@@ -17,15 +17,18 @@ async function fn(action, payload) {
 // ============================ PANEL ============================
 async function panel(el) {
   const today = todayStr();
-  const [{ data: studs }, { data: subs }, { data: asg }, { data: sch }, { data: groups }, { data: evs }] = await Promise.all([
+  const [{ data: studs }, { data: subs }, { data: asg }, { data: sch }, { data: groups }, { data: evs }, { data: units }, { data: mats }, { data: prog }] = await Promise.all([
     sb.from('profiles').select('id,full_name,active,must_change_password,group_id').eq('role', 'student'),
     sb.from('submissions').select('id,assignment_id,student_id,submitted_at,score').order('submitted_at', { ascending: false }),
-    sb.from('assignments').select('id,title,published,is_ae'),
+    sb.from('assignments').select('id,title,published,is_ae,unit_id'),
     sb.from('schedule').select('*').gte('day', today).order('day').order('ord').limit(8),
     sb.from('groups').select('*'),
     sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(60),
+    sb.from('units').select('id,code,title,weight').order('ord'), sb.from('materials').select('unit_id,published,teacher_only,kind,url'), sb.from('module_progress').select('module,pct'),
   ]);
   const active = studs.filter((s) => s.active);
+  const mapa = units.map((u) => { const ms = mats.filter((m) => m.unit_id === u.id && !m.teacher_only), ts = asg.filter((a) => a.unit_id === u.id); const pub = ms.filter((m) => m.published).length + ts.filter((a) => a.published).length, tot = ms.length + ts.length;
+    const pr = prog.filter((p) => p.module === 'm1-' + u.code.split('.')[1]).map((p) => p.pct); return { u, pub, tot, avg: pr.length ? Math.round(pr.reduce((a, b) => a + b, 0) / pr.length) : null, n: pr.length }; });
   const toGrade = subs.filter((s) => s.score == null);
   const sn = Object.fromEntries(studs.map((s) => [s.id, s.full_name])); const an = Object.fromEntries(asg.map((a) => [a.id, a.title]));
   const nd = sch[0]?.day; const nItems = sch.filter((s) => s.day === nd);
@@ -36,6 +39,7 @@ async function panel(el) {
     <div class="stat"><b>${asg.filter((a) => a.published).length}</b><span>Tareas publicadas</span></div>
     <div class="stat"><b>${active.filter((s) => s.must_change_password).length}</b><span>Sin cambiar contraseña temporal</span></div>
   </div>
+  <div class="card"><h2>Mapa del curso <a class="small" href="#/material">abrir material →</a></h2><div class="list">${mapa.map(({ u, pub, tot, avg, n }) => `<a class="item" href="#/material"><span class="code">${esc(u.code)}</span><div class="grow"><div class="t">${esc(u.title)}</div><div class="muted small">⭐ Vale ${u.weight} % · ${avg == null ? 'sin avance de alumnos todavía' : `avance promedio del módulo: ${avg} % (${n} alumno${n === 1 ? '' : 's'})`}</div></div><span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub === 0 ? '🙈 oculto' : pub === tot ? '👁️ visible' : `👁️ ${pub}/${tot}`}</span></a>`).join('')}</div></div>
   <div class="grid">
     <div class="card"><h2>Por calificar</h2>${toGrade.length ? `<div class="list">${toGrade.slice(0, 8).map((s) => `<a class="item" href="#/entregas/${s.assignment_id}"><div class="grow"><div class="t">${esc(sn[s.student_id] || '—')}</div><div class="muted small">${esc(an[s.assignment_id] || '')} · ${fmtDateTime(s.submitted_at)}</div></div></a>`).join('')}</div>` : empty('Todo calificado ✔')}</div>
     <div class="card"><h2>Próxima sesión</h2>${nd ? `<p><b>${parseDay(nd).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</b></p>${nItems.map((s) => `<div>• ${esc(s.label)}</div>`).join('')}<p><a href="#/cronograma">Ver cronograma completo →</a></p>` : empty('Sin sesiones próximas')}</div>
@@ -155,28 +159,42 @@ function manageGroups(groups, done) {
 
 // ============================ MATERIAL ============================
 async function material(el) {
-  const [{ data: units }, { data: mats }, { data: groups }] = await Promise.all([
+  const [{ data: units }, { data: mats }, { data: groups }, { data: asg }, { data: sch }, { data: prog }, { data: subs }] = await Promise.all([
     sb.from('units').select('*').order('ord'), sb.from('materials').select('*').order('created_at', { ascending: false }), sb.from('groups').select('*').order('name'),
+    sb.from('assignments').select('id,unit_id,title,is_ae,due_at,published').order('created_at'), sb.from('schedule').select('day,unit_code,kind').in('kind', ['clase', 'ae']).order('day'),
+    sb.from('module_progress').select('module,pct'), sb.from('submissions').select('assignment_id,score'),
   ]);
   const order = (m) => (m.teacher_only ? 20 : m.kind === 'module' ? 0 : /Contenidos/.test(m.title) ? 1 : /Apuntes/.test(m.title) ? 2 : /Ejemplos/.test(m.title) ? 3 : /Ejercicios/.test(m.title) ? 4 : /Práctica/.test(m.title) ? 5 : 6);
-  const groupsList = [...units.map((u) => ({ id: u.id, title: `${u.code} · ${u.title}` })), { id: null, title: 'General (todo el curso)' }];
+  const groupsList = [...units.map((u) => ({ id: u.id, u, title: u.title })), { id: null, u: null, title: 'Resumen general del curso' }];
   const icon = { link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' };
-  const itemHtml = (m) => `<div class="item ${m.published && !m.teacher_only ? '' : 'dim'}"><div style="font-size:1.4rem">${m.teacher_only ? '🔒' : icon[m.kind]}</div>
-    <div class="grow"><div class="t">${esc(m.title)}</div><div class="small">${m.teacher_only ? '<span class="badge brand">🔒 Solo docente · los alumnos nunca lo ven</span>' : m.published ? '<span class="badge ok">👁️ Visible para alumnos</span>' : '<span class="badge warn">🙈 Oculto</span>'}</div></div>
+  const pm = {}; (prog || []).forEach((p) => { (pm[p.module] ||= []).push(p.pct); });
+  const vis = (on, hidden = '🙈 Oculto') => (on ? '<span class="badge ok">👁️ Visible para alumnos</span>' : `<span class="badge warn">${hidden}</span>`);
+  const itemHtml = (m, n) => `<div class="item ${m.published && !m.teacher_only ? '' : 'dim'}"><span class="qn">${n}</span><div style="font-size:1.4rem">${m.teacher_only ? '🔒' : icon[m.kind]}</div>
+    <div class="grow"><div class="t">${esc(m.title.replace(/^\d\.\d\s·\s/, ''))}${m.kind === 'module' && pm[m.url] ? ` <span class="badge info">promedio ${Math.round(pm[m.url].reduce((a, b) => a + b, 0) / pm[m.url].length)} %</span>` : ''}</div><div class="small">${m.teacher_only ? '<span class="badge brand">🔒 Solo docente · los alumnos nunca lo ven</span>' : vis(m.published)}</div></div>
     <div class="actions">${m.teacher_only ? '' : `<button class="btn ${m.published ? 'ghost' : ''} sm" data-pub="${m.id}">${m.published ? '🙈 Ocultar' : '👁️ Mostrar'}</button>`}<button class="btn soft sm" data-ed="${m.id}">Editar</button></div></div>`;
-  const sections = groupsList.map((g) => { const items = mats.filter((m) => (m.unit_id || null) === g.id).sort((a, b) => order(a) - order(b));
-    if (!items.length) return ''; const pub = items.filter((m) => m.published && !m.teacher_only).length, tot = items.filter((m) => !m.teacher_only).length;
-    return `<div class="card"><div class="head" style="margin-bottom:10px"><h2 style="margin:0;flex:1">${esc(g.title)} <span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub}/${tot} visibles</span></h2>
+  const taskHtml = (a, n) => { const ss = (subs || []).filter((s) => s.assignment_id === a.id); return `<div class="item ${a.published ? '' : 'dim'}"><span class="qn">${n}</span><div style="font-size:1.4rem">✅</div>
+    <div class="grow"><div class="t">${a.is_ae ? 'Tarea de evaluación' : 'Tarea'}: ${esc(a.title)}</div><div class="small">${vis(a.published, '🙈 Oculta')} <span class="muted">· ${ss.length} entrega(s), ${ss.filter((s) => s.score == null).length} por calificar</span></div></div>
+    <div class="actions"><button class="btn ${a.published ? 'ghost' : ''} sm" data-tpub="${a.id}">${a.published ? '🙈 Ocultar' : '👁️ Mostrar'}</button><a class="btn soft sm" href="#/entregas/${a.id}">Entregas</a></div></div>`; };
+  const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']; const sd = (s) => { const d = new Date(s + 'T12:00:00'); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+  const sections = groupsList.map((g) => { const items = mats.filter((m) => (m.unit_id || null) === g.id).sort((a, b) => order(a) - order(b)); const tasks = g.id ? asg.filter((a) => a.unit_id === g.id) : [];
+    if (!items.length && !tasks.length) return ''; const vm = items.filter((m) => !m.teacher_only); const pub = vm.filter((m) => m.published).length + tasks.filter((a) => a.published).length, tot = vm.length + tasks.length;
+    const days = g.u ? sch.filter((s) => s.unit_code === g.u.code).map((s) => s.day) : []; const n0 = items.filter((m) => !m.teacher_only).length;
+    return `<div class="card" id="t-${g.u ? esc(g.u.code) : 'gen'}" style="scroll-margin-top:120px"><div class="head" style="margin-bottom:6px">${g.u ? `<span class="code">${esc(g.u.code)}</span>` : ''}<h2 style="margin:0;flex:1">${esc(g.title)} <span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub}/${tot} visibles</span></h2>
       <button class="btn ghost sm" data-all="show" data-unit="${g.id || ''}">👁️ Mostrar todo</button><button class="btn ghost sm" data-all="hide" data-unit="${g.id || ''}">🙈 Ocultar todo</button></div>
-      <div class="list">${items.map(itemHtml).join('')}</div></div>`; }).join('');
+      ${g.u ? `<div class="chips" style="margin-bottom:10px"><span class="chip">⏱️ ${g.u.hours} horas</span><span class="chip">⭐ Vale ${g.u.weight} %</span>${days.length ? `<span class="chip">📅 ${sd(days[0])} → ${sd(days[days.length - 1])}</span>` : ''}</div>` : ''}
+      <div class="list">${items.filter((m) => !m.teacher_only).map((m, i) => itemHtml(m, i + 1)).join('')}${tasks.map((a, i) => taskHtml(a, n0 + i + 1)).join('')}${items.filter((m) => m.teacher_only).map((m) => itemHtml(m, '🔒')).join('')}</div></div>`; }).join('');
+  const toc = groupsList.filter((g) => g.u).map((g) => `<button class="chip" data-goto="t-${esc(g.u.code)}">${esc(g.u.code)}</button>`).join('');
   el.innerHTML = `<div class="head"><h1>Material</h1><button class="btn" id="add">+ Agregar</button></div>
-    <p class="muted small">Cada propósito agrupa su material. Usa <b>Ocultar / Mostrar</b> para controlar lo que ven los alumnos. Lo marcado con 🔒 (por ejemplo, las respuestas) es solo para ti.</p>${sections || empty('Aún no has agregado material.')}`;
+    <p class="muted small">Cada propósito agrupa <b>todo</b> lo suyo, en el mismo orden que ven los alumnos: módulo, contenidos, apuntes, ejemplos, ejercicios, práctica y tarea. Lo marcado con 🔒 (respuestas) va al final y es solo para ti.</p>
+    <div class="toc"><span class="muted small">Ir a:</span>${toc}</div>${sections || empty('Aún no has agregado material.')}`;
   $('#add', el).onclick = () => matForm(null, units, groups, () => material(el));
   el.onclick = (e) => {
+    const g = e.target.closest('[data-goto]'); if (g) { document.getElementById(g.dataset.goto)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const tp = e.target.closest('[data-tpub]'); if (tp) { const a = asg.find((x) => x.id === tp.dataset.tpub); run(tp, async () => { const { error } = await sb.from('assignments').update({ published: !a.published }).eq('id', a.id); if (error) throw error; material(el); }); return; }
     const p = e.target.closest('[data-pub]'), d = e.target.closest('[data-ed]'), a = e.target.closest('[data-all]');
     if (p) { const m = mats.find((x) => x.id === p.dataset.pub); run(p, async () => { const { error } = await sb.from('materials').update({ published: !m.published }).eq('id', m.id); if (error) throw error; material(el); }); }
     if (d) matForm(mats.find((x) => x.id === d.dataset.ed), units, groups, () => material(el));
-    if (a) run(a, async () => { let q = sb.from('materials').update({ published: a.dataset.all === 'show' }).eq('teacher_only', false); q = a.dataset.unit ? q.eq('unit_id', a.dataset.unit) : q.is('unit_id', null); const { error } = await q; if (error) throw error; toast(a.dataset.all === 'show' ? 'Ahora es visible para los alumnos' : 'Oculto para los alumnos', 'ok'); material(el); });
+    if (a) run(a, async () => { let q = sb.from('materials').update({ published: a.dataset.all === 'show' }).eq('teacher_only', false); q = a.dataset.unit ? q.eq('unit_id', a.dataset.unit) : q.is('unit_id', null); const { error } = await q; if (error) throw error; if (a.dataset.unit) { const r2 = await sb.from('assignments').update({ published: a.dataset.all === 'show' }).eq('unit_id', a.dataset.unit); if (r2.error) throw r2.error; } toast(a.dataset.all === 'show' ? 'Ahora es visible para los alumnos' : 'Oculto para los alumnos', 'ok'); material(el); });
   };
 }
 
