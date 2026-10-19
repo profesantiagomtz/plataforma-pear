@@ -28,7 +28,7 @@ async function inicio(el, { profile }) {
   <div class="card"><h2>Por entregar</h2>${pending.length ? `<div class="list">${pending.map((a) => `<a class="item" href="#/tareas/${a.id}"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div></div>${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}</a>`).join('')}</div>` : empty('¡Estás al día! 🎉')}</div>`;
 }
 
-async function material(el, { profile }) {
+export async function material(el, { preview } = {}) {
   const [{ data: units }, { data: mats }] = await Promise.all([
     sb.from('units').select('*').order('ord'),
     sb.from('materials').select('*').order('created_at'),
@@ -36,15 +36,23 @@ async function material(el, { profile }) {
   const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id) }));
   const loose = mats.filter((m) => !m.unit_id);
   if (loose.length) blocks.push({ u: { code: '', title: 'General', contents: [] }, items: loose });
-  el.innerHTML = `<div class="head"><h1>Material</h1></div>` + (mats.length ? blocks.filter((b) => b.items.length).map(({ u, items }) => `
+  el.innerHTML = `${preview ? '' : '<div class="head"><h1>Material</h1></div>'}` + (mats.length ? blocks.filter((b) => b.items.length).map(({ u, items }) => `
     <details class="unit" open><summary>${u.code ? `<span class="code">${esc(u.code)}</span>` : ''}${esc(u.title)}<span class="badge">${items.length}</span></summary>
-    <div class="body">${items.map((m) => `<div class="item" style="align-items:flex-start"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title)}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}${m.kind === 'text' ? `<div class="pre" style="margin-top:6px">${esc(m.body)}</div>` : ''}</div>${m.kind !== 'text' ? `<button class="btn soft sm" data-open="${m.id}">Abrir</button>` : ''}</div>`).join('')}</div></details>`).join('') : empty('Aún no hay material publicado.'));
+    <div class="body">${items.map((m) => `<div class="item" style="align-items:flex-start"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title)}${preview && !m.published ? ' <span class="badge warn">Borrador · no visible</span>' : ''}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}${m.kind === 'text' ? `<div class="pre" style="margin-top:6px">${esc(m.body)}</div>` : ''}</div>${m.kind !== 'text' ? `<button class="btn soft sm" data-open="${m.id}">Abrir</button>` : ''}</div>`).join('')}</div></details>`).join('') : empty('Aún no hay material publicado.'));
   $$('[data-open]', el).forEach((b) => b.onclick = () => run(b, async () => {
     const m = mats.find((x) => x.id === b.dataset.open);
     const url = m.kind === 'file' ? await signedUrl('materials', m.file_path) : m.url;
     if (!isUrl(url)) throw new Error('Enlace no válido');
     window.open(url, '_blank', 'noopener');
   }));
+}
+
+export async function tareasPreview(el) {
+  const [{ data: asg }, { data: units }] = await Promise.all([sb.from('assignments').select('*').order('due_at', { nullsFirst: false }), sb.from('units').select('id,code')]);
+  const uc = Object.fromEntries(units.map((u) => [u.id, u.code]));
+  el.innerHTML = asg.length ? `<div class="list">${asg.map((a) => `<div class="card flat" style="margin:0"><div class="t"><b>${esc(a.title)}</b> ${a.published ? '' : '<span class="badge warn">Borrador · no visible</span>'} ${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}</div>
+    <div class="muted small">${uc[a.unit_id] ? 'Propósito ' + uc[a.unit_id] + ' · ' : ''}${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div><p class="pre small">${esc(a.instructions || 'Sin instrucciones adicionales.')}</p>
+    <button class="btn" disabled>Enviar entrega (desactivado en vista previa)</button></div>`).join('')}</div>` : empty('Aún no hay tareas.');
 }
 
 async function tareas(el, { profile, param }) {

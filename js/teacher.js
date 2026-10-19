@@ -1,5 +1,6 @@
 import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
+import { material as studentMaterial, tareasPreview } from './student.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const opt = (list, val, label, sel) => list.map((x) => `<option value="${esc(x[val])}" ${x[val] === sel ? 'selected' : ''}>${esc(typeof label === 'function' ? label(x) : x[label])}</option>`).join('');
@@ -302,6 +303,19 @@ async function anuncios(el) {
   el.onclick = async (e) => { const d = e.target.closest('[data-del]'); if (d && await confirmBox('¿Borrar aviso?', 'Borrar', true)) { await sb.from('announcements').delete().eq('id', d.dataset.del); anuncios(el); } };
 }
 
+// ============================ VISTA ALUMNO ============================
+async function vistaAlumno(el, { param }) {
+  const tab = param[0] || 'material';
+  el.innerHTML = `<div class="msg info" style="margin:0 0 14px">👁️ <b>Vista previa de alumno.</b> Así lo verán tus alumnos; lo marcado como «Borrador» solo lo ves tú.</div>
+  <div class="head"><h1>Vista alumno</h1></div>
+  <div class="tabs">${[['material', 'Material'], ['tareas', 'Tareas'], ['cronograma', 'Cronograma']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('')}</div><div id="pv"></div>`;
+  $$('.tabs button', el).forEach((b) => b.onclick = () => { location.hash = '#/vista/' + b.dataset.t; });
+  const box = $('#pv', el);
+  if (tab === 'tareas') await tareasPreview(box);
+  else if (tab === 'cronograma') await calendarView(box);
+  else await studentMaterial(box, { preview: true });
+}
+
 export const teacherRoutes = {
   panel: { title: 'Panel', icon: '🏠', nav: true, render: panel },
   alumnos: { title: 'Alumnos', icon: '👥', nav: true, render: alumnos },
@@ -311,5 +325,6 @@ export const teacherRoutes = {
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },
   cronograma: { title: 'Cronograma', icon: '🗓️', nav: true, render: calendarView },
+  vista: { title: 'Vista alumno', icon: '👁️', nav: true, render: vistaAlumno },
   perfil: { title: 'Perfil', icon: '👤', nav: true, render: profileView },
 };
