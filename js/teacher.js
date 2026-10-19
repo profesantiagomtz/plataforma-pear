@@ -1,6 +1,7 @@
 import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
+import { moduloView } from './modulo.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const opt = (list, val, label, sel) => list.map((x) => `<option value="${esc(x[val])}" ${x[val] === sel ? 'selected' : ''}>${esc(typeof label === 'function' ? label(x) : x[label])}</option>`).join('');
@@ -156,7 +157,7 @@ async function material(el) {
   ]);
   const un = Object.fromEntries(units.map((u) => [u.id, u]));
   el.innerHTML = `<div class="head"><h1>Material</h1><button class="btn" id="add">+ Agregar</button></div>
-  <div class="list">${mats.length ? mats.map((m) => `<div class="item"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝' }[m.kind]}</div>
+  <div class="list">${mats.length ? mats.map((m) => `<div class="item"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' }[m.kind]}</div>
     <div class="grow"><div class="t">${esc(m.title)}</div><div class="muted small">${m.unit_id ? 'Propósito ' + esc(un[m.unit_id]?.code) : 'General'} · ${m.published ? '<span class="badge ok">Publicado</span>' : '<span class="badge">Borrador</span>'}</div></div>
     <div class="actions"><button class="btn ghost sm" data-pub="${m.id}">${m.published ? 'Ocultar' : 'Publicar'}</button><button class="btn soft sm" data-ed="${m.id}">Editar</button></div></div>`).join('') : empty('Aún no has agregado material.')}</div>`;
   $('#add', el).onclick = () => matForm(null, units, groups, () => material(el));
@@ -172,19 +173,19 @@ function matForm(m, units, groups, done) {
   const md = modal(m ? 'Editar material' : 'Nuevo material', `<label for="t">Título</label><input id="t" value="${esc(m?.title)}">
     <label for="d">Descripción</label><textarea id="d" rows="2">${esc(m?.description)}</textarea>
     <div class="row"><div><label for="u">Propósito formativo</label><select id="u"><option value="">General</option>${opt(units, 'id', (u) => `${u.code} · ${u.title}`, m?.unit_id)}</select></div>
-    <div><label for="k">Tipo</label><select id="k"><option value="link">Enlace</option><option value="video">Video (enlace)</option><option value="file">Archivo</option><option value="text">Texto</option></select></div></div>
+    <div><label for="k">Tipo</label><select id="k"><option value="link">Enlace</option><option value="video">Video (enlace)</option><option value="file">Archivo</option><option value="text">Texto</option><option value="module">Módulo interactivo</option></select></div></div>
     <div id="kz"></div>
     <label for="g">Visible para</label><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name', m?.group_id)}</select>
     <label class="check"><input type="checkbox" id="p" ${m?.published ? 'checked' : ''}> Publicado (visible para alumnos)</label>
     <div class="foot">${m ? '<button class="btn danger" id="del">Eliminar</button>' : ''}<button class="btn" id="sv">Guardar</button></div>`);
   const e = md.el; $('#k', e).value = k;
-  const kz = () => { const t = $('#k', e).value; $('#kz', e).innerHTML = t === 'file' ? `<label for="f">Archivo (máx. 25 MB)</label><input id="f" type="file">${m?.file_path ? '<div class="muted small">Ya hay un archivo; sube otro solo para reemplazarlo.</div>' : ''}` : t === 'text' ? `<label for="b">Contenido</label><textarea id="b" rows="14">${esc(m?.body)}</textarea><div class="muted small">Formato: ## título, **negritas**, listas con - o 1., tablas con |, imágenes ![texto](assets/lessons/archivo.svg)</div>` : `<label for="ur">Enlace</label><input id="ur" type="url" placeholder="https://" value="${esc(m?.url)}">`; };
+  const kz = () => { const t = $('#k', e).value; $('#kz', e).innerHTML = t === 'module' ? `<label for="ur">Módulo</label><select id="ur">${['1', '2', '3', '4', '5', '6', '7'].map((n) => `<option value="m1-${n}" ${m?.url === 'm1-' + n ? 'selected' : ''}>Propósito 1.${n}</option>`).join('')}</select>` : t === 'file' ? `<label for="f">Archivo (máx. 25 MB)</label><input id="f" type="file">${m?.file_path ? '<div class="muted small">Ya hay un archivo; sube otro solo para reemplazarlo.</div>' : ''}` : t === 'text' ? `<label for="b">Contenido</label><textarea id="b" rows="14">${esc(m?.body)}</textarea><div class="muted small">Formato: ## título, **negritas**, listas con - o 1., tablas con |, imágenes ![texto](assets/lessons/archivo.svg)</div>` : `<label for="ur">Enlace</label><input id="ur" type="url" placeholder="https://" value="${esc(m?.url)}">`; };
   $('#k', e).onchange = kz; kz();
   $('#sv', e).onclick = (ev) => run(ev.target, async () => {
     const t = $('#t', e).value.trim(), kind = $('#k', e).value; if (!t) throw new Error('Falta el título');
     const row = { title: t, description: $('#d', e).value.trim() || null, unit_id: $('#u', e).value || null, group_id: $('#g', e).value || null, kind, published: $('#p', e).checked, url: null, body: null, file_path: m?.file_path ?? null };
     if (kind === 'file') { const f = $('#f', e).files[0]; if (f) { if (m?.file_path) await sb.storage.from('materials').remove([m.file_path]); row.file_path = await uploadFile('materials', `${Date.now()}-${safeName(f.name)}`, f); } if (!row.file_path) throw new Error('Selecciona un archivo'); }
-    else if (kind === 'text') row.body = $('#b', e).value; else { row.url = $('#ur', e).value.trim(); if (!isUrl(row.url)) throw new Error('Enlace no válido'); if (m?.file_path) { await sb.storage.from('materials').remove([m.file_path]); row.file_path = null; } }
+    else if (kind === 'text') row.body = $('#b', e).value; else if (kind === 'module') row.url = $('#ur', e).value; else { row.url = $('#ur', e).value.trim(); if (!isUrl(row.url)) throw new Error('Enlace no válido'); if (m?.file_path) { await sb.storage.from('materials').remove([m.file_path]); row.file_path = null; } }
     const { error } = m ? await sb.from('materials').update(row).eq('id', m.id) : await sb.from('materials').insert(row);
     if (error) throw error; md.close(); toast('Guardado', 'ok'); done();
   });
@@ -303,6 +304,25 @@ async function anuncios(el) {
   el.onclick = async (e) => { const d = e.target.closest('[data-del]'); if (d && await confirmBox('¿Borrar aviso?', 'Borrar', true)) { await sb.from('announcements').delete().eq('id', d.dataset.del); anuncios(el); } };
 }
 
+// ============================ AVANCE EN MÓDULOS ============================
+async function avance(el) {
+  const [{ data: studs }, { data: prog }, { data: units }, { data: groups }] = await Promise.all([
+    sb.from('profiles').select('id,full_name,group_id').eq('role', 'student').eq('active', true).order('full_name'),
+    sb.from('module_progress').select('student_id,module,pct,updated_at'), sb.from('units').select('code').order('ord'), sb.from('groups').select('*').order('name'),
+  ]);
+  const mods = units.map((u) => 'm1-' + u.code.split('.')[1]); const pm = new Map(prog.map((p) => [p.student_id + p.module, p]));
+  let fg = '';
+  const draw = () => {
+    const rows = studs.filter((s) => !fg || s.group_id === fg);
+    $('#tb', el).innerHTML = rows.map((s) => { const vals = mods.map((m) => pm.get(s.id + m)); const avg = Math.round(vals.reduce((t, v) => t + (v?.pct || 0), 0) / mods.length); const last = vals.filter(Boolean).map((v) => v.updated_at).sort().pop();
+      return `<tr><td>${esc(s.full_name)}</td>${vals.map((v) => `<td class="num">${v ? `<span class="badge ${v.pct >= 100 ? 'ok' : v.pct > 0 ? 'info' : ''}">${v.pct} %</span>` : '<span class="muted">—</span>'}</td>`).join('')}<td class="num"><b>${avg} %</b></td><td class="muted small">${last ? fmtDateTime(last) : '—'}</td></tr>`; }).join('') || `<tr><td colspan="10">${empty('Sin alumnos')}</td></tr>`;
+  };
+  el.innerHTML = `<div class="head"><h1>Avance en módulos</h1></div><div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select></div>
+    <div class="tablewrap"><table><thead><tr><th>Alumno</th>${units.map((u) => `<th class="num">${u.code}</th>`).join('')}<th class="num">Prom.</th><th>Última actividad</th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
+  draw();
+}
+
 // ============================ VISTA ALUMNO ============================
 async function vistaAlumno(el, { param }) {
   const tab = param[0] || 'material';
@@ -323,6 +343,8 @@ export const teacherRoutes = {
   tareas: { title: 'Tareas', icon: '✅', nav: true, render: tareas },
   entregas: { title: 'Entregas', icon: '📥', nav: true, render: entregas },
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
+  avance: { title: 'Avance', icon: '📈', nav: true, render: avance },
+  modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },
   cronograma: { title: 'Cronograma', icon: '🗓️', nav: true, render: calendarView },
   vista: { title: 'Vista alumno', icon: '👁️', nav: true, render: vistaAlumno },

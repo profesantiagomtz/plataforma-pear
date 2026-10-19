@@ -25,14 +25,16 @@ export function toast(msg, type = '') {
 }
 
 // Markdown mínimo y seguro (todo se escapa; imágenes solo de assets/lessons/ o https)
+const okImg = (u) => /^assets\/lessons\/[\w.-]+\.(svg|png|jpe?g|webp)$/.test(u) || /^https:\/\/[^\s"']+$/.test(u);
+export const mdInline = (t) => esc(t)
+  .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, a, u) => (okImg(u) ? `<img src="${u}" alt="${a}" loading="lazy">` : ''))
+  .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+  .replace(/`([^`]+)`/g, '<code>$1</code>')
+  .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+  .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+
 export function md(src) {
-  const okImg = (u) => /^assets\/lessons\/[\w.-]+\.(svg|png|jpe?g|webp)$/.test(u) || /^https:\/\/[^\s"']+$/.test(u);
-  const inline = (t) => esc(t)
-    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, a, u) => (okImg(u) ? `<img src="${u}" alt="${a}" loading="lazy">` : ''))
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-    .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+  const inline = mdInline;
   const lines = String(src ?? '').replace(/\r/g, '').split('\n');
   const out = []; let i = 0;
   const special = (l) => /^(#{1,3} |\||[-*] |\d+\. |> |---$|!\[)/.test(l);
