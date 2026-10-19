@@ -250,6 +250,7 @@ table.tt td.fixed{background:var(--surface2);font-weight:700}.ttb{width:44px;hei
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.three>div{border:2px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;background:var(--surface2)}
 .three span{display:block;font-size:2rem}.three b{display:block}.three small{color:var(--muted)}
 .prevbar{margin:0 0 12px!important}
+.item.dim{opacity:.8;border-style:dashed}
 .fnav .btn{white-space:nowrap;padding:0 14px}.fnav .btn.big{font-size:1rem}#ct{text-align:center;line-height:1.2;font-size:.8rem}
 @media(max-width:420px){.fnav{gap:6px}.fnav .btn{padding:0 10px}.fnav #prev{min-width:0}}
 .abn{font-size:1.6rem;color:var(--brand)}

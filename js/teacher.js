@@ -158,16 +158,25 @@ async function material(el) {
   const [{ data: units }, { data: mats }, { data: groups }] = await Promise.all([
     sb.from('units').select('*').order('ord'), sb.from('materials').select('*').order('created_at', { ascending: false }), sb.from('groups').select('*').order('name'),
   ]);
-  const un = Object.fromEntries(units.map((u) => [u.id, u]));
+  const order = (m) => (m.kind === 'module' ? 0 : m.teacher_only ? 2 : 1);
+  const groupsList = [...units.map((u) => ({ id: u.id, title: `${u.code} · ${u.title}` })), { id: null, title: 'General (todo el curso)' }];
+  const icon = { link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' };
+  const itemHtml = (m) => `<div class="item ${m.published && !m.teacher_only ? '' : 'dim'}"><div style="font-size:1.4rem">${m.teacher_only ? '🔒' : icon[m.kind]}</div>
+    <div class="grow"><div class="t">${esc(m.title)}</div><div class="small">${m.teacher_only ? '<span class="badge brand">🔒 Solo docente · los alumnos nunca lo ven</span>' : m.published ? '<span class="badge ok">👁️ Visible para alumnos</span>' : '<span class="badge warn">🙈 Oculto</span>'}</div></div>
+    <div class="actions">${m.teacher_only ? '' : `<button class="btn ${m.published ? 'ghost' : ''} sm" data-pub="${m.id}">${m.published ? '🙈 Ocultar' : '👁️ Mostrar'}</button>`}<button class="btn soft sm" data-ed="${m.id}">Editar</button></div></div>`;
+  const sections = groupsList.map((g) => { const items = mats.filter((m) => (m.unit_id || null) === g.id).sort((a, b) => order(a) - order(b));
+    if (!items.length) return ''; const pub = items.filter((m) => m.published && !m.teacher_only).length, tot = items.filter((m) => !m.teacher_only).length;
+    return `<div class="card"><div class="head" style="margin-bottom:10px"><h2 style="margin:0;flex:1">${esc(g.title)} <span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub}/${tot} visibles</span></h2>
+      <button class="btn ghost sm" data-all="show" data-unit="${g.id || ''}">👁️ Mostrar todo</button><button class="btn ghost sm" data-all="hide" data-unit="${g.id || ''}">🙈 Ocultar todo</button></div>
+      <div class="list">${items.map(itemHtml).join('')}</div></div>`; }).join('');
   el.innerHTML = `<div class="head"><h1>Material</h1><button class="btn" id="add">+ Agregar</button></div>
-  <div class="list">${mats.length ? mats.map((m) => `<div class="item"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' }[m.kind]}</div>
-    <div class="grow"><div class="t">${esc(m.title)}</div><div class="muted small">${m.unit_id ? 'Propósito ' + esc(un[m.unit_id]?.code) : 'General'} · ${m.published ? '<span class="badge ok">Publicado</span>' : '<span class="badge">Borrador</span>'}</div></div>
-    <div class="actions"><button class="btn ghost sm" data-pub="${m.id}">${m.published ? 'Ocultar' : 'Publicar'}</button><button class="btn soft sm" data-ed="${m.id}">Editar</button></div></div>`).join('') : empty('Aún no has agregado material.')}</div>`;
+    <p class="muted small">Cada propósito agrupa su material. Usa <b>Ocultar / Mostrar</b> para controlar lo que ven los alumnos. Lo marcado con 🔒 (por ejemplo, las respuestas) es solo para ti.</p>${sections || empty('Aún no has agregado material.')}`;
   $('#add', el).onclick = () => matForm(null, units, groups, () => material(el));
   el.onclick = (e) => {
-    const p = e.target.closest('[data-pub]'), d = e.target.closest('[data-ed]');
-    if (p) { const m = mats.find((x) => x.id === p.dataset.pub); run(p, async () => { await sb.from('materials').update({ published: !m.published }).eq('id', m.id); material(el); }); }
+    const p = e.target.closest('[data-pub]'), d = e.target.closest('[data-ed]'), a = e.target.closest('[data-all]');
+    if (p) { const m = mats.find((x) => x.id === p.dataset.pub); run(p, async () => { const { error } = await sb.from('materials').update({ published: !m.published }).eq('id', m.id); if (error) throw error; material(el); }); }
     if (d) matForm(mats.find((x) => x.id === d.dataset.ed), units, groups, () => material(el));
+    if (a) run(a, async () => { let q = sb.from('materials').update({ published: a.dataset.all === 'show' }).eq('teacher_only', false); q = a.dataset.unit ? q.eq('unit_id', a.dataset.unit) : q.is('unit_id', null); const { error } = await q; if (error) throw error; toast(a.dataset.all === 'show' ? 'Ahora es visible para los alumnos' : 'Oculto para los alumnos', 'ok'); material(el); });
   };
 }
 
@@ -179,14 +188,15 @@ function matForm(m, units, groups, done) {
     <div><label for="k">Tipo</label><select id="k"><option value="link">Enlace</option><option value="video">Video (enlace)</option><option value="file">Archivo</option><option value="text">Texto</option><option value="module">Módulo interactivo</option></select></div></div>
     <div id="kz"></div>
     <label for="g">Visible para</label><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name', m?.group_id)}</select>
-    <label class="check"><input type="checkbox" id="p" ${m?.published ? 'checked' : ''}> Publicado (visible para alumnos)</label>
+    <label class="check"><input type="checkbox" id="p" ${m?.published ? 'checked' : ''}> 👁️ Visible para alumnos</label>
+    <label class="check"><input type="checkbox" id="to" ${m?.teacher_only ? 'checked' : ''}> 🔒 Solo para mí (respuestas, notas del docente; nunca lo ven los alumnos)</label>
     <div class="foot">${m ? '<button class="btn danger" id="del">Eliminar</button>' : ''}<button class="btn" id="sv">Guardar</button></div>`);
   const e = md.el; $('#k', e).value = k;
   const kz = () => { const t = $('#k', e).value; $('#kz', e).innerHTML = t === 'module' ? `<label for="ur">Módulo</label><select id="ur">${['1', '2', '3', '4', '5', '6', '7'].map((n) => `<option value="m1-${n}" ${m?.url === 'm1-' + n ? 'selected' : ''}>Propósito 1.${n}</option>`).join('')}</select>` : t === 'file' ? `<label for="f">Archivo (máx. 25 MB)</label><input id="f" type="file">${m?.file_path ? '<div class="muted small">Ya hay un archivo; sube otro solo para reemplazarlo.</div>' : ''}` : t === 'text' ? `<label for="b">Contenido</label><textarea id="b" rows="14">${esc(m?.body)}</textarea><div class="muted small">Formato: ## título, **negritas**, listas con - o 1., tablas con |, imágenes ![texto](assets/lessons/archivo.svg)</div>` : `<label for="ur">Enlace</label><input id="ur" type="url" placeholder="https://" value="${esc(m?.url)}">`; };
   $('#k', e).onchange = kz; kz();
   $('#sv', e).onclick = (ev) => run(ev.target, async () => {
     const t = $('#t', e).value.trim(), kind = $('#k', e).value; if (!t) throw new Error('Falta el título');
-    const row = { title: t, description: $('#d', e).value.trim() || null, unit_id: $('#u', e).value || null, group_id: $('#g', e).value || null, kind, published: $('#p', e).checked, url: null, body: null, file_path: m?.file_path ?? null };
+    const row = { title: t, description: $('#d', e).value.trim() || null, unit_id: $('#u', e).value || null, group_id: $('#g', e).value || null, kind, teacher_only: $('#to', e).checked, published: $('#p', e).checked && !$('#to', e).checked, url: null, body: null, file_path: m?.file_path ?? null };
     if (kind === 'file') { const f = $('#f', e).files[0]; if (f) { if (m?.file_path) await sb.storage.from('materials').remove([m.file_path]); row.file_path = await uploadFile('materials', `${Date.now()}-${safeName(f.name)}`, f); } if (!row.file_path) throw new Error('Selecciona un archivo'); }
     else if (kind === 'text') row.body = $('#b', e).value; else if (kind === 'module') row.url = $('#ur', e).value; else { row.url = $('#ur', e).value.trim(); if (!isUrl(row.url)) throw new Error('Enlace no válido'); if (m?.file_path) { await sb.storage.from('materials').remove([m.file_path]); row.file_path = null; } }
     const { error } = m ? await sb.from('materials').update(row).eq('id', m.id) : await sb.from('materials').insert(row);
