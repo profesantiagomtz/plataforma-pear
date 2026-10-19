@@ -158,7 +158,7 @@ async function material(el) {
   const [{ data: units }, { data: mats }, { data: groups }] = await Promise.all([
     sb.from('units').select('*').order('ord'), sb.from('materials').select('*').order('created_at', { ascending: false }), sb.from('groups').select('*').order('name'),
   ]);
-  const order = (m) => (m.kind === 'module' ? 0 : m.teacher_only ? 2 : 1);
+  const order = (m) => (m.teacher_only ? 20 : m.kind === 'module' ? 0 : /Contenidos/.test(m.title) ? 1 : /Apuntes/.test(m.title) ? 2 : /Ejemplos/.test(m.title) ? 3 : /Ejercicios/.test(m.title) ? 4 : /Práctica/.test(m.title) ? 5 : 6);
   const groupsList = [...units.map((u) => ({ id: u.id, title: `${u.code} · ${u.title}` })), { id: null, title: 'General (todo el curso)' }];
   const icon = { link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' };
   const itemHtml = (m) => `<div class="item ${m.published && !m.teacher_only ? '' : 'dim'}"><div style="font-size:1.4rem">${m.teacher_only ? '🔒' : icon[m.kind]}</div>
@@ -404,7 +404,7 @@ async function avance(el, { param } = {}) {
 }
 
 // ============================ VISTA ALUMNO ============================
-async function vistaAlumno(el, { param }) {
+async function vistaAlumno(el, { param, profile }) {
   const tab = param[0] || 'material';
   el.innerHTML = `<div class="msg info" style="margin:0 0 14px">👁️ <b>Vista previa de alumno.</b> Así lo verán tus alumnos; lo marcado como «Borrador» solo lo ves tú.</div>
   <div class="head"><h1>Vista alumno</h1></div>
@@ -413,7 +413,7 @@ async function vistaAlumno(el, { param }) {
   const box = $('#pv', el);
   if (tab === 'tareas') await tareasPreview(box);
   else if (tab === 'cronograma') await calendarView(box);
-  else await studentMaterial(box, { preview: true });
+  else await studentMaterial(box, { preview: true, profile });
 }
 
 export const teacherRoutes = {

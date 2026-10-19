@@ -30,17 +30,33 @@ async function inicio(el, { profile }) {
   <div class="card"><h2>Por entregar</h2>${pending.length ? `<div class="list">${pending.map((a) => `<a class="item" href="#/tareas/${a.id}"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div></div>${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}</a>`).join('')}</div>` : empty('¡Estás al día! 🎉')}</div>`;
 }
 
-export async function material(el, { preview } = {}) {
-  const [{ data: units }, { data: mats }] = await Promise.all([
+const MATRANK = (m) => (m.kind === 'module' ? 0 : /Contenidos/.test(m.title) ? 1 : /Apuntes/.test(m.title) ? 2 : /Ejemplos/.test(m.title) ? 3 : /Ejercicios/.test(m.title) ? 4 : /Práctica/.test(m.title) ? 5 : 6);
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const shortDay = (s) => { const d = new Date(s + 'T12:00:00'); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+
+export async function material(el, { preview, profile } = {}) {
+  const none = Promise.resolve({ data: [] });
+  const [{ data: units }, { data: mats }, { data: asg }, { data: sch }, { data: prog }, { data: subs }] = await Promise.all([
     sb.from('units').select('*').order('ord'),
     sb.from('materials').select('*').order('created_at'),
+    sb.from('assignments').select('id,unit_id,title,is_ae,due_at,published').order('created_at'),
+    sb.from('schedule').select('day,unit_code,kind').in('kind', ['clase', 'ae']).order('day'),
+    profile?.id ? sb.from('module_progress').select('module,pct').eq('student_id', profile.id) : none,
+    profile?.id ? sb.from('submissions').select('assignment_id,score').eq('student_id', profile.id) : none,
   ]);
-  const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id) }));
+  const pg = Object.fromEntries((prog || []).map((p) => [p.module, p.pct])); const sm = Object.fromEntries((subs || []).map((s) => [s.assignment_id, s]));
+  const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id).sort((a, b) => MATRANK(a) - MATRANK(b)), tasks: asg.filter((a) => a.unit_id === u.id) }));
   const loose = mats.filter((m) => !m.unit_id);
-  if (loose.length) blocks.push({ u: { code: '', title: 'General', contents: [] }, items: loose });
-  el.innerHTML = `${preview ? '' : '<div class="head"><h1>Material</h1></div>'}` + (mats.length ? blocks.filter((b) => b.items.length).map(({ u, items }) => `
-    <details class="unit" open><summary>${u.code ? `<span class="code">${esc(u.code)}</span>` : ''}${esc(u.title)}<span class="badge">${items.length}</span></summary>
-    <div class="body">${items.map((m) => `<div class="item" style="align-items:flex-start"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title)}${preview && m.teacher_only ? ' <span class="badge brand">🔒 Solo docente · no visible</span>' : preview && !m.published ? ' <span class="badge warn">🙈 Oculto · no visible</span>' : ''}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}</div><button class="btn soft sm" data-open="${m.id}">${m.kind === 'text' ? 'Leer' : m.kind === 'module' ? 'Iniciar' : 'Abrir'}</button></div>`).join('')}</div></details>`).join('') : empty('Aún no hay material publicado.'));
+  if (loose.length) blocks.push({ u: { code: '', title: 'Resumen general del curso', contents: [] }, items: loose, tasks: [] });
+  const shown = blocks.filter((b) => b.items.length || b.tasks.length);
+  const itemHtml = (m, n) => `<div class="item" style="align-items:flex-start"><span class="qn">${n}</span><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝', module: '🎓' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title.replace(/^\d\.\d\s·\s/, ''))}${m.kind === 'module' && !preview ? ` <span class="badge ${pg[m.url] >= 100 ? 'ok' : 'info'}">${pg[m.url] ?? 0} %</span>` : ''}${preview && m.teacher_only ? ' <span class="badge brand">🔒 Solo docente · no visible</span>' : preview && !m.published ? ' <span class="badge warn">🙈 Oculto · no visible</span>' : ''}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}</div><button class="btn ${m.kind === 'module' ? '' : 'soft'} sm" data-open="${m.id}">${m.kind === 'text' ? 'Leer' : m.kind === 'module' ? 'Iniciar' : 'Abrir'}</button></div>`;
+  const taskHtml = (a, n) => { const s = sm[a.id]; return `<a class="item" href="#/tareas/${a.id}"><span class="qn">${n}</span><div style="font-size:1.4rem">✅</div><div class="grow"><div class="t">${a.is_ae ? 'Tarea de evaluación' : 'Tarea'}: ${esc(a.title)}${preview && !a.published ? ' <span class="badge warn">🙈 Oculta · no visible</span>' : ''}</div><div class="muted small">${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div></div>${s ? (s.score != null ? `<span class="badge ok">Calificada</span>` : '<span class="badge info">Entregada</span>') : '<span class="badge warn">Pendiente</span>'}</a>`; };
+  el.innerHTML = `${preview ? '' : '<div class="head"><h1>Material</h1></div>'}` + (shown.length ? `
+    <div class="toc"><span class="muted small">Ir a:</span>${shown.filter((b) => b.u.code).map((b) => `<button class="chip" data-goto="u-${esc(b.u.code)}">${esc(b.u.code)}</button>`).join('')}</div>` + shown.map(({ u, items, tasks }) => { const days = sch.filter((s) => s.unit_code === u.code).map((s) => s.day);
+    return `<details class="unit" id="u-${esc(u.code)}" open><summary>${u.code ? `<span class="code">${esc(u.code)}</span>` : ''}${esc(u.title)}<span class="badge">${items.length + tasks.length}</span></summary>
+    <div class="body">${u.code ? `<div class="chips" style="margin-bottom:4px"><span class="chip">⏱️ ${u.hours} horas</span><span class="chip">⭐ Vale ${u.weight} %</span>${days.length ? `<span class="chip">📅 ${shortDay(days[0])} → ${shortDay(days[days.length - 1])}</span>` : ''}</div>` : ''}
+    ${items.map((m, i) => itemHtml(m, i + 1)).join('')}${tasks.map((a, i) => taskHtml(a, items.length + i + 1)).join('')}</div></details>`; }).join('') : empty('Aún no hay material publicado.'));
+  $$('[data-goto]', el).forEach((b) => b.onclick = () => document.getElementById(b.dataset.goto)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   $$('[data-open]', el).forEach((b) => b.onclick = () => run(b, async () => {
     const m = mats.find((x) => x.id === b.dataset.open);
     if (m.kind === 'module') { location.hash = '#/modulo/' + m.url; return; }
