@@ -1,6 +1,7 @@
 import { sb, esc, md, modal, $, $$, run, toast, fmtDate, fmtDateTime, todayStr, parseDay, dayName, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { moduloView } from './modulo.js';
+import { logEvent } from './live.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 
@@ -43,6 +44,7 @@ export async function material(el, { preview } = {}) {
   $$('[data-open]', el).forEach((b) => b.onclick = () => run(b, async () => {
     const m = mats.find((x) => x.id === b.dataset.open);
     if (m.kind === 'module') { location.hash = '#/modulo/' + m.url; return; }
+    logEvent('open_material', null, null, { title: m.title });
     if (m.kind === 'text') { modal(m.title, `<div class="md">${md(m.body)}</div>`, { wide: true }); return; }
     const url = m.kind === 'file' ? await signedUrl('materials', m.file_path) : m.url;
     if (!isUrl(url)) throw new Error('Enlace no válido');
@@ -106,6 +108,7 @@ async function tareaDetalle(el, profile, id) {
     const row = { assignment_id: a.id, student_id: profile.id, body, link_url: link || null, file_path, submitted_at: new Date().toISOString() };
     const { error } = s ? await sb.from('submissions').update(row).eq('id', s.id) : await sb.from('submissions').insert(row);
     if (error) throw error;
+    logEvent('submit', null, null, { title: a.title });
     toast('Entrega enviada ✔', 'ok'); tareaDetalle(el, profile, id);
   }); };
 }

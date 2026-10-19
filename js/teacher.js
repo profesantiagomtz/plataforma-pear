@@ -2,6 +2,7 @@ import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parse
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
+import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const opt = (list, val, label, sel) => list.map((x) => `<option value="${esc(x[val])}" ${x[val] === sel ? 'selected' : ''}>${esc(typeof label === 'function' ? label(x) : x[label])}</option>`).join('');
@@ -16,12 +17,13 @@ async function fn(action, payload) {
 // ============================ PANEL ============================
 async function panel(el) {
   const today = todayStr();
-  const [{ data: studs }, { data: subs }, { data: asg }, { data: sch }, { data: groups }] = await Promise.all([
+  const [{ data: studs }, { data: subs }, { data: asg }, { data: sch }, { data: groups }, { data: evs }] = await Promise.all([
     sb.from('profiles').select('id,full_name,active,must_change_password,group_id').eq('role', 'student'),
     sb.from('submissions').select('id,assignment_id,student_id,submitted_at,score').order('submitted_at', { ascending: false }),
     sb.from('assignments').select('id,title,published,is_ae'),
     sb.from('schedule').select('*').gte('day', today).order('day').order('ord').limit(8),
     sb.from('groups').select('*'),
+    sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(60),
   ]);
   const active = studs.filter((s) => s.active);
   const toGrade = subs.filter((s) => s.score == null);
@@ -37,6 +39,7 @@ async function panel(el) {
   <div class="grid">
     <div class="card"><h2>Por calificar</h2>${toGrade.length ? `<div class="list">${toGrade.slice(0, 8).map((s) => `<a class="item" href="#/entregas/${s.assignment_id}"><div class="grow"><div class="t">${esc(sn[s.student_id] || '—')}</div><div class="muted small">${esc(an[s.assignment_id] || '')} · ${fmtDateTime(s.submitted_at)}</div></div></a>`).join('')}</div>` : empty('Todo calificado ✔')}</div>
     <div class="card"><h2>Próxima sesión</h2>${nd ? `<p><b>${parseDay(nd).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</b></p>${nItems.map((s) => `<div>• ${esc(s.label)}</div>`).join('')}<p><a href="#/cronograma">Ver cronograma completo →</a></p>` : empty('Sin sesiones próximas')}</div>
+    <div class="card"><h2>Actividad reciente <a class="small" href="#/envivo">ver en vivo →</a></h2><div class="feed">${(evs || []).filter((e) => describe(e).imp).slice(0, 10).map((e) => feedItem(e, Object.fromEntries(studs.map((s) => [s.id, s])))).join('') || '<div class="empty">Aún no hay actividad de alumnos.</div>'}</div></div>
     <div class="card"><h2>Accesos rápidos</h2><div class="list">
       <a class="item" href="#/alumnos">👥 Alumnos y contraseñas</a><a class="item" href="#/material">📚 Subir material</a><a class="item" href="#/tareas">✅ Crear tarea</a><a class="item" href="#/notas">📊 Calificaciones</a></div></div>
   </div>`;
@@ -305,7 +308,72 @@ async function anuncios(el) {
 }
 
 // ============================ AVANCE EN MÓDULOS ============================
-async function avance(el) {
+const feedItem = (ev, names) => { const d = describe(ev); const s = names[ev.student_id]; return `<div class="fi ${d.imp ? '' : 'minor'}"><span class="fic">${d.icon}</span><div class="grow"><a href="#/avance/${ev.student_id}"><b>${esc(s?.full_name || '—')}</b></a> ${esc(d.text)}</div><span class="muted small">${ago(ev.created_at)}</span></div>`; };
+
+async function envivo(el) {
+  const [{ data: studs }, { data: groups }, { data: ev }] = await Promise.all([
+    sb.from('profiles').select('id,full_name,group_id').eq('role', 'student'), sb.from('groups').select('*').order('name'),
+    sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200),
+  ]);
+  const names = Object.fromEntries(studs.map((s) => [s.id, s]));
+  let events = ev || [], online = [], fg = '', all = false;
+  const inGroup = (id) => !fg || names[id]?.group_id === fg;
+  const drawOnline = () => {
+    const list = online.filter((o) => inGroup(o.id)).sort((a, b) => b.at - a.at);
+    $('#on', el).innerHTML = list.length ? list.map((o) => `<a class="item" href="#/avance/${o.id}"><span class="live">●</span><div class="grow"><div class="t">${esc(o.name)}</div><div class="muted small">${o.module ? `🎓 Módulo ${esc(o.module.replace('m1-', '1.'))} · paso ${o.page}/${o.total} · «${esc(o.title || '')}»` : '🟢 En la plataforma'}</div></div><span class="muted small">${ago(o.at)}</span></a>`).join('') : '<div class="empty">Nadie conectado en este momento.</div>';
+    $('#onc', el).textContent = list.length;
+  };
+  const drawFeed = () => {
+    const list = events.filter((e) => inGroup(e.student_id) && (all || describe(e).imp)).slice(0, 80);
+    $('#feed', el).innerHTML = list.length ? list.map((e) => feedItem(e, names)).join('') : '<div class="empty">Todavía no hay actividad.</div>';
+  };
+  el.innerHTML = `<div class="head"><h1>En vivo</h1><span class="badge ok">● tiempo real</span></div>
+  <div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select><label class="check" style="margin:0"><input type="checkbox" id="all"> Mostrar también cada página que visitan</label></div>
+  <div class="grid"><div class="card"><h2>En línea ahora (<span id="onc">0</span>)</h2><div class="list" id="on"></div></div>
+  <div class="card"><h2>Lo que están haciendo</h2><div id="feed" class="feed"></div></div></div>`;
+  $('#g', el).onchange = (e) => { fg = e.target.value; drawOnline(); drawFeed(); };
+  $('#all', el).onchange = (e) => { all = e.target.checked; drawFeed(); };
+  drawOnline(); drawFeed();
+  const ch = sb.channel('feed-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (p) => { events.unshift(p.new); drawFeed(); }).subscribe();
+  const stopP = watchPresence((l) => { online = l; drawOnline(); }, names);
+  const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); sb.removeChannel(ch); stopP(); return; } drawOnline(); drawFeed(); }, 15000);
+}
+
+async function avanceAlumno(el, id) {
+  const [{ data: s }, { data: prog }, { data: ev }, { data: units }] = await Promise.all([
+    sb.from('profiles').select('id,full_name,email,group_id').eq('id', id).maybeSingle(), sb.from('module_progress').select('*').eq('student_id', id),
+    sb.from('activity_log').select('*').eq('student_id', id).order('created_at', { ascending: false }).limit(60), sb.from('units').select('code,title').order('ord'),
+  ]);
+  if (!s) { el.innerHTML = empty('Alumno no encontrado.'); return; }
+  const pm = Object.fromEntries(prog.map((p) => [p.module, p]));
+  const secsAll = prog.reduce((t, p) => t + Object.values(p.done || {}).reduce((a, d) => a + (d.t || 0), 0), 0);
+  const blocks = [];
+  for (const u of units) {
+    const mid = 'm1-' + u.code.split('.')[1]; const p = pm[mid]; let mod; try { mod = (await import(`../content/${mid}.js`)).default; } catch { continue; }
+    const pages = [{ type: 'intro', t: 'Inicio' }, ...mod.pages]; const done = p?.done || {};
+    const rows = pages.map((pg, k) => { const d = done[k]; let state;
+      if (!d) state = '<span class="badge">⏳ Pendiente</span>';
+      else if (pg.type === 'intro') state = '<span class="badge ok">✅ Entró</span>';
+      else if (pg.type === 'lesson') state = d.r ? '<span class="badge ok">📖 Leída</span>' : '<span class="badge info">Empezó</span>';
+      else if (pg.type === 'practica') { const c = d.c || []; const n = c.filter(Boolean).length; state = `<span class="badge ${n === c.length && n ? 'ok' : 'info'}">📝 ${n}/${pg.steps.length} pasos</span>`; }
+      else if (d.sk) state = '<span class="badge warn">⏭️ Saltada</span>';
+      else if ((d.s || 0) >= 0.6) state = `<span class="badge ok">✅ Superada</span>`;
+      else if (d.rv) state = '<span class="badge warn">👀 Vio respuestas</span>';
+      else if (d.f) state = `<span class="badge bad">🔁 ${d.f} fallo(s)</span>`;
+      else state = '<span class="badge info">Empezó</span>';
+      return `<tr><td class="num">${k + 1}</td><td>${esc(KINDNAME[pg.type] || '')}</td><td>${esc(plain(pg.t))}</td><td>${state}</td><td class="num">${d?.a || '—'}</td><td class="num">${d?.t ? fmtSecs(d.t) : '—'}</td></tr>`; }).join('');
+    const tsecs = Object.values(done).reduce((a, d) => a + (d.t || 0), 0);
+    blocks.push(`<details class="card" ${p ? 'open' : ''}><summary style="cursor:pointer;font-weight:700"><span class="code">${esc(u.code)}</span> ${esc(u.title)} <span class="badge ${p?.pct >= 100 ? 'ok' : 'brand'}">${p?.pct || 0} %</span> <span class="muted small">${tsecs ? '· ' + fmtSecs(tsecs) : ''}</span></summary>
+      <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th class="num">#</th><th>Tipo</th><th>Parte</th><th>Estado</th><th class="num">Intentos</th><th class="num">Tiempo</th></tr></thead><tbody>${rows}</tbody></table></div></details>`);
+  }
+  el.innerHTML = `<p><a href="#/avance">← Avance</a></p><div class="head"><h1>${esc(s.full_name)}</h1><span class="muted">${esc(s.email)}</span></div>
+    <div class="stats"><div class="stat"><b>${Math.round(prog.reduce((t, p) => t + p.pct, 0) / 7)} %</b><span>Avance promedio</span></div><div class="stat"><b>${fmtSecs(secsAll)}</b><span>Tiempo en módulos</span></div><div class="stat"><b>${ev[0] ? ago(ev[0].created_at) : '—'}</b><span>Última actividad</span></div></div>
+    ${blocks.join('')}<div class="card"><h2>Actividad reciente</h2><div class="feed">${ev.length ? ev.filter((e) => describe(e).imp).map((e) => feedItem(e, { [s.id]: s })).join('') : '<div class="empty">Sin actividad.</div>'}</div></div>`;
+}
+const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final' };
+
+async function avance(el, { param } = {}) {
+  if (param?.[0]) return avanceAlumno(el, param[0]);
   const [{ data: studs }, { data: prog }, { data: units }, { data: groups }] = await Promise.all([
     sb.from('profiles').select('id,full_name,group_id').eq('role', 'student').eq('active', true).order('full_name'),
     sb.from('module_progress').select('student_id,module,pct,updated_at'), sb.from('units').select('code').order('ord'), sb.from('groups').select('*').order('name'),
@@ -315,12 +383,14 @@ async function avance(el) {
   const draw = () => {
     const rows = studs.filter((s) => !fg || s.group_id === fg);
     $('#tb', el).innerHTML = rows.map((s) => { const vals = mods.map((m) => pm.get(s.id + m)); const avg = Math.round(vals.reduce((t, v) => t + (v?.pct || 0), 0) / mods.length); const last = vals.filter(Boolean).map((v) => v.updated_at).sort().pop();
-      return `<tr><td>${esc(s.full_name)}</td>${vals.map((v) => `<td class="num">${v ? `<span class="badge ${v.pct >= 100 ? 'ok' : v.pct > 0 ? 'info' : ''}">${v.pct} %</span>` : '<span class="muted">—</span>'}</td>`).join('')}<td class="num"><b>${avg} %</b></td><td class="muted small">${last ? fmtDateTime(last) : '—'}</td></tr>`; }).join('') || `<tr><td colspan="10">${empty('Sin alumnos')}</td></tr>`;
+      return `<tr><td><a href="#/avance/${s.id}"><b>${esc(s.full_name)}</b></a></td>${vals.map((v) => `<td class="num">${v ? `<span class="badge ${v.pct >= 100 ? 'ok' : v.pct > 0 ? 'info' : ''}">${v.pct} %</span>` : '<span class="muted">—</span>'}</td>`).join('')}<td class="num"><b>${avg} %</b></td><td class="muted small">${last ? fmtDateTime(last) : '—'}</td></tr>`; }).join('') || `<tr><td colspan="10">${empty('Sin alumnos')}</td></tr>`;
   };
-  el.innerHTML = `<div class="head"><h1>Avance en módulos</h1></div><div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select></div>
+  el.innerHTML = `<div class="head"><h1>Avance en módulos</h1><span class="badge ok">● se actualiza solo</span></div><div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select></div>
     <div class="tablewrap"><table><thead><tr><th>Alumno</th>${units.map((u) => `<th class="num">${u.code}</th>`).join('')}<th class="num">Prom.</th><th>Última actividad</th></tr></thead><tbody id="tb"></tbody></table></div>`;
   $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
   draw();
+  const ch = sb.channel('avance-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: '*', schema: 'public', table: 'module_progress' }, (p) => { const r = p.new; if (r?.student_id) { pm.set(r.student_id + r.module, r); draw(); } }).subscribe();
+  const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); sb.removeChannel(ch); } }, 5000);
 }
 
 // ============================ VISTA ALUMNO ============================
@@ -343,6 +413,7 @@ export const teacherRoutes = {
   tareas: { title: 'Tareas', icon: '✅', nav: true, render: tareas },
   entregas: { title: 'Entregas', icon: '📥', nav: true, render: entregas },
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
+  envivo: { title: 'En vivo', icon: '📡', nav: true, render: envivo },
   avance: { title: 'Avance', icon: '📈', nav: true, render: avance },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },

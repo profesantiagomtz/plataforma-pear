@@ -7,7 +7,7 @@ INK, BR, SOFT, OK, WARN, MUT, PINK = "#1b1d2a", "#4f46e5", "#eceafd", "#0f9d58",
 
 
 def svg(name, w, h, body):
-    s = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img"><rect width="{w}" height="{h}" fill="#ffffff"/>{body}</svg>'
+    s = f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img"><rect width="{w}" height="{h}" fill="#ffffff"/>{body}</svg>'
     open(os.path.join(OUT, name), "w", encoding="utf-8").write(s)
 
 
