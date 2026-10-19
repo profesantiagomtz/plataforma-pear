@@ -178,7 +178,7 @@ function matForm(m, units, groups, done) {
     <label class="check"><input type="checkbox" id="p" ${m?.published ? 'checked' : ''}> Publicado (visible para alumnos)</label>
     <div class="foot">${m ? '<button class="btn danger" id="del">Eliminar</button>' : ''}<button class="btn" id="sv">Guardar</button></div>`);
   const e = md.el; $('#k', e).value = k;
-  const kz = () => { const t = $('#k', e).value; $('#kz', e).innerHTML = t === 'file' ? `<label for="f">Archivo (máx. 25 MB)</label><input id="f" type="file">${m?.file_path ? '<div class="muted small">Ya hay un archivo; sube otro solo para reemplazarlo.</div>' : ''}` : t === 'text' ? `<label for="b">Contenido</label><textarea id="b" rows="6">${esc(m?.body)}</textarea>` : `<label for="ur">Enlace</label><input id="ur" type="url" placeholder="https://" value="${esc(m?.url)}">`; };
+  const kz = () => { const t = $('#k', e).value; $('#kz', e).innerHTML = t === 'file' ? `<label for="f">Archivo (máx. 25 MB)</label><input id="f" type="file">${m?.file_path ? '<div class="muted small">Ya hay un archivo; sube otro solo para reemplazarlo.</div>' : ''}` : t === 'text' ? `<label for="b">Contenido</label><textarea id="b" rows="14">${esc(m?.body)}</textarea><div class="muted small">Formato: ## título, **negritas**, listas con - o 1., tablas con |, imágenes ![texto](assets/lessons/archivo.svg)</div>` : `<label for="ur">Enlace</label><input id="ur" type="url" placeholder="https://" value="${esc(m?.url)}">`; };
   $('#k', e).onchange = kz; kz();
   $('#sv', e).onclick = (ev) => run(ev.target, async () => {
     const t = $('#t', e).value.trim(), kind = $('#k', e).value; if (!t) throw new Error('Falta el título');

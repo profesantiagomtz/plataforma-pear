@@ -1,4 +1,4 @@
-import { sb, esc, $, $$, run, toast, fmtDate, fmtDateTime, todayStr, parseDay, dayName, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
+import { sb, esc, md, modal, $, $$, run, toast, fmtDate, fmtDateTime, todayStr, parseDay, dayName, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
@@ -38,9 +38,10 @@ export async function material(el, { preview } = {}) {
   if (loose.length) blocks.push({ u: { code: '', title: 'General', contents: [] }, items: loose });
   el.innerHTML = `${preview ? '' : '<div class="head"><h1>Material</h1></div>'}` + (mats.length ? blocks.filter((b) => b.items.length).map(({ u, items }) => `
     <details class="unit" open><summary>${u.code ? `<span class="code">${esc(u.code)}</span>` : ''}${esc(u.title)}<span class="badge">${items.length}</span></summary>
-    <div class="body">${items.map((m) => `<div class="item" style="align-items:flex-start"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title)}${preview && !m.published ? ' <span class="badge warn">Borrador · no visible</span>' : ''}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}${m.kind === 'text' ? `<div class="pre" style="margin-top:6px">${esc(m.body)}</div>` : ''}</div>${m.kind !== 'text' ? `<button class="btn soft sm" data-open="${m.id}">Abrir</button>` : ''}</div>`).join('')}</div></details>`).join('') : empty('Aún no hay material publicado.'));
+    <div class="body">${items.map((m) => `<div class="item" style="align-items:flex-start"><div style="font-size:1.4rem">${{ link: '🔗', video: '▶️', file: '📄', text: '📝' }[m.kind]}</div><div class="grow"><div class="t">${esc(m.title)}${preview && !m.published ? ' <span class="badge warn">Borrador · no visible</span>' : ''}</div>${m.description ? `<div class="muted small pre">${esc(m.description)}</div>` : ''}</div><button class="btn soft sm" data-open="${m.id}">${m.kind === 'text' ? 'Leer' : 'Abrir'}</button></div>`).join('')}</div></details>`).join('') : empty('Aún no hay material publicado.'));
   $$('[data-open]', el).forEach((b) => b.onclick = () => run(b, async () => {
     const m = mats.find((x) => x.id === b.dataset.open);
+    if (m.kind === 'text') { modal(m.title, `<div class="md">${md(m.body)}</div>`, { wide: true }); return; }
     const url = m.kind === 'file' ? await signedUrl('materials', m.file_path) : m.url;
     if (!isUrl(url)) throw new Error('Enlace no válido');
     window.open(url, '_blank', 'noopener');

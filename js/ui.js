@@ -24,10 +24,42 @@ export function toast(msg, type = '') {
   setTimeout(() => t.remove(), type === 'err' ? 6000 : 3200);
 }
 
-export function modal(title, html, { onMount } = {}) {
+// Markdown mínimo y seguro (todo se escapa; imágenes solo de assets/lessons/ o https)
+export function md(src) {
+  const okImg = (u) => /^assets\/lessons\/[\w.-]+\.(svg|png|jpe?g|webp)$/.test(u) || /^https:\/\/[^\s"']+$/.test(u);
+  const inline = (t) => esc(t)
+    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, a, u) => (okImg(u) ? `<img src="${u}" alt="${a}" loading="lazy">` : ''))
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+  const lines = String(src ?? '').replace(/\r/g, '').split('\n');
+  const out = []; let i = 0;
+  const special = (l) => /^(#{1,3} |\||[-*] |\d+\. |> |---$|!\[)/.test(l);
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim()) { i++; continue; }
+    let m;
+    if ((m = l.match(/^(#{1,3}) (.*)/))) { out.push(`<h${m[1].length + 1}>${inline(m[2])}</h${m[1].length + 1}>`); i++; }
+    else if (/^---$/.test(l)) { out.push('<hr>'); i++; }
+    else if (l.startsWith('|')) {
+      const rows = []; while (i < lines.length && lines[i].startsWith('|')) rows.push(lines[i++].trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+      const head = rows[0]; const body = rows.slice(/^[\s:-]+$/.test(rows[1]?.join('')) ? 2 : 1);
+      out.push(`<div class="tablewrap"><table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+    }
+    else if (/^[-*] /.test(l)) { const it = []; while (i < lines.length && /^[-*] /.test(lines[i])) it.push(lines[i++].slice(2)); out.push(`<ul>${it.map((x) => `<li>${inline(x)}</li>`).join('')}</ul>`); }
+    else if (/^\d+\. /.test(l)) { const it = []; while (i < lines.length && /^\d+\. /.test(lines[i])) it.push(lines[i++].replace(/^\d+\. /, '')); out.push(`<ol>${it.map((x) => `<li>${inline(x)}</li>`).join('')}</ol>`); }
+    else if (l.startsWith('> ')) { const it = []; while (i < lines.length && lines[i].startsWith('> ')) it.push(lines[i++].slice(2)); out.push(`<blockquote>${it.map(inline).join('<br>')}</blockquote>`); }
+    else if (/^!\[/.test(l)) { out.push(`<figure>${inline(l)}</figure>`); i++; }
+    else { const p = []; while (i < lines.length && lines[i].trim() && !special(lines[i])) p.push(lines[i++]); if (!p.length) { p.push(lines[i++]); } out.push(`<p>${p.map(inline).join('<br>')}</p>`); }
+  }
+  return out.join('');
+}
+
+export function modal(title, html, { onMount, wide } = {}) {
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
-  bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(title)}</h2><button class="x" aria-label="Cerrar">×</button></div><div class="mb">${html}</div></div>`;
+  bg.innerHTML = `<div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(title)}</h2><button class="x" aria-label="Cerrar">×</button></div><div class="mb">${html}</div></div>`;
   const close = () => bg.remove();
   bg.addEventListener('mousedown', (e) => { if (e.target === bg) close(); });
   $('.x', bg).onclick = close;
