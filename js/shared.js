@@ -34,7 +34,7 @@ export async function calendarView(el) {
 export async function profileView(el, { profile, reload }) {
   const { data: g } = profile.group_id ? await sb.from('groups').select('name').eq('id', profile.group_id).single() : { data: null };
   el.innerHTML = `<div class="head"><h1>Mi perfil</h1></div>
-  <div class="card"><h3>${esc(profile.full_name)}</h3><div class="muted">${esc(profile.email)}</div>
+  <div class="card"><h3>${esc(profile.full_name)}</h3><div class="muted">${esc(profile.email)}</div>${profile.matricula ? `<div class="muted">🪪 Matrícula: ${esc(profile.matricula)}</div>` : ''}
     <div style="margin-top:8px"><span class="badge brand">${profile.role === 'teacher' ? 'Docente' : 'Alumno'}</span> ${g ? `<span class="badge">Grupo ${esc(g.name)}</span>` : ''}</div></div>
   <div class="card"><h3>Cambiar contraseña</h3><form id="f" style="max-width:420px">
     <label for="p1">Nueva contraseña</label><input id="p1" type="password" autocomplete="new-password" required>

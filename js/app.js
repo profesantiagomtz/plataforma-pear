@@ -66,6 +66,23 @@ function viewSetPassword(title, intro) {
   }); };
 }
 
+async function viewProfileSetup() {
+  const { data: groups } = await sb.from('groups').select('id,name').eq('active', true).order('name');
+  app.innerHTML = `<div class="auth"><div class="auth-card">${logo}<h1>Completa tu perfil</h1><p class="muted">Solo son 3 datos y solo lo haces una vez.</p>
+    <form id="f"><label for="nm">Nombre completo <span class="muted small">(nombre y apellidos)</span></label><input id="nm" value="${esc(state.profile.full_name)}" autocomplete="name" required>
+    <label for="mt">Matrícula</label><input id="mt" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Escribe tu matrícula" required>
+    <p class="muted small">Es tu número de control (viene en tu credencial o en tu lista).</p>
+    <label for="gr">Grupo</label><select id="gr" required><option value="">👉 Elige tu grupo…</option>${(groups || []).map((g) => `<option value="${g.id}" ${g.id === state.profile.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
+    <div id="m"></div><button class="btn block">Guardar y entrar</button></form>
+    <p class="center"><button class="linkbtn" id="out">Cerrar sesión</button></p></div></div>`;
+  $('#out').onclick = () => sb.auth.signOut();
+  $('#f').onsubmit = (e) => { e.preventDefault(); run($('.btn'), async () => {
+    const { error } = await sb.rpc('complete_profile', { p_name: $('#nm').value, p_matricula: $('#mt').value, p_group: $('#gr').value || null });
+    if (error) return $('#m').innerHTML = `<div class="msg err">${esc(error.message)}</div>`;
+    toast('¡Listo! Perfil guardado', 'ok'); await loadProfile(); render();
+  }); };
+}
+
 // ---------------- shell + router ----------------
 function shell() {
   startPresence(state.profile);
@@ -96,10 +113,11 @@ function render() {
   if (!state.profile) return app.innerHTML = `<div class="boot"><div class="spinner"></div></div>`;
   if (!state.profile.active) { toast('Tu cuenta está desactivada. Habla con tu docente.', 'err'); return sb.auth.signOut(); }
   if (state.profile.must_change_password) return viewSetPassword('Crea tu contraseña', 'Por seguridad, cambia la contraseña temporal por una propia antes de continuar.');
+  if (state.profile.role === 'student' && !state.profile.profile_done) return viewProfileSetup();
   shell();
 }
 
-window.addEventListener('hashchange', () => { if (state.session && state.profile && !state.profile.must_change_password && !state.recovery) shell(); });
+window.addEventListener('hashchange', () => { if (state.session && state.profile && !state.profile.must_change_password && !state.recovery && (state.profile.role === 'teacher' || state.profile.profile_done)) shell(); });
 
 sb.auth.onAuthStateChange((event, session) => {
   setTimeout(async () => {
