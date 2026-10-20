@@ -108,6 +108,8 @@ function addStudents(groups, done, bulk) {
     <label for="fi">Archivo CSV</label><input id="fi" type="file" accept=".csv,.txt">
     <label for="tx">O pega aquí la lista</label><textarea id="tx" rows="6" placeholder="Juan Pérez López,juan@dominio.edu.mx,111"></textarea>
     <label for="dg">Grupo por omisión</label><select id="dg">${groups.length === 1 ? '' : '<option value="">—</option>'}${opt(groups, 'id', 'name', groups.length === 1 ? groups[0].id : undefined)}</select>
+    <label for="bp">Contraseña temporal para todos <span class="muted small">(opcional)</span></label><input id="bp" placeholder="Ejemplo: Temp-1234$   ·   vacío = una distinta para cada alumno" autocomplete="off">
+    <div class="muted small">Con una contraseña igual para todos es más fácil de repartir, pero <b>cualquiera que sepa el correo de un compañero podría entrar primero a su cuenta</b>. Lo más seguro es dejarlo vacío y darle a cada uno la suya (mensaje o tarjeta impresa).</div>
     <div class="foot"><button class="btn" id="go">Crear cuentas</button></div>` : `
     <label for="n">Nombre completo</label><input id="n"><label for="e">Correo institucional</label><input id="e" type="email">
     <label for="dg">Grupo</label><select id="dg">${groups.length === 1 ? '' : '<option value="">—</option>'}${opt(groups, 'id', 'name', groups.length === 1 ? groups[0].id : undefined)}</select>
@@ -122,7 +124,7 @@ function addStudents(groups, done, bulk) {
       students = rows.map((r) => ({ full_name: r[0], email: r[1], group: r[2] || null, group_id: r[2] ? null : gid }));
     } else students = [{ full_name: $('#n', e).value, email: $('#e', e).value, group_id: gid }];
     if (!students.length) throw new Error('No hay alumnos para crear');
-    const { results } = await fn('create_students', { students, password: bulk ? undefined : ($('#pw', e).value.trim() || undefined) });
+    const { results } = await fn('create_students', { students, password: bulk ? ($('#bp', e).value.trim() || undefined) : ($('#pw', e).value.trim() || undefined) });
     m.close(); showPasswords(results); done();
   });
 }
