@@ -104,10 +104,10 @@ function addStudents(groups, done, bulk) {
     <p class="muted small">Pega o sube un CSV con columnas: <b>nombre, correo, grupo</b> (grupo opcional). Se crean cuentas con contraseña temporal individual.</p>
     <label for="fi">Archivo CSV</label><input id="fi" type="file" accept=".csv,.txt">
     <label for="tx">O pega aquí la lista</label><textarea id="tx" rows="6" placeholder="Juan Pérez López,juan@dominio.edu.mx,111"></textarea>
-    <label for="dg">Grupo por omisión</label><select id="dg"><option value="">—</option>${opt(groups, 'id', 'name')}</select>
+    <label for="dg">Grupo por omisión</label><select id="dg">${groups.length === 1 ? '' : '<option value="">—</option>'}${opt(groups, 'id', 'name', groups.length === 1 ? groups[0].id : undefined)}</select>
     <div class="foot"><button class="btn" id="go">Crear cuentas</button></div>` : `
     <label for="n">Nombre completo</label><input id="n"><label for="e">Correo institucional</label><input id="e" type="email">
-    <label for="dg">Grupo</label><select id="dg"><option value="">—</option>${opt(groups, 'id', 'name')}</select>
+    <label for="dg">Grupo</label><select id="dg">${groups.length === 1 ? '' : '<option value="">—</option>'}${opt(groups, 'id', 'name', groups.length === 1 ? groups[0].id : undefined)}</select>
     <label for="pw">Contraseña temporal (opcional)</label><input id="pw" placeholder="Si lo dejas vacío se genera: Temp-1234$">
     <div class="foot"><button class="btn" id="go">Crear cuenta</button></div>`);
   const e = m.el;

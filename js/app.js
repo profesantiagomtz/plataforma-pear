@@ -68,11 +68,13 @@ function viewSetPassword(title, intro) {
 
 async function viewProfileSetup() {
   const { data: groups } = await sb.from('groups').select('id,name').eq('active', true).order('name');
-  app.innerHTML = `<div class="auth"><div class="auth-card">${logo}<h1>Completa tu perfil</h1><p class="muted">Solo son 3 datos y solo lo haces una vez.</p>
+  app.innerHTML = `<div class="auth"><div class="auth-card">${logo}<h1>Completa tu perfil</h1><p class="muted">Solo faltan tus datos y solo lo haces una vez.</p>
     <form id="f"><label for="nm">Nombre completo <span class="muted small">(nombre y apellidos)</span></label><input id="nm" value="${esc(state.profile.full_name)}" autocomplete="name" required>
     <label for="mt">Matrícula</label><input id="mt" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Escribe tu matrícula" required>
     <p class="muted small">Es tu número de control (viene en tu credencial o en tu lista).</p>
-    <label for="gr">Grupo</label><select id="gr" required><option value="">👉 Elige tu grupo…</option>${(groups || []).map((g) => `<option value="${g.id}" ${g.id === state.profile.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
+    ${(groups || []).length === 1
+      ? `<label>Grupo</label><div class="msg ok" style="margin:0">Tu grupo es el <b>${esc(groups[0].name)}</b></div><input type="hidden" id="gr" value="${groups[0].id}">`
+      : `<label for="gr">Grupo</label><select id="gr" required><option value="">👉 Elige tu grupo…</option>${(groups || []).map((g) => `<option value="${g.id}" ${g.id === state.profile.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`}
     <div id="m"></div><button class="btn block">Guardar y entrar</button></form>
     <p class="center"><button class="linkbtn" id="out">Cerrar sesión</button></p></div></div>`;
   $('#out').onclick = () => sb.auth.signOut();
