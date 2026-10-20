@@ -129,6 +129,11 @@ export async function uploadFile(bucket, path, file) {
   return path;
 }
 
+// Lista del grupo: orden alfabético empezando por apellidos (paterno, materno, nombres)
+export const surnameKey = (s) => `${s.apellido_p || ''} ${s.apellido_m || ''} ${s.nombres || ''}`.trim() || s.full_name || '';
+export const listName = (s) => (s.apellido_p ? `${s.apellido_p}${s.apellido_m ? ' ' + s.apellido_m : ''}, ${s.nombres || ''}` : s.full_name);
+export const bySurname = (a, b) => surnameKey(a).localeCompare(surnameKey(b), 'es', { sensitivity: 'base' });
+
 export const PASS_HELP = 'Mínimo 8 caracteres, con letras y números.';
 export const passOk = (p) => p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
 

@@ -21,7 +21,8 @@ function viewLogin(mode = 'login', note = '') {
       <div id="m"></div>${note ? `<div class="msg ok">${esc(note)}</div>` : ''}
       <button class="btn block">Entrar</button></form>
       <div class="msg info" style="text-align:center"><b>¿No recuerdas tu contraseña?</b><br>No pasa nada: <b>pídele a tu profe</b> que te dé una nueva. No necesitas entrar a tu correo.</div>
-      <p class="muted small center">Primer ingreso: usa la contraseña temporal que te dio tu profe.</p>
+      <button type="button" class="btn ghost block" id="reg" style="margin-top:12px">✨ ¿Primera vez? Regístrate aquí</button>
+      <p class="muted small center">Si tu profe ya te dio una contraseña temporal, úsala arriba para entrar.</p>
       <p class="center" style="margin-top:6px"><button class="linkbtn small" id="forgot" style="font-weight:400;color:var(--muted)">Soy docente y olvidé mi contraseña</button></p>`
     : `<h1>Restablecer contraseña</h1><p class="muted">Escribe tu correo y te enviaremos un enlace para crear una nueva contraseña.</p>
       <form id="f"><label for="em">Correo</label><input id="em" type="email" autocomplete="username" required><div id="m"></div><button class="btn block">Enviar enlace</button></form>
@@ -32,6 +33,7 @@ function viewLogin(mode = 'login', note = '') {
   const f = $('#f'), m = $('#m');
   if (mode === 'login') {
     $('#forgot').onclick = () => viewLogin('forgot');
+    $('#reg').onclick = () => viewRegister();
     f.onsubmit = (e) => { e.preventDefault(); run($('.btn', f), async () => {
       const { error } = await sb.auth.signInWithPassword({ email: $('#em').value.trim().toLowerCase(), password: $('#pw').value });
       if (error) m.innerHTML = `<div class="msg err">${/Invalid login/i.test(error.message) ? 'Correo o contraseña incorrectos.' : esc(error.message)}</div>`;
@@ -43,6 +45,32 @@ function viewLogin(mode = 'login', note = '') {
       m.innerHTML = error ? `<div class="msg err">${esc(error.message)}</div>` : `<div class="msg ok">Si el correo está registrado, recibirás un enlace en unos minutos.</div>`;
     }); };
   }
+}
+
+function viewRegister() {
+  app.innerHTML = `<div class="auth"><div class="auth-card">${logo}<h1>Regístrate</h1><p class="muted">Solo la primera vez. Llena todo y listo: tu profe verá que ya estás en el grupo.</p>
+    <form id="f" autocomplete="on">
+      <label for="em">Correo institucional</label><input id="em" type="email" autocomplete="username" placeholder="tucorreo@..." required>
+      <label for="nm">Nombre(s)</label><input id="nm" autocomplete="given-name" placeholder="Ej. María José" required>
+      <div class="row"><div><label for="ap">Apellido paterno</label><input id="ap" autocomplete="family-name" required></div><div><label for="am">Apellido materno</label><input id="am"></div></div>
+      <label for="mt">Matrícula</label><input id="mt" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Tu número de control" required>
+      ${pwField('p1', 'Crea tu contraseña', 'new-password')}${pwField('p2', 'Repite tu contraseña', 'new-password')}
+      <p class="muted small">${PASS_HELP} Acuérdate de ella: es solo tuya.</p>
+      <label for="cd">Clave del grupo</label><input id="cd" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="La que te dio tu profe" required>
+      <div id="m"></div><button class="btn block">Crear mi cuenta</button></form>
+    <p class="center"><button class="linkbtn" id="back">← Ya tengo cuenta, quiero entrar</button></p></div></div>`;
+  bindEyes(app); $('#back').onclick = () => viewLogin();
+  $('#f').onsubmit = (e) => { e.preventDefault(); run($('.btn', $('#f')), async () => {
+    const m = $('#m'); const em = $('#em').value.trim().toLowerCase(); const pw = $('#p1').value;
+    if (pw !== $('#p2').value) return m.innerHTML = '<div class="msg err">Las contraseñas no coinciden.</div>';
+    if (!passOk(pw)) return m.innerHTML = `<div class="msg err">${PASS_HELP}</div>`;
+    const { data, error } = await sb.functions.invoke('self-register', { body: { email: em, password: pw, nombres: $('#nm').value, apellido_p: $('#ap').value, apellido_m: $('#am').value, matricula: $('#mt').value, code: $('#cd').value } });
+    let msg = data?.error; if (error) { try { msg = (await error.context.json()).error; } catch { msg = 'No se pudo conectar. Revisa tu internet e inténtalo otra vez.'; } }
+    if (msg) return m.innerHTML = `<div class="msg err">${esc(msg)}</div>`;
+    toast('¡Cuenta creada! Entrando…', 'ok');
+    const r = await sb.auth.signInWithPassword({ email: em, password: pw });
+    if (r.error) { viewLogin('login', 'Tu cuenta quedó creada. Entra con tu correo y tu contraseña.'); }
+  }); };
 }
 
 function viewSetPassword(title, intro) {
@@ -69,7 +97,8 @@ function viewSetPassword(title, intro) {
 async function viewProfileSetup() {
   const { data: groups } = await sb.from('groups').select('id,name').eq('active', true).order('name');
   app.innerHTML = `<div class="auth"><div class="auth-card">${logo}<h1>Completa tu perfil</h1><p class="muted">Solo faltan tus datos y solo lo haces una vez.</p>
-    <form id="f"><label for="nm">Nombre completo <span class="muted small">(nombre y apellidos)</span></label><input id="nm" value="${esc(state.profile.full_name)}" autocomplete="name" required>
+    <form id="f"><label for="nm">Nombre(s)</label><input id="nm" value="${esc(state.profile.nombres || '')}" autocomplete="given-name" placeholder="Ej. María José" required>
+    <div class="row"><div><label for="ap">Apellido paterno</label><input id="ap" value="${esc(state.profile.apellido_p || '')}" autocomplete="family-name" required></div><div><label for="am">Apellido materno</label><input id="am" value="${esc(state.profile.apellido_m || '')}"></div></div>
     <label for="mt">Matrícula</label><input id="mt" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Escribe tu matrícula" required>
     <p class="muted small">Es tu número de control (viene en tu credencial o en tu lista).</p>
     ${(groups || []).length === 1
@@ -79,7 +108,7 @@ async function viewProfileSetup() {
     <p class="center"><button class="linkbtn" id="out">Cerrar sesión</button></p></div></div>`;
   $('#out').onclick = () => sb.auth.signOut();
   $('#f').onsubmit = (e) => { e.preventDefault(); run($('.btn'), async () => {
-    const { error } = await sb.rpc('complete_profile', { p_name: $('#nm').value, p_matricula: $('#mt').value, p_group: $('#gr').value || null });
+    const { error } = await sb.rpc('complete_profile', { p_nombres: $('#nm').value, p_ap: $('#ap').value, p_am: $('#am').value, p_matricula: $('#mt').value, p_group: $('#gr').value || null });
     if (error) return $('#m').innerHTML = `<div class="msg err">${esc(error.message)}</div>`;
     toast('¡Listo! Perfil guardado', 'ok'); await loadProfile(); render();
   }); };

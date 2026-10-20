@@ -1,5 +1,5 @@
 // Seguimiento completo de alumnos: tabla general con alertas + expediente individual.
-import { sb, esc, $, $$, fmtDateTime, computeGrades, fmtNum } from './ui.js';
+import { sb, esc, $, $$, fmtDateTime, computeGrades, fmtNum, bySurname, listName } from './ui.js';
 import { describe, ago, fmtSecs, plain } from './live.js';
 
 const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final' };
@@ -9,7 +9,7 @@ const days = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
 // ---------- cálculo por alumno (compartido con el Panel) ----------
 export async function loadSeguimiento() {
   const [{ data: studs }, { data: prog }, { data: subs }, { data: asg }, { data: units }, { data: evs }, { data: groups }] = await Promise.all([
-    sb.from('profiles').select('id,full_name,email,matricula,group_id,active,profile_done,must_change_password,created_at').eq('role', 'student').eq('active', true).order('full_name'),
+    sb.from('profiles').select('id,full_name,nombres,apellido_p,apellido_m,email,matricula,group_id,active,profile_done,must_change_password,created_at').eq('role', 'student').eq('active', true),
     sb.from('module_progress').select('student_id,module,pct,done,updated_at'),
     sb.from('submissions').select('assignment_id,student_id,score,submitted_at'),
     sb.from('assignments').select('id,title,unit_id,group_id,due_at,max_score,is_ae,published'),
@@ -17,6 +17,7 @@ export async function loadSeguimiento() {
     sb.from('activity_log').select('student_id,kind,created_at').order('created_at', { ascending: false }).limit(4000),
     sb.from('groups').select('*').order('name'),
   ]);
+  studs.sort(bySurname);
   const D = { studs, units, asg, groups, prog: new Map(), subs: new Map(), last: new Map() };
   prog.forEach((p) => { if (!D.prog.has(p.student_id)) D.prog.set(p.student_id, []); D.prog.get(p.student_id).push(p); });
   subs.forEach((s) => { if (!D.subs.has(s.student_id)) D.subs.set(s.student_id, []); D.subs.get(s.student_id).push(s); });
@@ -57,10 +58,10 @@ export async function seguimiento(el, { param } = {}, tools = {}) {
   const mods = D.units.map((u) => 'm1-' + u.code.split('.')[1]);
   const draw = () => {
     let rows = D.studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + s.email + (s.matricula || '')).toLowerCase().includes(q))).map((s) => ({ s, st: statsFor(s, D) }));
-    rows.sort((a, b) => sort === 'atencion' ? b.st.sev - a.st.sev || a.st.avg - b.st.avg : sort === 'avance' ? a.st.avg - b.st.avg : sort === 'nota' ? b.st.pts - a.st.pts : sort === 'reciente' ? (b.st.last || '').localeCompare(a.st.last || '') : a.s.full_name.localeCompare(b.s.full_name, 'es'));
+    rows.sort((a, b) => sort === 'atencion' ? b.st.sev - a.st.sev || a.st.avg - b.st.avg : sort === 'avance' ? a.st.avg - b.st.avg : sort === 'nota' ? b.st.pts - a.st.pts : sort === 'reciente' ? (b.st.last || '').localeCompare(a.st.last || '') : bySurname(a.s, b.s));
     const pend = rows.filter((r) => r.st.sev === 2).length;
     $('#sum', el).innerHTML = `<div class="stat"><b>${rows.length}</b><span>Alumnos</span></div><div class="stat"><b>${rows.length ? Math.round(rows.reduce((t, r) => t + r.st.avg, 0) / rows.length) : 0} %</b><span>Avance promedio</span></div><div class="stat"><b>${pend}</b><span>Necesitan atención</span></div><div class="stat"><b>${rows.filter((r) => r.st.last && days(r.st.last) < 1).length}</b><span>Activos hoy</span></div>`;
-    $('#tb', el).innerHTML = rows.map(({ s, st }) => `<tr><td><a href="#/avance/${s.id}"><b>${esc(s.full_name)}</b></a><div class="muted small">${s.matricula ? '🪪 ' + esc(s.matricula) : 'sin matrícula'}</div></td>
+    $('#tb', el).innerHTML = rows.map(({ s, st }) => `<tr><td><a href="#/avance/${s.id}"><b>${esc(listName(s))}</b></a><div class="muted small">${s.matricula ? '🪪 ' + esc(s.matricula) : 'sin matrícula'}</div></td>
       <td class="num"><b>${st.avg} %</b><div class="bar" style="width:70px;margin:4px auto 0"><i style="width:${st.avg}%"></i></div></td>
       <td class="num"><b>${fmtNum(st.pts)}</b><span class="muted small"> / 100</span></td><td class="num">${st.done}/${st.applies.length}</td>
       <td class="small">${st.last ? ago(st.last) : '<span class="muted">nunca</span>'}</td><td class="small">${st.secs ? fmtSecs(st.secs) : '—'}</td>

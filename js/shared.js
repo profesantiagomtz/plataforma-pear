@@ -33,10 +33,16 @@ export async function calendarView(el) {
 
 export async function profileView(el, { profile, reload }) {
   const { data: g } = profile.group_id ? await sb.from('groups').select('name').eq('id', profile.group_id).single() : { data: null };
+  let attHtml = '';
+  if (profile.role === 'student') {
+    const { data: a } = await sb.from('attendance').select('day,status').eq('student_id', profile.id);
+    if (a?.length) { const c = (k) => a.filter((x) => x.status === k).length; const pct = Math.round((c('P') + c('R') + c('J')) / a.length * 100);
+      attHtml = `<div class="card"><h3>🗒️ Mi asistencia</h3><div class="chips"><span class="chip">✔ Asistencias: <b>${c('P')}</b></span><span class="chip">⏰ Retardos: <b>${c('R')}</b></span><span class="chip">✖ Faltas: <b>${c('F')}</b></span><span class="chip">📝 Justificadas: <b>${c('J')}</b></span><span class="chip">📈 <b>${pct} %</b></span></div></div>`; }
+  }
   el.innerHTML = `<div class="head"><h1>Mi perfil</h1></div>
   <div class="card"><h3>${esc(profile.full_name)}</h3><div class="muted">${esc(profile.email)}</div>${profile.matricula ? `<div class="muted">🪪 Matrícula: ${esc(profile.matricula)}</div>` : ''}
     <div style="margin-top:8px"><span class="badge brand">${profile.role === 'teacher' ? 'Docente' : 'Alumno'}</span> ${g ? `<span class="badge">Grupo ${esc(g.name)}</span>` : ''}</div></div>
-  <div class="card"><h3>Cambiar contraseña</h3><form id="f" style="max-width:420px">
+  ${attHtml}<div class="card"><h3>Cambiar contraseña</h3><form id="f" style="max-width:420px">
     <label for="p1">Nueva contraseña</label><input id="p1" type="password" autocomplete="new-password" required>
     <label for="p2">Repite la contraseña</label><input id="p2" type="password" autocomplete="new-password" required>
     <p class="muted small">${PASS_HELP}</p><div id="m"></div><button class="btn block">Actualizar contraseña</button></form></div>`;

@@ -1,9 +1,10 @@
-import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
+import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, surnameKey, listName, bySurname, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
 import { seguimiento, loadSeguimiento, statsFor, alertBadges } from './seguimiento.js';
+import { asistencia } from './asistencia.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const opt = (list, val, label, sel) => list.map((x) => `<option value="${esc(x[val])}" ${x[val] === sel ? 'selected' : ''}>${esc(typeof label === 'function' ? label(x) : x[label])}</option>`).join('');
@@ -55,24 +56,36 @@ async function panel(el) {
 // ============================ ALUMNOS ============================
 async function alumnos(el) {
   const [{ data: studs }, { data: groups }] = await Promise.all([
-    sb.from('profiles').select('*').eq('role', 'student').order('full_name'),
+    sb.from('profiles').select('*').eq('role', 'student'),
     sb.from('groups').select('*').order('name'),
   ]);
+  studs.sort(bySurname);
   const gn = Object.fromEntries(groups.map((g) => [g.id, g.name]));
+  const numOf = {}; const cnt = {}; studs.filter((s) => s.active).forEach((s) => { cnt[s.group_id] = (cnt[s.group_id] || 0) + 1; numOf[s.id] = cnt[s.group_id]; });
   let fg = '', q = '';
-  const visible = () => studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + s.email + (s.matricula || '')).toLowerCase().includes(q)));
+  const visible = () => studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + ' ' + surnameKey(s) + s.email + (s.matricula || '')).toLowerCase().includes(q)));
   const draw = () => {
     const list = visible();
-    $('#tb', el).innerHTML = list.length ? list.map((s) => `<tr><td><a href="#/avance/${s.id}" title="Ver expediente completo"><b>${esc(s.full_name)}</b></a><div class="muted small">${esc(s.email)}</div><div class="small">${s.matricula ? `🪪 Matrícula: <b>${esc(s.matricula)}</b>` : '<span class="muted">🪪 Sin matrícula todavía</span>'}</div></td><td>${esc(gn[s.group_id] || '—')}</td>
+    $('#tb', el).innerHTML = list.length ? list.map((s) => `<tr><td class="num"><b>${numOf[s.id] || '—'}</b></td><td><a href="#/avance/${s.id}" title="Ver expediente completo"><b>${esc(listName(s))}</b></a><div class="muted small">${esc(s.email)}</div><div class="small">${s.matricula ? `🪪 Matrícula: <b>${esc(s.matricula)}</b>` : '<span class="muted">🪪 Sin matrícula todavía</span>'}</div></td><td>${esc(gn[s.group_id] || '—')}</td>
       <td>${s.active ? '' : '<span class="badge bad">Desactivado</span> '}${s.must_change_password ? '<span class="badge warn">Contraseña temporal</span>' : s.profile_done ? '<span class="badge ok">Activo</span>' : '<span class="badge info">Perfil pendiente</span>'}</td>
-      <td class="right"><a class="btn ghost sm" href="#/avance/${s.id}">📋 Expediente</a> <button class="btn soft sm" data-a="pw" data-id="${s.id}">🔑 Contraseña</button> <button class="btn ghost sm" data-a="ed" data-id="${s.id}">Editar</button></td></tr>`).join('') : `<tr><td colspan="4">${empty('No hay alumnos con ese filtro.')}</td></tr>`;
+      <td class="right"><a class="btn ghost sm" href="#/avance/${s.id}">📋 Expediente</a> <button class="btn soft sm" data-a="pw" data-id="${s.id}">🔑 Contraseña</button> <button class="btn ghost sm" data-a="ed" data-id="${s.id}">Editar</button></td></tr>`).join('') : `<tr><td colspan="5">${empty('Aún no hay alumnos. Pásales la clave del grupo para que se registren, o importa tu lista.')}</td></tr>`;
     $('#cnt', el).textContent = `${list.length} alumno(s)`;
   };
-  el.innerHTML = `<div class="head"><h1>Alumnos</h1><span class="muted" id="cnt"></span></div>
-  <div class="toolbar"><input id="q" type="search" placeholder="Buscar nombre o correo"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select>
-    <button class="btn" id="add">+ Alumno</button><button class="btn soft" id="imp">Importar lista</button><button class="btn ghost" id="grp">Grupos</button><button class="btn ghost" id="rall">🔑 Restablecer a todos</button></div>
+  el.innerHTML = `<div class="head"><h1>Lista del grupo</h1><span class="muted" id="cnt"></span></div>
+  <div class="card" style="border:2px solid var(--brand)"><h2 style="margin-bottom:6px">✨ Registro de alumnos por su cuenta</h2>
+    <p class="muted small" style="margin:0 0 8px">Dale a tus alumnos esta <b>clave de grupo</b> y la dirección de la plataforma. Ellos se registran solos la primera vez (con su correo, nombre, apellidos y matrícula) y <b>van apareciendo aquí en orden alfabético por apellidos</b>.</p>
+    ${groups.map((g) => `<div class="item" style="margin-top:6px"><div class="grow"><div class="t">Grupo ${esc(g.name)} · clave: <code style="font-size:1.15rem;letter-spacing:2px">${esc(g.join_code || '—')}</code></div><div class="small">${g.registration_open ? '<span class="badge ok">✅ Registro abierto</span>' : '<span class="badge warn">🔒 Registro cerrado</span>'}</div></div>
+      <div class="actions"><button class="btn soft sm" data-code="copy" data-g="${g.id}">📋 Copiar mensaje</button><button class="btn ghost sm" data-code="toggle" data-g="${g.id}">${g.registration_open ? '🔒 Cerrar registro' : '🔓 Abrir registro'}</button><button class="btn ghost sm" data-code="new" data-g="${g.id}">🔄 Nueva clave</button></div></div>`).join('')}</div>
+  <div class="toolbar"><input id="q" type="search" placeholder="Buscar nombre, apellido, correo o matrícula"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select>
+    <button class="btn" id="add">+ Alumno</button><button class="btn soft" id="imp">Importar lista</button><button class="btn ghost" id="grp">Grupos</button><button class="btn ghost" id="rall">🔑 Restablecer a todos</button><button class="btn ghost" id="prt">🖨️ Imprimir lista</button></div>
   <p class="muted small">¿Un alumno olvidó su contraseña? Toca <b>🔑 Contraseña</b> en su renglón: se le asigna una temporal al instante y la ves aquí para dársela. Ellos no necesitan entrar a su correo.</p>
-  <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Grupo</th><th>Estado</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  <div class="tablewrap"><table><thead><tr><th class="num">No.</th><th>Apellidos y nombre</th><th>Grupo</th><th>Estado</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  el.onclick = (e) => { const b = e.target.closest('[data-code]'); if (!b) return; const g = groups.find((x) => x.id === b.dataset.g);
+    if (b.dataset.code === 'copy') copy(`Hola 👋 Para registrarte en PEAR entra a ${location.origin + location.pathname} y toca «Regístrate aquí».\nClave del grupo ${g.name}: ${g.join_code}\nTe pedirá tu correo institucional, tu nombre, apellidos, matrícula y que crees tu contraseña.`);
+    else run(b, async () => { const patch = b.dataset.code === 'toggle' ? { registration_open: !g.registration_open } : { join_code: Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n % 32]).join('') };
+      const { error } = await sb.from('groups').update(patch).eq('id', g.id); if (error) throw error; toast(b.dataset.code === 'toggle' ? 'Listo' : 'Nueva clave creada: los alumnos nuevos usarán esta', 'ok'); alumnos(el); }); };
+  $('#prt', el).onclick = () => { const list = visible().filter((s) => s.active); const w = window.open('', '_blank'); if (!w) return toast('Permite las ventanas emergentes para imprimir', 'err');
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Lista del grupo</title><style>body{font:13px system-ui;margin:16px}h1{font-size:18px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;padding:4px 6px;text-align:left}td.b{width:26px}th{background:#eee}</style><h1>PEAR · Lista del grupo ${esc(fg ? gn[fg] : 'todos')}</h1><table><tr><th>No.</th><th>Matrícula</th><th>Apellidos y nombre</th>${'<th class="b"></th>'.repeat(16)}</tr>${list.map((s, i) => `<tr><td>${numOf[s.id] || i + 1}</td><td>${esc(s.matricula || '')}</td><td>${esc(listName(s))}</td>${'<td class="b"></td>'.repeat(16)}</tr>`).join('')}</table>`); w.document.close(); w.focus(); w.print(); };
   $('#q', el).oninput = (e) => { q = e.target.value.toLowerCase(); draw(); };
   $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
   $('#add', el).onclick = () => addStudents(groups, () => alumnos(el), false);
@@ -151,16 +164,19 @@ function resetMany(list, done) {
 }
 
 function editStudent(s, groups, done) {
-  const m = modal('Editar alumno', `<label for="n">Nombre</label><input id="n" value="${esc(s.full_name)}"><div class="muted small">${esc(s.email)}</div>
+  const m = modal('Editar alumno', `<div class="muted small">${esc(s.email)}</div>
+    <label for="n">Nombre(s)</label><input id="n" value="${esc(s.nombres || (s.apellido_p ? '' : s.full_name))}">
+    <div class="row"><div><label for="ap">Apellido paterno</label><input id="ap" value="${esc(s.apellido_p)}"></div><div><label for="am">Apellido materno</label><input id="am" value="${esc(s.apellido_m)}"></div></div>
     <label for="mt">Matrícula</label><input id="mt" value="${esc(s.matricula)}" autocapitalize="characters" placeholder="(la escribe el alumno al entrar)">
     <label for="g">Grupo</label><select id="g"><option value="">—</option>${opt(groups, 'id', 'name', s.group_id)}</select>
     <label class="check"><input type="checkbox" id="ac" ${s.active ? 'checked' : ''}> Cuenta activa</label>
     <div class="foot"><button class="btn danger" id="del">Eliminar</button><button class="btn" id="sv">Guardar</button></div>`);
   $('#sv', m.el).onclick = (ev) => run(ev.target, async () => {
     const mat = $('#mt', m.el).value.trim().toUpperCase() || null;
-    const { error } = await sb.from('profiles').update({ full_name: $('#n', m.el).value.trim(), matricula: mat, group_id: $('#g', m.el).value || null, active: $('#ac', m.el).checked }).eq('id', s.id);
+    const nom = $('#n', m.el).value.trim(), ap = $('#ap', m.el).value.trim(), am = $('#am', m.el).value.trim(); const full = `${nom} ${ap} ${am}`.replace(/\s+/g, ' ').trim();
+    const { error } = await sb.from('profiles').update({ full_name: full, nombres: nom || null, apellido_p: ap || null, apellido_m: am || null, matricula: mat, group_id: $('#g', m.el).value || null, active: $('#ac', m.el).checked }).eq('id', s.id);
     if (error) throw new Error(/profiles_matricula_uq/.test(error.message) ? 'Esa matrícula ya la tiene otro alumno' : error.message);
-    await sb.from('roster').update({ full_name: $('#n', m.el).value.trim(), group_id: $('#g', m.el).value || null }).eq('email', s.email);
+    await sb.from('roster').update({ full_name: full, group_id: $('#g', m.el).value || null }).eq('email', s.email);
     m.close(); toast('Guardado', 'ok'); done();
   });
   $('#del', m.el).onclick = async () => {
@@ -413,6 +429,7 @@ async function vistaAlumno(el, { param, profile }) {
 export const teacherRoutes = {
   panel: { title: 'Panel', icon: '🏠', nav: true, render: panel },
   alumnos: { title: 'Alumnos', icon: '👥', nav: true, render: alumnos },
+  asistencia: { title: 'Asistencia', icon: '🗒️', nav: true, render: asistencia },
   material: { title: 'Material', icon: '📚', nav: true, render: material },
   tareas: { title: 'Tareas', icon: '✅', nav: true, render: tareas },
   entregas: { title: 'Entregas', icon: '📥', nav: true, render: entregas },
