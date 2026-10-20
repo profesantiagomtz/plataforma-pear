@@ -20,8 +20,9 @@ function viewLogin(mode = 'login', note = '') {
       ${pwField('pw', 'Contraseña', 'current-password')}
       <div id="m"></div>${note ? `<div class="msg ok">${esc(note)}</div>` : ''}
       <button class="btn block">Entrar</button></form>
-      <p class="center"><button class="linkbtn" id="forgot">¿Olvidaste tu contraseña?</button></p>
-      <p class="muted small center">Primer ingreso: usa la contraseña temporal que te dio tu docente.</p>`
+      <div class="msg info" style="text-align:center"><b>¿No recuerdas tu contraseña?</b><br>No pasa nada: <b>pídele a tu profe</b> que te dé una nueva. No necesitas entrar a tu correo.</div>
+      <p class="muted small center">Primer ingreso: usa la contraseña temporal que te dio tu profe.</p>
+      <p class="center" style="margin-top:6px"><button class="linkbtn small" id="forgot" style="font-weight:400;color:var(--muted)">Soy docente y olvidé mi contraseña</button></p>`
     : `<h1>Restablecer contraseña</h1><p class="muted">Escribe tu correo y te enviaremos un enlace para crear una nueva contraseña.</p>
       <form id="f"><label for="em">Correo</label><input id="em" type="email" autocomplete="username" required><div id="m"></div><button class="btn block">Enviar enlace</button></form>
       <p class="muted small">Si el correo no llega en unos minutos (revisa spam), pide a tu docente una contraseña temporal nueva.</p>

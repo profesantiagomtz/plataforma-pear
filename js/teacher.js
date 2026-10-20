@@ -57,8 +57,9 @@ async function alumnos(el) {
   ]);
   const gn = Object.fromEntries(groups.map((g) => [g.id, g.name]));
   let fg = '', q = '';
+  const visible = () => studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + s.email).toLowerCase().includes(q)));
   const draw = () => {
-    const list = studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + s.email).toLowerCase().includes(q)));
+    const list = visible();
     $('#tb', el).innerHTML = list.length ? list.map((s) => `<tr><td><b>${esc(s.full_name)}</b><div class="muted small">${esc(s.email)}</div></td><td>${esc(gn[s.group_id] || '—')}</td>
       <td>${s.active ? '' : '<span class="badge bad">Desactivado</span> '}${s.must_change_password ? '<span class="badge warn">Contraseña temporal</span>' : '<span class="badge ok">Activo</span>'}</td>
       <td class="right"><button class="btn soft sm" data-a="pw" data-id="${s.id}">🔑 Contraseña</button> <button class="btn ghost sm" data-a="ed" data-id="${s.id}">Editar</button></td></tr>`).join('') : `<tr><td colspan="4">${empty('No hay alumnos con ese filtro.')}</td></tr>`;
@@ -66,13 +67,15 @@ async function alumnos(el) {
   };
   el.innerHTML = `<div class="head"><h1>Alumnos</h1><span class="muted" id="cnt"></span></div>
   <div class="toolbar"><input id="q" type="search" placeholder="Buscar nombre o correo"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select>
-    <button class="btn" id="add">+ Alumno</button><button class="btn soft" id="imp">Importar lista</button><button class="btn ghost" id="grp">Grupos</button></div>
+    <button class="btn" id="add">+ Alumno</button><button class="btn soft" id="imp">Importar lista</button><button class="btn ghost" id="grp">Grupos</button><button class="btn ghost" id="rall">🔑 Restablecer a todos</button></div>
+  <p class="muted small">¿Un alumno olvidó su contraseña? Toca <b>🔑 Contraseña</b> en su renglón: se le asigna una temporal al instante y la ves aquí para dársela. Ellos no necesitan entrar a su correo.</p>
   <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Grupo</th><th>Estado</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>`;
   $('#q', el).oninput = (e) => { q = e.target.value.toLowerCase(); draw(); };
   $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
   $('#add', el).onclick = () => addStudents(groups, () => alumnos(el), false);
   $('#imp', el).onclick = () => addStudents(groups, () => alumnos(el), true);
   $('#grp', el).onclick = () => manageGroups(groups, () => alumnos(el));
+  $('#rall', el).onclick = () => resetMany(visible().filter((s) => s.active), () => alumnos(el));
   $('#tb', el).onclick = (e) => {
     const b = e.target.closest('[data-a]'); if (!b) return; const s = studs.find((x) => x.id === b.dataset.id);
     if (b.dataset.a === 'pw') resetPw(s, () => alumnos(el));
@@ -87,6 +90,11 @@ function showPasswords(rows, title = 'Contraseñas temporales') {
     <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Correo</th><th>Contraseña</th></tr></thead><tbody>${ok.map((r) => `<tr><td>${esc(r.full_name || '')}</td><td>${esc(r.email)}</td><td><code>${esc(r.password)}</code></td></tr>`).join('')}</tbody></table></div>
     ${rows.some((r) => !r.ok) ? `<div class="msg err"><b>No se pudieron crear:</b><br>${rows.filter((r) => !r.ok).map((r) => `${esc(r.email)} — ${esc(r.error)}`).join('<br>')}</div>` : ''}
     <div class="foot"><button class="btn ghost" id="cp">Copiar</button><button class="btn" id="cs">Descargar CSV</button></div>`);
+  const url = location.origin + location.pathname;
+  $('.foot', m.el).insertAdjacentHTML('afterbegin', '<button class="btn ghost" id="msg">📱 Copiar mensaje</button><button class="btn ghost" id="pr">🖨️ Imprimir tarjetas</button>');
+  $('#msg', m.el).onclick = () => copy(ok.map((r) => `Hola ${(r.full_name || '').split(' ')[0]} 👋 Entra a ${url}\nCorreo: ${r.email}\nContraseña temporal: ${r.password}\nAl entrar te pedirá crear tu propia contraseña.`).join('\n\n'));
+  $('#pr', m.el).onclick = () => { const w = window.open('', '_blank'); if (!w) return toast('Permite las ventanas emergentes para imprimir', 'err');
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Tarjetas de acceso</title><style>body{font:14px system-ui;margin:12px}.c{display:inline-block;width:46%;margin:1.5%;padding:12px;border:2px dashed #888;border-radius:10px;vertical-align:top;page-break-inside:avoid}b{font-size:15px}code{font-size:17px;background:#eee;padding:2px 6px;border-radius:6px}</style>${ok.map((r) => `<div class="c"><b>${esc(r.full_name || '')}</b><br>Entra a: ${esc(url)}<br>Correo: ${esc(r.email)}<br>Contraseña temporal: <code>${esc(r.password)}</code><br><small>Al entrar crearás tu propia contraseña.</small></div>`).join('')}`); w.document.close(); w.focus(); w.print(); };
   $('#cp', m.el).onclick = () => copy(ok.map((r) => `${r.full_name}\t${r.email}\t${r.password}`).join('\n'));
   $('#cs', m.el).onclick = () => downloadCSV('contrasenas-temporales.csv', [['Nombre', 'Correo', 'Contraseña temporal'], ...ok.map((r) => [r.full_name, r.email, r.password])]);
 }
@@ -123,6 +131,17 @@ function resetPw(s, done) {
   $('#go', m.el).onclick = (ev) => run(ev.target, async () => {
     const r = await fn('reset_password', { user_id: s.id, password: $('#pw', m.el).value.trim() || undefined });
     m.close(); showPasswords([{ ok: true, full_name: s.full_name, email: s.email, password: r.password }], 'Nueva contraseña temporal'); done();
+  });
+}
+
+function resetMany(list, done) {
+  if (!list.length) return toast('No hay alumnos en esta lista', 'err');
+  const m = modal('Restablecer contraseñas', `<p>Se creará una <b>contraseña temporal nueva</b> para <b>${list.length} alumno(s)</b> de la lista que estás viendo (según el grupo o la búsqueda). Les pedirá cambiarla al entrar.</p><p class="muted small">Las contraseñas anteriores dejarán de funcionar.</p><div class="foot"><button class="btn ghost" id="no">Cancelar</button><button class="btn" id="go">Restablecer a los ${list.length}</button></div>`);
+  $('#no', m.el).onclick = m.close;
+  $('#go', m.el).onclick = (ev) => run(ev.target, async () => {
+    const rows = [];
+    for (const s of list) { try { const r = await fn('reset_password', { user_id: s.id }); rows.push({ ok: true, full_name: s.full_name, email: s.email, password: r.password }); } catch (e) { rows.push({ ok: false, email: s.email, error: e.message }); } }
+    m.close(); showPasswords(rows, 'Contraseñas temporales nuevas'); done();
   });
 }
 
