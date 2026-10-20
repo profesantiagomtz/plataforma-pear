@@ -3,6 +3,7 @@ import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
+import { seguimiento, loadSeguimiento, statsFor, alertBadges } from './seguimiento.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const opt = (list, val, label, sel) => list.map((x) => `<option value="${esc(x[val])}" ${x[val] === sel ? 'selected' : ''}>${esc(typeof label === 'function' ? label(x) : x[label])}</option>`).join('');
@@ -27,6 +28,7 @@ async function panel(el) {
     sb.from('units').select('id,code,title,weight').order('ord'), sb.from('materials').select('unit_id,published,teacher_only,kind,url'), sb.from('module_progress').select('module,pct'),
   ]);
   const active = studs.filter((s) => s.active);
+  const SD = await loadSeguimiento(); const attention = SD.studs.map((s) => ({ s, st: statsFor(s, SD) })).filter((x) => x.st.sev > 0).sort((a, b) => b.st.sev - a.st.sev || a.st.avg - b.st.avg);
   const mapa = units.map((u) => { const ms = mats.filter((m) => m.unit_id === u.id && !m.teacher_only), ts = asg.filter((a) => a.unit_id === u.id); const pub = ms.filter((m) => m.published).length + ts.filter((a) => a.published).length, tot = ms.length + ts.length;
     const pr = prog.filter((p) => p.module === 'm1-' + u.code.split('.')[1]).map((p) => p.pct); return { u, pub, tot, avg: pr.length ? Math.round(pr.reduce((a, b) => a + b, 0) / pr.length) : null, n: pr.length }; });
   const toGrade = subs.filter((s) => s.score == null);
@@ -39,6 +41,7 @@ async function panel(el) {
     <div class="stat"><b>${asg.filter((a) => a.published).length}</b><span>Tareas publicadas</span></div>
     <div class="stat"><b>${active.filter((s) => s.must_change_password).length}</b><span>Sin cambiar contraseña temporal</span></div>
   </div>
+  <div class="card"><h2>⚠️ Necesitan atención <a class="small" href="#/avance">ver seguimiento →</a></h2>${attention.length ? `<div class="list">${attention.slice(0, 8).map(({ s, st }) => `<a class="item" href="#/avance/${s.id}"><span class="live" style="color:${st.sev === 2 ? 'var(--bad)' : 'var(--warn)'}">●</span><div class="grow"><div class="t">${esc(s.full_name)}</div><div style="margin-top:2px">${alertBadges(st.alerts)}</div></div></a>`).join('')}</div>${attention.length > 8 ? `<p class="muted small">…y ${attention.length - 8} más.</p>` : ''}` : (SD.studs.length ? empty('Todos van bien ✔') : empty('Aún no hay alumnos dados de alta.'))}</div>
   <div class="card"><h2>Mapa del curso <a class="small" href="#/material">abrir material →</a></h2><div class="list">${mapa.map(({ u, pub, tot, avg, n }) => `<a class="item" href="#/material"><span class="code">${esc(u.code)}</span><div class="grow"><div class="t">${esc(u.title)}</div><div class="muted small">⭐ Vale ${u.weight} % · ${avg == null ? 'sin avance de alumnos todavía' : `avance promedio del módulo: ${avg} % (${n} alumno${n === 1 ? '' : 's'})`}</div></div><span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub === 0 ? '🙈 oculto' : pub === tot ? '👁️ visible' : `👁️ ${pub}/${tot}`}</span></a>`).join('')}</div></div>
   <div class="grid">
     <div class="card"><h2>Por calificar</h2>${toGrade.length ? `<div class="list">${toGrade.slice(0, 8).map((s) => `<a class="item" href="#/entregas/${s.assignment_id}"><div class="grow"><div class="t">${esc(sn[s.student_id] || '—')}</div><div class="muted small">${esc(an[s.assignment_id] || '')} · ${fmtDateTime(s.submitted_at)}</div></div></a>`).join('')}</div>` : empty('Todo calificado ✔')}</div>
@@ -60,9 +63,9 @@ async function alumnos(el) {
   const visible = () => studs.filter((s) => (!fg || s.group_id === fg) && (!q || (s.full_name + s.email + (s.matricula || '')).toLowerCase().includes(q)));
   const draw = () => {
     const list = visible();
-    $('#tb', el).innerHTML = list.length ? list.map((s) => `<tr><td><b>${esc(s.full_name)}</b><div class="muted small">${esc(s.email)}</div><div class="small">${s.matricula ? `🪪 Matrícula: <b>${esc(s.matricula)}</b>` : '<span class="muted">🪪 Sin matrícula todavía</span>'}</div></td><td>${esc(gn[s.group_id] || '—')}</td>
+    $('#tb', el).innerHTML = list.length ? list.map((s) => `<tr><td><a href="#/avance/${s.id}" title="Ver expediente completo"><b>${esc(s.full_name)}</b></a><div class="muted small">${esc(s.email)}</div><div class="small">${s.matricula ? `🪪 Matrícula: <b>${esc(s.matricula)}</b>` : '<span class="muted">🪪 Sin matrícula todavía</span>'}</div></td><td>${esc(gn[s.group_id] || '—')}</td>
       <td>${s.active ? '' : '<span class="badge bad">Desactivado</span> '}${s.must_change_password ? '<span class="badge warn">Contraseña temporal</span>' : s.profile_done ? '<span class="badge ok">Activo</span>' : '<span class="badge info">Perfil pendiente</span>'}</td>
-      <td class="right"><button class="btn soft sm" data-a="pw" data-id="${s.id}">🔑 Contraseña</button> <button class="btn ghost sm" data-a="ed" data-id="${s.id}">Editar</button></td></tr>`).join('') : `<tr><td colspan="4">${empty('No hay alumnos con ese filtro.')}</td></tr>`;
+      <td class="right"><a class="btn ghost sm" href="#/avance/${s.id}">📋 Expediente</a> <button class="btn soft sm" data-a="pw" data-id="${s.id}">🔑 Contraseña</button> <button class="btn ghost sm" data-a="ed" data-id="${s.id}">Editar</button></td></tr>`).join('') : `<tr><td colspan="4">${empty('No hay alumnos con ese filtro.')}</td></tr>`;
     $('#cnt', el).textContent = `${list.length} alumno(s)`;
   };
   el.innerHTML = `<div class="head"><h1>Alumnos</h1><span class="muted" id="cnt"></span></div>
@@ -388,59 +391,7 @@ async function envivo(el) {
   const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); sb.removeChannel(ch); stopP(); return; } drawOnline(); drawFeed(); }, 15000);
 }
 
-async function avanceAlumno(el, id) {
-  const [{ data: s }, { data: prog }, { data: ev }, { data: units }] = await Promise.all([
-    sb.from('profiles').select('id,full_name,email,group_id').eq('id', id).maybeSingle(), sb.from('module_progress').select('*').eq('student_id', id),
-    sb.from('activity_log').select('*').eq('student_id', id).order('created_at', { ascending: false }).limit(60), sb.from('units').select('code,title').order('ord'),
-  ]);
-  if (!s) { el.innerHTML = empty('Alumno no encontrado.'); return; }
-  const pm = Object.fromEntries(prog.map((p) => [p.module, p]));
-  const secsAll = prog.reduce((t, p) => t + Object.values(p.done || {}).reduce((a, d) => a + (d.t || 0), 0), 0);
-  const blocks = [];
-  for (const u of units) {
-    const mid = 'm1-' + u.code.split('.')[1]; const p = pm[mid]; let mod; try { mod = (await import(`../content/${mid}.js`)).default; } catch { continue; }
-    const pages = [{ type: 'intro', t: 'Inicio' }, ...mod.pages]; const done = p?.done || {};
-    const rows = pages.map((pg, k) => { const d = done[k]; let state;
-      if (!d) state = '<span class="badge">⏳ Pendiente</span>';
-      else if (pg.type === 'intro') state = '<span class="badge ok">✅ Entró</span>';
-      else if (pg.type === 'lesson') state = d.r ? '<span class="badge ok">📖 Leída</span>' : '<span class="badge info">Empezó</span>';
-      else if (pg.type === 'practica') { const c = d.c || []; const n = c.filter(Boolean).length; state = `<span class="badge ${n === c.length && n ? 'ok' : 'info'}">📝 ${n}/${pg.steps.length} pasos</span>`; }
-      else if (d.sk) state = '<span class="badge warn">⏭️ Saltada</span>';
-      else if ((d.s || 0) >= 0.6) state = `<span class="badge ok">✅ Superada</span>`;
-      else if (d.rv) state = '<span class="badge warn">👀 Vio respuestas</span>';
-      else if (d.f) state = `<span class="badge bad">🔁 ${d.f} fallo(s)</span>`;
-      else state = '<span class="badge info">Empezó</span>';
-      return `<tr><td class="num">${k + 1}</td><td>${esc(KINDNAME[pg.type] || '')}</td><td>${esc(plain(pg.t))}</td><td>${state}</td><td class="num">${d?.a || '—'}</td><td class="num">${d?.t ? fmtSecs(d.t) : '—'}</td></tr>`; }).join('');
-    const tsecs = Object.values(done).reduce((a, d) => a + (d.t || 0), 0);
-    blocks.push(`<details class="card" ${p ? 'open' : ''}><summary style="cursor:pointer;font-weight:700"><span class="code">${esc(u.code)}</span> ${esc(u.title)} <span class="badge ${p?.pct >= 100 ? 'ok' : 'brand'}">${p?.pct || 0} %</span> <span class="muted small">${tsecs ? '· ' + fmtSecs(tsecs) : ''}</span></summary>
-      <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th class="num">#</th><th>Tipo</th><th>Parte</th><th>Estado</th><th class="num">Intentos</th><th class="num">Tiempo</th></tr></thead><tbody>${rows}</tbody></table></div></details>`);
-  }
-  el.innerHTML = `<p><a href="#/avance">← Avance</a></p><div class="head"><h1>${esc(s.full_name)}</h1><span class="muted">${esc(s.email)}</span></div>
-    <div class="stats"><div class="stat"><b>${Math.round(prog.reduce((t, p) => t + p.pct, 0) / 7)} %</b><span>Avance promedio</span></div><div class="stat"><b>${fmtSecs(secsAll)}</b><span>Tiempo en módulos</span></div><div class="stat"><b>${ev[0] ? ago(ev[0].created_at) : '—'}</b><span>Última actividad</span></div></div>
-    ${blocks.join('')}<div class="card"><h2>Actividad reciente</h2><div class="feed">${ev.length ? ev.filter((e) => describe(e).imp).map((e) => feedItem(e, { [s.id]: s })).join('') : '<div class="empty">Sin actividad.</div>'}</div></div>`;
-}
-const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final' };
-
-async function avance(el, { param } = {}) {
-  if (param?.[0]) return avanceAlumno(el, param[0]);
-  const [{ data: studs }, { data: prog }, { data: units }, { data: groups }] = await Promise.all([
-    sb.from('profiles').select('id,full_name,group_id').eq('role', 'student').eq('active', true).order('full_name'),
-    sb.from('module_progress').select('student_id,module,pct,updated_at'), sb.from('units').select('code').order('ord'), sb.from('groups').select('*').order('name'),
-  ]);
-  const mods = units.map((u) => 'm1-' + u.code.split('.')[1]); const pm = new Map(prog.map((p) => [p.student_id + p.module, p]));
-  let fg = '';
-  const draw = () => {
-    const rows = studs.filter((s) => !fg || s.group_id === fg);
-    $('#tb', el).innerHTML = rows.map((s) => { const vals = mods.map((m) => pm.get(s.id + m)); const avg = Math.round(vals.reduce((t, v) => t + (v?.pct || 0), 0) / mods.length); const last = vals.filter(Boolean).map((v) => v.updated_at).sort().pop();
-      return `<tr><td><a href="#/avance/${s.id}"><b>${esc(s.full_name)}</b></a></td>${vals.map((v) => `<td class="num">${v ? `<span class="badge ${v.pct >= 100 ? 'ok' : v.pct > 0 ? 'info' : ''}">${v.pct} %</span>` : '<span class="muted">—</span>'}</td>`).join('')}<td class="num"><b>${avg} %</b></td><td class="muted small">${last ? fmtDateTime(last) : '—'}</td></tr>`; }).join('') || `<tr><td colspan="10">${empty('Sin alumnos')}</td></tr>`;
-  };
-  el.innerHTML = `<div class="head"><h1>Avance en módulos</h1><span class="badge ok">● se actualiza solo</span></div><div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select></div>
-    <div class="tablewrap"><table><thead><tr><th>Alumno</th>${units.map((u) => `<th class="num">${u.code}</th>`).join('')}<th class="num">Prom.</th><th>Última actividad</th></tr></thead><tbody id="tb"></tbody></table></div>`;
-  $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
-  draw();
-  const ch = sb.channel('avance-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: '*', schema: 'public', table: 'module_progress' }, (p) => { const r = p.new; if (r?.student_id) { pm.set(r.student_id + r.module, r); draw(); } }).subscribe();
-  const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); sb.removeChannel(ch); } }, 5000);
-}
+const avance = (el, ctx) => seguimiento(el, ctx, { resetPw, editStudent });
 
 // ============================ VISTA ALUMNO ============================
 async function vistaAlumno(el, { param, profile }) {

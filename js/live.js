@@ -38,6 +38,7 @@ export function describe(ev, ctx = {}) {
   const d = ev.detail || {}; const mod = ev.module ? ev.module.replace('m1-', '1.') : '';
   const t = d.title ? `«${d.title}»` : '';
   switch (ev.kind) {
+    case 'login': return { icon: '🔓', text: 'entró a la plataforma', imp: true };
     case 'module_open': return { icon: '🎓', text: `abrió el módulo ${mod}`, imp: true };
     case 'lesson_read': return { icon: '📖', text: `leyó ${t} (${mod})${d.secs ? ` · ${fmtSecs(d.secs)}` : ''}`, imp: true };
     case 'attempt': return d.pass ? { icon: '✅', text: `superó ${t} (${mod}) · ${d.ok}/${d.tot}${d.a > 1 ? ` · intento ${d.a}` : ''}${d.hints ? ` · ${d.hints} pista(s)` : ''}`, imp: true } : { icon: '❌', text: `falló ${t} (${mod}) · ${d.ok}/${d.tot} · intento ${d.a}`, imp: true };

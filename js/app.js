@@ -1,7 +1,7 @@
 import { sb, esc, $, toast, run, PASS_HELP, passOk } from './ui.js';
 import { studentRoutes } from './student.js';
 import { teacherRoutes } from './teacher.js';
-import { setMe, startPresence, stopPresence } from './live.js';
+import { setMe, startPresence, stopPresence, logEvent } from './live.js';
 
 const app = $('#app');
 const state = { session: null, profile: null, recovery: /type=recovery/.test(location.hash), booted: false };
@@ -106,6 +106,7 @@ async function loadProfile() {
   const { data, error } = await sb.from('profiles').select('*').eq('id', state.session.user.id).single();
   if (error) throw error;
   state.profile = data; setMe(data);
+  if (data.role === 'student' && !sessionStorage.getItem('pear-login')) { sessionStorage.setItem('pear-login', '1'); logEvent('login', null, null, {}); }
 }
 
 function render() {
@@ -126,7 +127,7 @@ sb.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') state.recovery = true;
     const prev = state.session?.user?.id;
     state.session = session;
-    if (!session) { stopPresence(); state.profile = null; state.booted = true; state.recovery = false; return render(); }
+    if (!session) { stopPresence(); sessionStorage.removeItem('pear-login'); state.profile = null; state.booted = true; state.recovery = false; return render(); }
     if (event === 'TOKEN_REFRESHED') return;
     // misma sesión (p. ej. al volver a la pestaña): no redibujar para no perder lo que se está escribiendo
     if (state.profile && prev === session.user.id && event !== 'PASSWORD_RECOVERY' && event !== 'USER_UPDATED') return;
