@@ -12,9 +12,13 @@ export const flow = (items, label) => ({ k: 'ill', kind: 'flow', items, label })
 export const tiles = (items) => ({ k: 'tiles', items });
 export const tbl = (head, rows) => ({ k: 'tbl', head, rows });
 export const steps = (t, list) => ({ k: 'steps', t, steps: list });
-export const viz = (name, h, extra = {}) => ({ k: 'viz', name, h, ...extra });
+export const words = (items) => ({ k: 'words', items });
+export const vis = (rows, cap) => ({ k: 'vis', rows, cap });
+export const alt = (p, h) => ({ k: 'alt', h, p });
+export const viz =(name, h, extra = {}) => ({ k: 'viz', name, h, ...extra });
 
-export const match = (t, sub, rows, options, nav) => ({ type: 'match', t, sub, rows, options, nav });
+export const guia = (t, sub, steps, intro, nav) => ({ type: 'guia', t, sub, steps, intro, nav });
+export const match =(t, sub, rows, options, nav) => ({ type: 'match', t, sub, rows, options, nav });
 export const mc = (t, sub, qs, nav) => ({ type: 'mc', t, sub, qs, nav });
 export const order = (t, sub, items, nav) => ({ type: 'order', t, sub, items, nav });
 export const cloze = (t, sub, tpl, blanks, nav) => ({ type: 'cloze', t, sub, tpl, blanks, nav });

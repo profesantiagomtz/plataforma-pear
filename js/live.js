@@ -40,7 +40,7 @@ export function describe(ev, ctx = {}) {
   switch (ev.kind) {
     case 'module_open': return { icon: '🎓', text: `abrió el módulo ${mod}`, imp: true };
     case 'lesson_read': return { icon: '📖', text: `leyó ${t} (${mod})${d.secs ? ` · ${fmtSecs(d.secs)}` : ''}`, imp: true };
-    case 'attempt': return d.pass ? { icon: '✅', text: `superó ${t} (${mod}) · ${d.ok}/${d.tot}${d.a > 1 ? ` · intento ${d.a}` : ''}`, imp: true } : { icon: '❌', text: `falló ${t} (${mod}) · ${d.ok}/${d.tot} · intento ${d.a}`, imp: true };
+    case 'attempt': return d.pass ? { icon: '✅', text: `superó ${t} (${mod}) · ${d.ok}/${d.tot}${d.a > 1 ? ` · intento ${d.a}` : ''}${d.hints ? ` · ${d.hints} pista(s)` : ''}`, imp: true } : { icon: '❌', text: `falló ${t} (${mod}) · ${d.ok}/${d.tot} · intento ${d.a}`, imp: true };
     case 'reveal': return { icon: '👀', text: `pidió ver las respuestas de ${t} (${mod})`, imp: true };
     case 'skip': return { icon: '⏭️', text: `saltó ${t} (${mod}) tras varios intentos`, imp: true };
     case 'practice_step': return { icon: '📝', text: `práctica final (${mod}): paso ${d.n} de ${d.tot}`, imp: true };

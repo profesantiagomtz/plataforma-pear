@@ -31,6 +31,11 @@ G.logica = () => {
   return { q: `Si <b>p = ${VF(p)}</b> y <b>q = ${VF(q)}</b>, ¿cuánto vale <b>${txt}</b>?`, mode: 'sel', opts: ['V', 'F'], ans: VF(f(p, q)),
     e: `Sustituye p = ${VF(p)} y q = ${VF(q)} y resuelve conectivo por conectivo: el resultado es <b>${VF(f(p, q))}</b>.` };
 };
+G.logicaFacil = () => {
+  const [txt, f] = pick(FORMS.filter((x) => ['p ∨ q', 'p ∧ q', 'p → q', 'p ↔ q', '¬p ∨ q', 'p ∧ ¬q'].includes(x[0]))); const p = Math.random() < .5, q = Math.random() < .5;
+  return { q: `Si <b>p = ${VF(p)}</b> y <b>q = ${VF(q)}</b>, ¿cuánto vale <b>${txt}</b>?`, mode: 'sel', opts: ['V', 'F'], ans: VF(f(p, q)), e: `Sustituye: p = ${VF(p)}, q = ${VF(q)}. El resultado es <b>${VF(f(p, q))}</b>.` };
+};
+G.neg = () => { const p = Math.random() < .5; return { q: `Si <b>p = ${VF(p)}</b>, ¿cuánto vale <b>¬p</b> (no p)?`, mode: 'sel', opts: ['V', 'F'], ans: VF(!p), e: `El «NO» voltea el valor: ¬p = ${VF(!p)}.` }; };
 G.filas = () => { const n = rnd(2, 5); return { q: `¿Cuántas filas tiene la tabla de verdad de una proposición con <b>${n}</b> proposiciones simples?`, mode: 'n', ans: 2 ** n, e: `Son 2<sup>${n}</sup> = ${2 ** n} filas.` }; };
 G.tipo = () => {
   const items = [['p ∨ ¬p', 'Tautología'], ['p ∧ ¬p', 'Contradicción'], ['p → p', 'Tautología'], ['p ∧ q', 'Contingencia'], ['p ↔ ¬p', 'Contradicción'], ['p ∨ q', 'Contingencia'], ['(p ∧ q) → p', 'Tautología']];
@@ -62,6 +67,12 @@ G.enteros = () => {
   else { b = pick([-9, -8, -6, -5, -4, -3, -2, 2, 3, 4, 5, 6, 8, 9]); const q = rnd(-9, 9) || 4; a = b * q; r = q; txt = `${a < 0 ? '−' + -a : a} ÷ ${sgn(b)}`; }
   return { q: `Calcula: <b>${txt}</b>`, mode: 'n', ans: r, e: op === '−' ? `Restar es sumar el opuesto: ${a} + ${sgn(-b)} = ${r}.` : `Con la ley de signos el resultado es ${r}.` };
 };
+G.enterosFacil = () => {
+  const a = rnd(-9, 9), b = rnd(-9, 9) || 4; const plus = Math.random() < .5; const r = plus ? a + b : a - b;
+  if (a >= 0 && b >= 0 && (plus || a >= b)) return G.enterosFacil();
+  const txt = plus ? `${a < 0 ? '−' + -a : a} + ${sgn(b)}` : `${a < 0 ? '−' + -a : a} − ${sgn(b)}`;
+  return { q: `Calcula: <b>${txt}</b>`, mode: 'n', ans: r, e: plus ? `Piensa en dinero: ${a < 0 ? `debes $${-a}` : `tienes $${a}`} y ${b < 0 ? `debes $${-b} más` : `ganas $${b}`}. Resultado: ${r}.` : `Restar es sumar el opuesto: ${a} + ${sgn(-b)} = ${r}.` };
+};
 G.mcd = () => { const g = pick([2, 3, 4, 5, 6, 7]); let m, n; do { m = rnd(2, 8); n = rnd(2, 8); } while (m === n || gcd(m, n) !== 1); const a = g * m, b = g * n;
   return { q: `Calcula el <b>MCD</b> de <b>${a}</b> y <b>${b}</b>.`, mode: 'n', ans: g, e: `Factoriza y toma los primos comunes con el menor exponente. MCD(${a}, ${b}) = ${g}.` }; };
 G.mcm = () => { let a, b; do { a = rnd(3, 15); b = rnd(3, 15); } while (a === b || lcm(a, b) > 120);
@@ -69,6 +80,15 @@ G.mcm = () => { let a, b; do { a = rnd(3, 15); b = rnd(3, 15); } while (a === b 
 const isPrime = (n) => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
 G.primo = () => { const n = rnd(11, 97); const pr = isPrime(n);
   return { q: `¿El número <b>${n}</b> es primo o compuesto?`, mode: 'sel', opts: ['Primo', 'Compuesto'], ans: pr ? 'Primo' : 'Compuesto', e: pr ? `${n} solo es divisible entre 1 y entre sí mismo.` : `${n} es divisible entre ${[...Array(n).keys()].find((i) => i > 1 && n % i === 0)}.` }; };
+const divsOf = (n) => { const d = []; for (let i = 1; i <= n; i++) if (n % i === 0) d.push(i); return d; };
+G.divisores = () => { const n = pick([6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 24, 30]); return { q: `Escribe <b>todos los divisores</b> de <b>${n}</b>, separados por comas. <span class="muted small">(ejemplo: 1, 2, 3)</span>`, mode: 'list', ans: divsOf(n), e: `Los números que caben exacto en ${n}: ${divsOf(n).join(', ')}.` }; };
+G.multiplos = () => { const n = pick([2, 3, 4, 5, 6, 7, 8, 9]); const l = [1, 2, 3, 4, 5].map((k) => n * k); return { q: `Escribe los <b>primeros 5 múltiplos</b> de <b>${n}</b>, separados por comas. <span class="muted small">(cuenta de ${n} en ${n})</span>`, mode: 'list', ans: l, e: `Cuenta de ${n} en ${n}: ${l.join(', ')}.` }; };
+G.esDivisor = () => { const n = pick([12, 15, 18, 20, 24, 30, 36]); const d = Math.random() < .5 ? pick(divsOf(n).filter((x) => x > 1 && x < n)) : pick([4, 5, 7, 8, 9].filter((x) => n % x !== 0)); const yes = n % d === 0;
+  return { q: `¿El <b>${d}</b> es divisor del <b>${n}</b>? <span class="muted small">(¿${d} cabe exacto en ${n}?)</span>`, mode: 'sel', opts: ['Sí', 'No'], ans: yes ? 'Sí' : 'No', e: yes ? `Sí: ${n} ÷ ${d} = ${n / d}, sin sobrante.` : `No: ${n} ÷ ${d} no sale exacto (sobra ${n % d}).` }; };
+G.mcdFacil = () => { const [a, b] = pick([[4, 6], [6, 9], [8, 12], [10, 15], [6, 8], [9, 12], [12, 18], [10, 25], [14, 21], [8, 20], [12, 16], [15, 20]]);
+  const g = gcd(a, b); return { q: `Escribe el <b>MCD</b> de <b>${a}</b> y <b>${b}</b>. <span class="muted small">(el número más grande que cabe exacto en los dos)</span>`, mode: 'n', ans: g, e: `Divisores de ${a}: ${divsOf(a).join(', ')}. Divisores de ${b}: ${divsOf(b).join(', ')}. El más grande que se repite es <b>${g}</b>.` }; };
+G.mcmFacil = () => { const [a, b] = pick([[2, 3], [3, 4], [2, 5], [4, 6], [3, 5], [6, 8], [4, 10], [5, 6], [6, 9], [3, 8], [4, 5], [2, 7]]);
+  const m = lcm(a, b); return { q: `Escribe el <b>MCM</b> de <b>${a}</b> y <b>${b}</b>. <span class="muted small">(el primer número al que llegan los dos contando de salto en salto)</span>`, mode: 'n', ans: m, e: `Múltiplos de ${a}: ${[1, 2, 3, 4, 5, 6].map((k) => a * k).join(', ')}… Múltiplos de ${b}: ${[1, 2, 3, 4, 5, 6].map((k) => b * k).join(', ')}… El primero que se repite es <b>${m}</b>.` }; };
 const factorize = (n) => { const m = {}; for (let p = 2; p * p <= n; p++) while (n % p === 0) { m[p] = (m[p] || 0) + 1; n /= p; } if (n > 1) m[n] = (m[n] || 0) + 1; return m; };
 const fstr = (m) => Object.keys(m).map(Number).sort((a, b) => a - b).map((p) => (m[p] > 1 ? `${p}<sup>${m[p]}</sup>` : p)).join(' × ');
 G.factor = () => { const n = pick([12, 18, 20, 24, 28, 30, 36, 40, 45, 48, 50, 54, 60, 72, 84, 90, 100, 120, 150]);
@@ -160,6 +180,15 @@ G.jerarquia = (level = 0) => {
   return { q: 'Resuelve: <b>2 + 3 × 4</b>', mode: 'n', ans: 14 };
 };
 G.jerarquia2 = () => G.jerarquia(1);
+const TPL0 = [
+  () => `${rnd(2, 9)} + ${rnd(2, 6)} × ${rnd(2, 6)}`,
+  () => `${rnd(10, 30)} − ${rnd(2, 5)} × ${rnd(2, 5)}`,
+  () => `(${rnd(2, 9)} + ${rnd(2, 8)}) × ${rnd(2, 5)}`,
+  () => { const d = rnd(2, 5); return `${rnd(8, 20)} + ${d * rnd(2, 6)} ÷ ${d}`; },
+  () => `${rnd(2, 6)} × ${rnd(2, 6)} + ${rnd(2, 9)}`,
+  () => `(${rnd(10, 20)} − ${rnd(2, 8)}) ÷ ${pick([2, 3, 4])}`,
+];
+G.jerarquiaFacil = () => { for (let t = 0; t < 200; t++) { const s = pick(TPL0)(); try { const v = evaluate(s); if (Number.isInteger(v) && v > 0 && v < 100) return { q: `Resuelve aplicando el orden: <b class="expr">${s}</b>`, mode: 'n', ans: v, steps: s, e: 'Mira los pasos abajo.' }; } catch { /* otro intento */ } } return { q: 'Resuelve: <b>2 + 3 × 4</b>', mode: 'n', ans: 14 }; };
 G.mercado = () => { const a = pick([12, 15, 18, 20, 22, 25]), b = pick([30, 35, 38, 40, 45]), q1 = rnd(2, 5), q2 = rnd(2, 4); const P = pick([10, 20]);
   const tot = (a * q1 + b * q2) * (100 - P) / 100;
   return { q: `Compras <b>${q1} kg</b> de naranja a <b>$${a}</b> el kilo y <b>${q2} kg</b> de frijol a <b>$${b}</b> el kilo. Con un cupón de <b>${P} %</b> sobre el total, ¿cuánto pagas?`, mode: 'n', ans: tot, tol: .01,
@@ -192,6 +221,8 @@ export function check(p, raw) {
     const n = +m[1], d = m[2] ? +m[2] : 1; if (!d) return { ok: false, msg: 'El denominador no puede ser 0.' };
     if (n * ad !== an * d) return { ok: false }; const [rn, rd] = red(n, d);
     if (rn !== n || rd !== d) return { ok: false, msg: 'Es correcta pero se puede simplificar más.' }; return { ok: true }; }
+  if (p.mode === 'list') { const got = String(raw).replace(/−/g, '-').split(/[,;\s]+/).filter(Boolean).map(Number); if (got.some(isNaN)) return { ok: false, msg: 'Escribe solo números separados por comas (ejemplo: 1, 2, 3).' };
+    const A = [...new Set(p.ans)].sort((a, b) => a - b), B = [...new Set(got)].sort((a, b) => a - b); return { ok: A.length === B.length && A.every((x, i) => x === B[i]), msg: B.length < A.length ? 'Te faltan números.' : B.length > A.length ? 'Te sobran números.' : undefined }; }
   if (p.mode === 't') return { ok: raw.toUpperCase().replace(/[^A-Z0-9]/g, '') === String(p.ans).toUpperCase() };
   if (p.mode === 'fact') { const parts = clearNum(raw).replace(/[x×·]/gi, '*').split('*'); const got = {};
     for (const part of parts) { const m = part.match(/^(\d+)(?:\^(\d+))?$/); if (!m) return { ok: false, msg: 'Usa el formato 2^2*3*5.' }; got[+m[1]] = (got[+m[1]] || 0) + (m[2] ? +m[2] : 1); }
@@ -202,5 +233,5 @@ export function check(p, raw) {
     return { ok: Math.abs(mant - p.ans[0]) < 1e-9 && ex === p.ans[1] }; }
   return { ok: false };
 }
-export const answerText = (p) => (p.mode === 'sel' || p.mode === 't' ? String(p.ans) : p.mode === 'fs' ? frs(...p.ans) : p.mode === 'sci' ? `${p.ans[0]}x10^${p.ans[1]}` : p.mode === 'fact' ? fstr(p.ans).replace(/<\/?sup>/g, (m) => (m === '<sup>' ? '^' : '')) : String(num(p.ans)));
+export const answerText = (p) => (p.mode === 'list' ? p.ans.join(', ') : p.mode === 'sel' || p.mode === 't' ? String(p.ans) : p.mode === 'fs' ? frs(...p.ans) : p.mode === 'sci' ? `${p.ans[0]}x10^${p.ans[1]}` : p.mode === 'fact' ? fstr(p.ans).replace(/<\/?sup>/g, (m) => (m === '<sup>' ? '^' : '')) : String(num(p.ans)));
 export { steps };

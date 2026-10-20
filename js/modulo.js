@@ -7,8 +7,9 @@ import { logEvent, setPresence, plain } from './live.js';
 
 const rich = (s) => String(s ?? '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
 const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const KICK = { lesson: '📘 Lección', match: '🧩 Actividad', mc: '🔁 Repaso rápido', order: '🔢 Actividad', cloze: '✏️ Actividad', gen: '🎲 Práctica', tt: '📊 Actividad', abaco: '🧮 Actividad', write: '📝 Actividad', practica: '🏁 Práctica final' };
+const KICK = { guia: '🤝 Con ayuda', lesson: '📘 Lección', match: '🧩 Actividad', mc: '🔁 Repaso rápido', order: '🔢 Actividad', cloze: '✏️ Actividad', gen: '🎲 Práctica', tt: '📊 Actividad', abaco: '🧮 Actividad', write: '📝 Actividad', practica: '🏁 Práctica final' };
 const HOW = {
+  guia: ['🤝', 'Yo te voy guiando <b>paso a paso</b>. Contesta cada pregunta y toca <b>COMPROBAR</b>. Si te trabas, toca <b>💡 PISTA</b>. No pasa nada si te equivocas.'],
   lesson: ['👀', 'Lee cada parte y toca <b>ENTENDIDO 👍</b> para ver la siguiente.'],
   match: ['👆', '<b>1)</b> En cada renglón abre el menú y <b>elige la respuesta</b>. <b>2)</b> Toca <b>REVISAR</b>. <b>3)</b> Corrige lo que salga en rojo y revisa otra vez.'],
   mc: ['👆', 'Toca la respuesta que creas <b>correcta</b>. Al instante verás si acertaste.'],
@@ -37,6 +38,9 @@ function block(b, ctx) {
     case 'warn': return `<div class="co co-warn"><div class="co-l">${rich(b.h || 'Ojo')}</div><p>${rich(b.p)}</p></div>`;
     case 'it': return `<div class="it"><b>${rich(b.h)}</b><span>${rich(b.p)}</span></div>`;
     case 'p': return `<p class="lp">${rich(b.s)}</p>`;
+    case 'words': return `<div class="words"><div class="co-l">📖 Palabras nuevas</div>${b.items.map(([t, d]) => `<div class="wd"><b>${rich(t)}</b><span>${rich(d)}</span></div>`).join('')}</div>`;
+    case 'vis': return `<div class="vis">${b.rows.map((r) => `<div class="vr">${r.map((t) => `<span class="${/^[+\-−×÷=➜→]$/.test(t) ? 'vo' : 'vt'}">${t}</span>`).join('')}</div>`).join('')}${b.cap ? `<div class="vc">${rich(b.cap)}</div>` : ''}</div>`;
+    case 'alt': return `<details class="alt"><summary>🤔 ${rich(b.h || '¿No lo entendiste? Mira otra forma')}</summary><div>${rich(b.p)}</div></details>`;
     case 'md': return `<div class="md">${md(b.s)}</div>`;
     case 'img': return `<figure class="fig"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}" loading="lazy"></figure>`;
     case 'ill': return ill(b);
@@ -115,6 +119,33 @@ const PAGE = {
     return `${head(p)}${exampleBox(p.gen)}<div class="qs">${drawQs()}</div><div class="chk"><button class="btn big" data-check>✅ REVISAR</button><button class="btn ghost" data-new>🔄 Otros ejercicios</button><button class="btn ghost" data-reveal>💡 Ver respuestas</button><span class="res" role="status"></span></div>`;
   },
 
+  guia(p, ctx) {
+    const S = p.steps;
+    ctx.act = {
+      manual: true, noReport: true,
+      mount(root, done) {
+        let k = 0, hints = 0, solved = 0; const boxes = $$('.gs', root);
+        const open = (n) => { boxes.forEach((b, i) => { b.hidden = i > n; b.classList.toggle('cur', i === n); }); boxes[n]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('input', boxes[n])?.focus({ preventScroll: true }); };
+        const good = (b, step) => { b.classList.add('ok'); $('.gf', b).innerHTML = `✅ <b>¡Bien!</b> ${step.ok || ''}`; $$('input,button', b).forEach((x) => x.disabled = true); solved++; k++;
+          if (k >= S.length) { $('.gend', root).hidden = false; done({ ok: S.length, tot: S.length, hints }); } else open(k); };
+        const tryAns = (b, i, val) => { const step = S[i]; const r = check({ mode: step.mode || 'n', ans: step.ans, tol: step.tol }, val);
+          if (r.ok) return good(b, step);
+          const h = $('.gh', b); b.classList.add('shake'); setTimeout(() => b.classList.remove('shake'), 400);
+          $('.gf', b).innerHTML = `❌ ${r.msg || 'Todavía no. Inténtalo otra vez.'}`; if (step.hint && h.hidden) { h.hidden = false; hints++; } };
+        boxes.forEach((b, i) => {
+          $('[data-gc]', b)?.addEventListener('click', () => tryAns(b, i, $('input', b).value));
+          $('input', b)?.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryAns(b, i, e.target.value); });
+          $$('[data-go]', b).forEach((o) => o.addEventListener('click', () => tryAns(b, i, o.dataset.go)));
+          $('[data-gh]', b)?.addEventListener('click', () => { const h = $('.gh', b); if (h.hidden) { h.hidden = false; hints++; } });
+        });
+        open(0);
+      },
+    };
+    return `${head(p)}${p.intro ? `<p class="lp">${rich(p.intro)}</p>` : ''}<div class="gsteps">${S.map((s, i) => `<div class="gs" ${i ? 'hidden' : ''}><div class="gq"><span class="qn">${i + 1}</span><div class="qt">${s.q}</div></div>
+      ${(s.mode || 'n') === 'sel' ? `<div class="gopts">${s.opts.map((o) => `<button class="opt" data-go="${esc(o)}">${rich(o)}</button>`).join('')}</div>` : `<div class="grow2"><input class="ti" type="text" inputmode="${(s.mode || 'n') === 'n' || s.mode === 'fs' ? 'decimal' : 'text'}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="✏️ Tu respuesta"><button class="btn" data-gc>Comprobar</button></div>`}
+      ${s.hint ? `<div class="ghbar"><button class="btn ghost sm" data-gh>💡 Pista</button></div><div class="gh" hidden>💡 ${rich(s.hint)}</div>` : ''}<div class="gf" role="status"></div></div>`).join('')}</div><div class="gend nexthint" hidden>🎉 ¡Terminaste! Ahora tú solo en lo que sigue. Toca <b>SIGUIENTE →</b></div><div class="chk"><span class="res" role="status"></span></div>`;
+  },
+
   tt(p, ctx) {
     let w; ctx.act = { mount(root) { w = W.mountTT($('.ttbox', root), p); }, check() { return w.check(); }, reveal() { w.reveal(); } };
     return `${head(p)}${p.hint ? `<p class="lp">${rich(p.hint)}</p>` : ''}<div class="ttbox"></div>${foot()}`;
@@ -144,7 +175,7 @@ const PAGE = {
         (saved?.c || []).forEach((v, i) => { if (boxes[i]) boxes[i].checked = !!v; }); upd();
         boxes.forEach((b) => b.addEventListener('change', () => { const n = upd(); done({ n, tot: boxes.length, c: boxes.map((x) => x.checked) }); })); },
     };
-    return `${head(p)}${p.intro ? `<p class="lp">${rich(p.intro)}</p>` : ''}${p.mat ? `<div class="co co-ana"><div class="co-l">🧰 Material</div><p>${rich(p.mat)}</p></div>` : ''}
+    return `${head(p)}${p.intro ? `<p class="lp">${rich(p.intro)}</p>` : ''}${p.mat ? `<div class="co co-ana"><div class="co-l">🧰 Material</div><p>${rich(p.mat)}</p></div>` : ''}${p.ejemplo ? `<div class="co co-ex"><div class="co-l">📌 Ejemplo para que veas cómo (hazlo parecido con lo tuyo)</div><p>${rich(p.ejemplo)}</p></div>` : ''}
       <div class="pgs"><i></i></div><div class="muted small pgl"></div>
       ${p.steps.map((s, i) => `<label class="stp"><input type="checkbox"><span><b>Paso ${i + 1}.</b> ${rich(s)}</span></label>`).join('')}
       ${p.deliver ? `<div class="co co-def"><div class="co-l">📤 Qué entregar</div><p>${rich(p.deliver)}</p></div>` : ''}
@@ -167,6 +198,7 @@ export async function moduloView(el, { profile, param }) {
   const pages = [{ type: 'intro', t: 'Inicio' }, ...mod.pages];
   let st = { done: {}, last: 0 };
   if (!preview) { const { data } = await sb.from('module_progress').select('done,last').eq('student_id', profile.id).eq('module', id).maybeSingle(); if (data) st = { done: data.done || {}, last: data.last || 0 }; }
+  const WORDS = {}; pages.forEach((p) => (p.blocks || []).forEach((b) => { if (b.k === 'words') b.items.forEach(([t, d]) => { WORDS[t.replace(/<[^>]+>|\*\*/g, '')] = d; }); }));
   let guided = true; let i = Math.min(st.last, pages.length - 1); let timer; let curSecs = 0; let doneLogged = false;
   const title = (k) => plain(pages[k].t || 'Inicio');
   const thr = (k) => (pages[k].type === 'practica' ? 0.99 : 0.6);
@@ -179,7 +211,7 @@ export async function moduloView(el, { profile, param }) {
   const canGo = () => { if (!guided) return true; const p = pages[i]; if (p.type === 'intro' || p.type === 'practica') return true; return isDone(i); };
   const log = (kind, detail) => logEvent(kind, id, i, { title: title(i), ...detail });
 
-  el.innerHTML = `<div class="mod"><div class="modtop"><a href="#/material" class="back">← Material</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
+  el.innerHTML = `<div class="mod"><div class="modtop"><a href="#/material" class="back">← Material</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon wbtn" id="gloss" aria-label="Diccionario" ${Object.keys(WORDS).length ? '' : 'hidden'}>📖 <span>Palabras</span></button><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
     ${preview ? '<div class="msg info prevbar">👁️ <b>Vista previa del docente</b> · el avance no se guarda. <label class="check" style="display:inline-flex;margin:0 0 0 10px"><input type="checkbox" id="gmode" checked> Ver con guía y bloqueos de alumno</label></div>' : ''}
     <div class="modbody"><aside class="modside" id="mside"></aside><main class="modmain"><div class="steps" id="steps"></div><div id="howslot"></div><article class="lesson" id="stage"></article>
     <div class="fnav"><button class="btn ghost" id="prev">← Atrás</button><span id="ct"></span><button class="btn big" id="next">Siguiente →</button></div></main></div></div>`;
@@ -202,7 +234,7 @@ export async function moduloView(el, { profile, param }) {
     const stage = $('#stage', el), res = $('.res', stage); const s = r.ok / r.tot; const needed = r.min ? r.min / r.tot : need; const passed = s >= needed - 1e-9;
     const old = st.done[i] || {}; const a = (old.a || 0) + 1, f = (old.f || 0) + (passed ? 0 : 1);
     mark(i, s, { a, f });
-    log('attempt', { ok: r.ok, tot: r.tot, pass: passed, a });
+    log('attempt', { ok: r.ok, tot: r.tot, pass: passed, a, ...(r.hints != null ? { hints: r.hints } : {}) });
     if (res) { res.innerHTML = passed ? `<span class="okcard">🎉 ¡Muy bien! ${r.ok} de ${r.tot}. <b>Toca SIGUIENTE →</b></span>` : `😅 Vas ${r.ok} de ${r.tot}. Corrige lo que salió en <b>rojo</b> y toca REVISAR otra vez.`; res.className = 'res ' + (passed ? 'ok' : 'bad'); }
     if (!passed && f >= 3 && !$('#skip', stage)) { const b = document.createElement('button'); b.id = 'skip'; b.className = 'btn ghost'; b.textContent = '⏭️ Saltar esta actividad'; b.onclick = () => { mark(i, 0.6, { sk: 1 }); log('skip', {}); toast('Actividad saltada: tu profe lo verá', 'ok'); }; res?.parentElement.append(b); }
     if (passed) { $('#next', el).scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -271,6 +303,7 @@ export async function moduloView(el, { profile, param }) {
   $('#next', el).onclick = () => { if (!canGo()) return; if (i === pages.length - 1) { maybeDone(); location.hash = '#/material'; } else go(i + 1); };
   $('#mside', el).addEventListener('click', (e) => { const b = e.target.closest('.sl'); if (b && !b.disabled) { go(+b.dataset.k); $('#mside', el).classList.remove('open'); $('.scrim')?.remove(); } });
   $('#mmenu', el).onclick = () => { const s = $('#mside', el); s.classList.toggle('open'); if (s.classList.contains('open')) { const sc = document.createElement('div'); sc.className = 'scrim on'; sc.onclick = () => { s.classList.remove('open'); sc.remove(); }; document.body.append(sc); } };
+  $('#gloss', el).onclick = () => modal('📖 Diccionario: palabras de este módulo', `<p class="muted small">Si no entiendes una palabra, aquí está explicada en fácil.</p><div class="words nob">${Object.entries(WORDS).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([t, d]) => `<div class="wd"><b>${esc(t)}</b><span>${rich(d)}</span></div>`).join('')}</div>`, { wide: true });
   $('#gmode', el)?.addEventListener('change', (e) => { guided = e.target.checked; draw(); });
   $('#steps', el).innerHTML = pages.map(() => '<i></i>').join('');
 

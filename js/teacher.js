@@ -423,15 +423,17 @@ async function avance(el, { param } = {}) {
 
 // ============================ VISTA ALUMNO ============================
 async function vistaAlumno(el, { param, profile }) {
-  const tab = param[0] || 'material';
-  el.innerHTML = `<div class="msg info" style="margin:0 0 14px">👁️ <b>Vista previa de alumno.</b> Así lo verán tus alumnos; lo marcado como «Borrador» solo lo ves tú.</div>
+  const tab = param[0] || 'material'; const showHidden = sessionStorage.getItem('pear-showhidden') === '1';
+  el.innerHTML = `<div class="msg info" style="margin:0 0 14px">👁️ <b>Vista previa de alumno.</b> Aquí ves <b>exactamente lo que ven tus alumnos</b>: lo que ocultaste no aparece.
+    <label class="check" style="margin:8px 0 0"><input type="checkbox" id="sh" ${showHidden ? 'checked' : ''}> Incluir también lo oculto y lo «solo docente» (solo para que lo revises; los alumnos no lo ven)</label></div>
   <div class="head"><h1>Vista alumno</h1></div>
   <div class="tabs">${[['material', 'Material'], ['tareas', 'Tareas'], ['cronograma', 'Cronograma']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('')}</div><div id="pv"></div>`;
   $$('.tabs button', el).forEach((b) => b.onclick = () => { location.hash = '#/vista/' + b.dataset.t; });
   const box = $('#pv', el);
-  if (tab === 'tareas') await tareasPreview(box);
+  $('#sh', el).onchange = (e) => { sessionStorage.setItem('pear-showhidden', e.target.checked ? '1' : '0'); vistaAlumno(el, { param, profile }); };
+  if (tab === 'tareas') await tareasPreview(box, { showHidden });
   else if (tab === 'cronograma') await calendarView(box);
-  else await studentMaterial(box, { preview: true, profile });
+  else await studentMaterial(box, { preview: true, profile, showHidden });
 }
 
 export const teacherRoutes = {

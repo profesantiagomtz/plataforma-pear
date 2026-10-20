@@ -34,9 +34,9 @@ const MATRANK = (m) => (m.kind === 'module' ? 0 : /Contenidos/.test(m.title) ? 1
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const shortDay = (s) => { const d = new Date(s + 'T12:00:00'); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
 
-export async function material(el, { preview, profile } = {}) {
+export async function material(el, { preview, profile, showHidden } = {}) {
   const none = Promise.resolve({ data: [] });
-  const [{ data: units }, { data: mats }, { data: asg }, { data: sch }, { data: prog }, { data: subs }] = await Promise.all([
+  const [{ data: units }, { data: mats0 }, { data: asg0 }, { data: sch }, { data: prog }, { data: subs }] = await Promise.all([
     sb.from('units').select('*').order('ord'),
     sb.from('materials').select('*').order('created_at'),
     sb.from('assignments').select('id,unit_id,title,is_ae,due_at,published').order('created_at'),
@@ -44,6 +44,9 @@ export async function material(el, { preview, profile } = {}) {
     profile?.id ? sb.from('module_progress').select('module,pct').eq('student_id', profile.id) : none,
     profile?.id ? sb.from('submissions').select('assignment_id,score').eq('student_id', profile.id) : none,
   ]);
+  // El docente ve exactamente lo que ve un alumno (lo oculto y lo «solo docente» no aparece), salvo que lo pida.
+  const mats = preview && !showHidden ? mats0.filter((m) => m.published && !m.teacher_only) : mats0;
+  const asg = preview && !showHidden ? asg0.filter((a) => a.published) : asg0;
   const pg = Object.fromEntries((prog || []).map((p) => [p.module, p.pct])); const sm = Object.fromEntries((subs || []).map((s) => [s.assignment_id, s]));
   const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id).sort((a, b) => MATRANK(a) - MATRANK(b)), tasks: asg.filter((a) => a.unit_id === u.id) }));
   const loose = mats.filter((m) => !m.unit_id);
@@ -68,8 +71,9 @@ export async function material(el, { preview, profile } = {}) {
   }));
 }
 
-export async function tareasPreview(el) {
-  const [{ data: asg }, { data: units }] = await Promise.all([sb.from('assignments').select('*').order('due_at', { nullsFirst: false }), sb.from('units').select('id,code')]);
+export async function tareasPreview(el, { showHidden } = {}) {
+  const [{ data: asg0 }, { data: units }] = await Promise.all([sb.from('assignments').select('*').order('due_at', { nullsFirst: false }), sb.from('units').select('id,code')]);
+  const asg = showHidden ? asg0 : asg0.filter((a) => a.published);
   const uc = Object.fromEntries(units.map((u) => [u.id, u.code]));
   el.innerHTML = asg.length ? `<div class="list">${asg.map((a) => `<div class="card flat" style="margin:0"><div class="t"><b>${esc(a.title)}</b> ${a.published ? '' : '<span class="badge warn">Borrador · no visible</span>'} ${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}</div>
     <div class="muted small">${uc[a.unit_id] ? 'Propósito ' + uc[a.unit_id] + ' · ' : ''}${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div><p class="pre small">${esc(a.instructions || 'Sin instrucciones adicionales.')}</p>
