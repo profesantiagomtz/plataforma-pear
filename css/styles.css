@@ -286,3 +286,15 @@ td.att{white-space:nowrap}.ab{display:inline-flex;flex-direction:column;align-it
 .ab.on{color:#fff}.ab.on.ok{background:var(--ok);border-color:var(--ok)}.ab.on.warn{background:var(--warn);border-color:var(--warn)}.ab.on.bad{background:var(--bad);border-color:var(--bad)}.ab.on.info{background:var(--info);border-color:var(--info)}
 @media(max-width:560px){.ab{min-width:54px;padding:6px 4px}}
 @media print{.nav,.topbar,.btn,.toolbar{display:none!important}.shell{padding:0}main{padding:0}}
+/* Ciencia de Datos · Batalla Naval Cuneiforme */
+.cu{fill:currentColor;vertical-align:middle}.cu.cl{width:9px;height:17px}.cu.cn{width:14px;height:12px}
+.cun{display:inline-flex;align-items:center;gap:2px}.cdg{display:inline-flex;align-items:center;gap:1px}.cdg .cls{display:inline-grid;grid-template-columns:repeat(3,auto);gap:0 1px}
+.cdg.empty{width:14px;height:16px;border:1px dashed var(--line);border-radius:3px}.csp{display:inline-block;width:12px}
+.cprev{min-height:56px;display:flex;align-items:center;justify-content:center;margin:12px 0;padding:10px;background:var(--surface2);border-radius:10px;color:var(--text)}
+.cprev.big .cu.cl{width:14px;height:26px}.cprev.big .cu.cn{width:22px;height:18px}
+.nvl{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.nb{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.nc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);padding:0}
+button.nc{cursor:pointer}button.nc:hover:not(:disabled){border-color:var(--brand)}button.nc:disabled{cursor:default}
+.nc.sel{outline:3px solid var(--brand)}.nc.ship{background:var(--info-soft)}.nc.miss{background:var(--surface2);color:var(--muted);text-decoration:line-through}.nc.hit{background:var(--bad);color:#fff}
+.cbuild{display:flex;gap:24px;flex-wrap:wrap}.ctl{display:flex;align-items:center;gap:8px;margin:4px 0}.ctl span{width:56px}.ctl b{min-width:18px;text-align:center}

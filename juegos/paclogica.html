@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pac-Lógica v2 · Simulador de Algoritmos · 13×10</title>
+<style>
+  :root{
+    --bg:#0b1020;--panel:#121a32;--panel2:#0e1528;--ink:#e8eefc;--muted:#9fb0d6;
+    --accent:#ffd23f;--accent2:#2c7b9b;--ok:#39d98a;--bad:#ff5c7a;--wall:#1f3a8a;--line:#26315a;
+    --pink:#ff6ad5;--cyan:#4cd6ff;--purple:#b08bff;--door:#ff8a3d;--sw:#39d98a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,#0e1530,#0b1020)}
+  header .dot{width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  header h1{font-size:17px;margin:0;letter-spacing:.5px}
+  header .sub{color:var(--muted);font-size:12px}
+  nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .tab.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .wrap{display:grid;grid-template-columns:minmax(430px,1.15fr) minmax(380px,1fr);gap:16px;padding:16px;align-items:start}
+  @media(max-width:1024px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .card h2{margin:0 0 10px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  canvas{background:#05070f;border-radius:10px;display:block;width:100%;height:auto;border:1px solid var(--line)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  select,button,input{font-family:inherit;font-size:13px}
+  .btn{background:var(--accent2);color:#fff;border:none;padding:9px 14px;border-radius:9px;cursor:pointer;font-weight:600}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.go{background:var(--ok);color:#05230f}
+  .btn.warn{background:#33406e;color:var(--ink)}
+  .btn.small{padding:5px 9px;font-size:12px;border-radius:7px}
+  .sel{background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:8px;border-radius:8px}
+  .status{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:14px;min-height:22px}
+  .status.ok{border-color:var(--ok);color:var(--ok)}.status.bad{border-color:var(--bad);color:var(--bad)}
+  .metrics{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .metrics b{color:var(--ink)}
+  .pill{font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--muted)}
+  .reto{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .prog{min-height:50px}
+  .container{border-left:2px dashed var(--line);margin-left:6px;padding-left:10px}
+  .block{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;margin:6px 0;font-size:13px}
+  .block .head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .block .kw{font-weight:700}
+  .block.mov{border-left:4px solid var(--accent)}.block.si{border-left:4px solid var(--cyan)}
+  .block.rep{border-left:4px solid var(--pink)}.block.mie{border-left:4px solid var(--purple)}
+  .x{margin-left:auto;background:#33406e;border:none;color:#fff;border-radius:6px;cursor:pointer;width:22px;height:22px;line-height:1}
+  .x:hover{background:var(--bad)}
+  .branchlabel{font-size:11px;color:var(--muted);margin:4px 0 0 6px;text-transform:uppercase;letter-spacing:1px}
+  .legend{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7}
+  .legend code{background:var(--panel2);padding:1px 5px;border-radius:5px;color:var(--accent)}
+  .cond .sel{padding:4px 6px;font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(3,6,16,.75);display:none;align-items:center;justify-content:center;padding:18px;z-index:9}
+  .modal.show{display:flex}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:520px;width:100%}
+  table.tv{border-collapse:collapse;width:100%;margin-top:10px;font-size:14px}
+  table.tv th,table.tv td{border:1px solid var(--line);padding:7px 9px;text-align:center}
+  table.tv th{background:var(--panel2);color:var(--muted)}
+  .V{color:var(--ok);font-weight:700}.Fx{color:var(--bad);font-weight:700}
+  .view{display:none}.view.active{display:block}
+  /* diseñador */
+  .paint{display:grid;gap:2px;background:var(--line);padding:4px;border-radius:8px}
+  .pcell{aspect-ratio:1;background:#05070f;border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;user-select:none}
+  .palette{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .pbtn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .pbtn.sel{border-color:var(--accent);background:#2a2410}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+  footer{padding:14px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ok);color:#05230f;padding:10px 18px;border-radius:10px;font-weight:700;opacity:0;transition:.3s;z-index:20}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <div><h1>PAC-LÓGICA v2 · Simulador de Algoritmos</h1>
+    <div class="sub">Reto del Pacman de las proposiciones · Tablero 13×10 · Funciona sin internet</div></div>
+  <nav>
+    <button class="tab active" data-v="jugar">▶ Jugar</button>
+    <button class="tab" data-v="disenador">✎ Diseñador</button>
+    <span class="pill" id="modePill">texto</span>
+    <button class="btn small warn" id="toggleMode">símbolos (∧ ∨ ¬ ↔)</button>
+  </nav>
+</header>
+
+<!-- ================= JUGAR ================= -->
+<div class="view active" id="v-jugar">
+<div class="wrap">
+  <div class="card">
+    <h2>Tablero</h2>
+    <canvas id="cv" width="598" height="460"></canvas>
+    <div class="row">
+      <label class="sub">Escenario:</label>
+      <select id="escSel" class="sel" style="min-width:230px"></select>
+      <button class="btn warn small" id="resetBtn">Reiniciar</button>
+    </div>
+    <div class="reto" id="reto"></div>
+    <div class="row">
+      <button class="btn go" id="runBtn">▶ Ejecutar</button>
+      <button class="btn" id="stepBtn">▷ Paso a paso</button>
+      <label class="sub">Velocidad</label>
+      <span class="sub" style="font-size:11px">lento</span>
+      <input type="range" id="spd" min="50" max="600" value="400" style="width:100px">
+      <span class="sub" style="font-size:11px">rápido</span>
+    </div>
+    <div class="status" id="status">Elige un escenario, construye tu algoritmo y presiona Ejecutar.</div>
+    <div class="metrics">
+      <span>Bloques: <b id="mBlocks">0</b></span>
+      <span>Movimientos: <b id="mMoves">0</b></span>
+      <span>Interruptor: <b id="mSw">apagado</b></span>
+      <span>Resultado: <b id="mRes">—</b></span>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Mi algoritmo</h2>
+    <div class="prog" id="prog"></div>
+    <div id="rootAdd" style="margin-top:6px"></div>
+    <button class="btn warn small" id="clearProg" style="margin-top:8px">🗑 Vaciar algoritmo</button>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+</div>
+
+<!-- ================= DISEÑADOR ================= -->
+<div class="view" id="v-disenador">
+<div class="wrap">
+  <div class="card">
+    <h2>Diseña tu escenario (13×10)</h2>
+    <div class="palette" id="palette"></div>
+    <div class="paint" id="paint" style="grid-template-columns:repeat(13,1fr)"></div>
+    <div class="row">
+      <label class="sub">Pacman mira hacia:</label>
+      <select id="dsDir" class="sel">
+        <option value="0">arriba</option><option value="1" selected>derecha</option>
+        <option value="2">abajo</option><option value="3">izquierda</option>
+      </select>
+      <button class="btn warn small" id="dsClear">Vaciar</button>
+    </div>
+    <div class="row">
+      <button class="btn go" id="dsTest">Probar en el simulador ▶</button>
+      <button class="btn warn small" id="dsExport">⬇ Exportar (.json)</button>
+      <label class="btn warn small" style="display:inline-block">⬆ Importar<input type="file" id="dsImp" accept=".json" style="display:none"></label>
+    </div>
+    <div class="status" id="dsStatus">Pinta muros, Pac-Man, fantasma, interruptor y puerta. Debe haber 1 Pac-Man y 1 fantasma.</div>
+  </div>
+  <div class="card">
+    <h2>Cómo usar el diseñador</h2>
+    <div class="legend" style="font-size:13px;line-height:1.8">
+      1. Elige un elemento de la paleta y haz clic (o arrastra) sobre la cuadrícula para pintarlo.<br>
+      2. Coloca <b>1 Pac-Man</b> (inicio) y <b>1 fantasma</b> (meta). Opcional: <b>interruptor</b> y <b>puerta</b>.<br>
+      3. Regla de la puerta: la <b>puerta está abierta si y solo si el interruptor está activado</b> (<code>puerta ↔ interruptor</code>). Pon la puerta bloqueando el paso al fantasma y el interruptor en un desvío.<br>
+      4. Pulsa <b>Probar en el simulador</b> para resolverlo con bloques, igual que los demás escenarios.<br>
+      5. <b>Exporta</b> tu escenario a un archivo e <b>intercámbialo</b> con otro equipo (ellos lo <b>importan</b> y lo resuelven).
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal tabla de verdad -->
+<div class="modal" id="tvModal"><div class="box">
+  <h2 style="color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-size:14px;margin-top:0">Tabla de verdad de la condición</h2>
+  <div id="tvExpr" style="font-size:15px;margin:6px 0 4px"></div>
+  <div id="tvBody"></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn" id="tvClose">Cerrar</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<footer>PAC-LÓGICA v2 · Material didáctico offline · IINIA para IYF · www.iinia.center</footer>
+
+<script>
+"use strict";
+</script>
+<script>
+const ESCENARIOS=[{"id": "EJ_R1", "label": "Ejemplo · Ronda 1", "grupo": "ej1", "dir": 1, "grid": ["#############", "#P...########", "####.########", "####.########", "####F########", "#############", "#############", "#############", "#############", "#############"]}, {"id": "R1_E1", "label": "Ronda 1 · Equipo 1", "grupo": "r1", "dir": 1, "grid": ["#############", "#P.....######", "######.######", "######.######", "######.######", "######.######", "######F######", "#############", "#############", "#############"]}, {"id": "R1_E2", "label": "Ronda 1 · Equipo 2", "grupo": "r1", "dir": 2, "grid": ["#############", "#P###########", "#.###########", "#.###########", "#.###########", "#.###########", "#......F#####", "#############", "#############", "#############"]}, {"id": "R1_E3", "label": "Ronda 1 · Equipo 3", "grupo": "r1", "dir": 1, "grid": ["#############", "#P...########", "####.########", "####.########", "####.....####", "########.####", "########.####", "########F####", "#############", "#############"]}, {"id": "R1_E4", "label": "Ronda 1 · Equipo 4", "grupo": "r1", "dir": 1, "grid": ["#############", "#P......#####", "#######.#####", "#######.#####", "###F....#####", "#############", "#############", "#############", "#############", "#############"]}, {"id": "R1_E5", "label": "Ronda 1 · Equipo 5", "grupo": "r1", "dir": 1, "grid": ["#############", "#############", "####.....####", "####.###.####", "####.###.####", "#P...###...F#", "#############", "#############", "#############", "#############"]}, {"id": "EJ_R2", "label": "Ejemplo · Ronda 2", "grupo": "ej2", "dir": 1, "grid": ["#############", "#P.....D.F###", "####.########", "####S########", "#############", "#############", "#############", "#############", "#############", "#############"]}, {"id": "R2_E1", "label": "Ronda 2 · Equipo 1", "grupo": "r2", "dir": 1, "grid": ["#############", "#P.......D.F#", "#####.#######", "#####.#######", "#####S#######", "#############", "#############", "#############", "#############", "#############"]}, {"id": "R2_E2", "label": "Ronda 2 · Equipo 2", "grupo": "r2", "dir": 2, "grid": ["#############", "#P###########", "#.###########", "#.###S#######", "#.###.#######", "#.###.#######", "#.....#######", "#####D#######", "#####F#######", "#############"]}, {"id": "R2_E3", "label": "Ronda 2 · Equipo 3", "grupo": "r2", "dir": 1, "grid": ["#############", "#P..........#", "###########.#", "#.D......S..#", "#.###########", "#F###########", "#############", "#############", "#############", "#############"]}, {"id": "R2_E4", "label": "Ronda 2 · Equipo 4", "grupo": "r2", "dir": 1, "grid": ["#############", "#####S#######", "#####.#######", "#P......D..##", "##########.##", "#########F.##", "#############", "#############", "#############", "#############"]}, {"id": "R2_E5", "label": "Ronda 2 · Equipo 5", "grupo": "r2", "dir": 1, "grid": ["#############", "#P....S.....#", "###########.#", "###########.#", "#F#########.#", "#D#########.#", "#.#########.#", "#.#########.#", "#...........#", "#############"]}];
+</script>
+<script>
+"use strict";
+/* ===== MOTOR ===== */
+const DIRS=[[-1,0],[0,1],[1,0],[0,-1]]; // 0 arriba,1 der,2 abajo,3 izq
+const SENSORS=[
+  {k:'pared_frente',txt:'pared al frente',sym:'Pf'},
+  {k:'pared_derecha',txt:'pared a la derecha',sym:'Pd'},
+  {k:'pared_izquierda',txt:'pared a la izquierda',sym:'Pi'},
+  {k:'libre_frente',txt:'camino libre al frente',sym:'Lf'},
+  {k:'libre_derecha',txt:'camino libre a la derecha',sym:'Ld'},
+  {k:'libre_izquierda',txt:'camino libre a la izquierda',sym:'Li'},
+  {k:'fantasma_frente',txt:'fantasma al frente',sym:'Gf'},
+  {k:'interruptor_activado',txt:'interruptor activado',sym:'Ia'},
+  {k:'puerta_frente',txt:'puerta al frente',sym:'Pu'},
+  {k:'llegue',txt:'llegué al fantasma',sym:'Ok'},
+];
+const SMAP={}; SENSORS.forEach(s=>SMAP[s.k]=s);
+const OPS=[['','(sin segundo)'],['Y','Y'],['O','O'],['SSI','↔']]; // ↔ = bicondicional
+
+function parseEsc(e){
+  const grid=e.grid.map(r=>r.split(''));
+  let pac=null,fr=-1,fc=-1;
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){
+    const ch=grid[r][c];
+    if(ch==='P'){pac={r,c,dir:e.dir};grid[r][c]='.';}
+    if(ch==='F'){fr=r;fc=c;}
+  }
+  return {grid,R:grid.length,C:grid[0].length,fr,fc,
+    startPac:{r:pac.r,c:pac.c},startDir:e.dir,
+    pac:{r:pac.r,c:pac.c,dir:e.dir},switchOn:false,swOn:{}};
+}
+function cellAt(S,r,c){ if(r<0||c<0||r>=S.R||c>=S.C)return '#'; return S.grid[r][c]; }
+function blocked(S,r,c){ // ¿no se puede pisar?
+  const ch=cellAt(S,r,c);
+  if(ch==='#')return true;
+  if(ch==='D' && !S.switchOn)return true; // puerta cerrada
+  return false;
+}
+function sensor(S,key){
+  const {r,c,dir}=S.pac;
+  const f=[r+DIRS[dir][0],c+DIRS[dir][1]];
+  const rg=[r+DIRS[(dir+1)%4][0],c+DIRS[(dir+1)%4][1]];
+  const lf=[r+DIRS[(dir+3)%4][0],c+DIRS[(dir+3)%4][1]];
+  switch(key){
+    case 'pared_frente':return blocked(S,f[0],f[1]);
+    case 'pared_derecha':return blocked(S,rg[0],rg[1]);
+    case 'pared_izquierda':return blocked(S,lf[0],lf[1]);
+    case 'libre_frente':return !blocked(S,f[0],f[1]);
+    case 'libre_derecha':return !blocked(S,rg[0],rg[1]);
+    case 'libre_izquierda':return !blocked(S,lf[0],lf[1]);
+    case 'fantasma_frente':return f[0]===S.fr&&f[1]===S.fc;
+    case 'interruptor_activado':return S.switchOn===true;
+    case 'puerta_frente':return cellAt(S,f[0],f[1])==='D';
+    case 'llegue':return r===S.fr&&c===S.fc;
+  } return false;
+}
+function evalCond(S,cond){
+  let v1=sensor(S,cond.s1); if(cond.neg1)v1=!v1;
+  if(!cond.op)return v1;
+  let v2=sensor(S,cond.s2); if(cond.neg2)v2=!v2;
+  if(cond.op==='Y')return v1&&v2;
+  if(cond.op==='O')return v1||v2;
+  if(cond.op==='SSI')return v1===v2; // bicondicional
+  return v1;
+}
+
+/* ===== ESTADO ===== */
+let S=parseEsc(ESCENARIOS[0]);
+let program=[]; let running=false,cancel=false; let mode='texto';
+let stepResolver=null;
+
+/* ===== CANVAS ===== */
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+function fit(){ const cell=Math.floor(Math.min(598/S.C,460/S.R)); cv.width=S.C*cell; cv.height=S.R*cell; }
+function draw(){
+  const cell=cv.width/S.C;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  for(let r=0;r<S.R;r++)for(let c=0;c<S.C;c++){
+    const x=c*cell,y=r*cell,ch=S.grid[r][c];
+    if(ch==='#'){ctx.fillStyle='#0a1024';ctx.fillRect(x,y,cell,cell);ctx.fillStyle='#1f3a8a';ctx.fillRect(x+2,y+2,cell-4,cell-4);}
+    else{ctx.fillStyle='#05070f';ctx.fillRect(x,y,cell,cell);ctx.fillStyle='#0e1730';ctx.beginPath();ctx.arc(x+cell/2,y+cell/2,2,0,7);ctx.fill();}
+    if(ch==='D')drawDoor(x,y,cell);
+    if(ch==='S')drawSwitch(x,y,cell,!!S.swOn[r+','+c]);
+  }
+  drawGhost(S.fc*cell,S.fr*cell,cell);
+  drawPac(S.pac.c*cell,S.pac.r*cell,cell,S.pac.dir);
+}
+function drawDoor(x,y,cell){
+  const open=S.switchOn;
+  ctx.fillStyle=open?'#123d24':'#3a1a10';ctx.fillRect(x+2,y+2,cell-4,cell-4);
+  ctx.strokeStyle=open?'#39d98a':'#ff8a3d';ctx.lineWidth=2;
+  if(open){ctx.beginPath();ctx.moveTo(x+cell*0.3,y+cell*0.25);ctx.lineTo(x+cell*0.45,y+cell*0.7);ctx.lineTo(x+cell*0.72,y+cell*0.28);ctx.stroke();}
+  else{for(let i=1;i<=3;i++){ctx.beginPath();ctx.moveTo(x+cell*0.2,y+cell*0.2*i+cell*0.05);ctx.lineTo(x+cell*0.8,y+cell*0.2*i+cell*0.05);ctx.stroke();}}
+}
+function drawSwitch(x,y,cell,on){
+  ctx.fillStyle=on?'#39d98a':'#264a34';ctx.beginPath();
+  ctx.arc(x+cell/2,y+cell/2,cell*0.28,0,7);ctx.fill();
+  ctx.fillStyle=on?'#05230f':'#7fe6b0';ctx.font=`bold ${cell*0.34}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('I',x+cell/2,y+cell/2+1);
+}
+function drawPac(x,y,cell,dir){
+  const cx=x+cell/2,cy=y+cell/2,rad=cell*0.38;
+  const rotByDir=[-Math.PI/2,0,Math.PI/2,Math.PI],a=rotByDir[dir],mouth=0.28*Math.PI;
+  ctx.fillStyle='#ffd23f';ctx.beginPath();ctx.moveTo(cx,cy);
+  ctx.arc(cx,cy,rad,a+mouth,a-mouth+Math.PI*2);ctx.closePath();ctx.fill();
+}
+function drawGhost(x,y,cell){
+  const cx=x+cell/2,cy=y+cell/2,rad=cell*0.34;
+  ctx.fillStyle='#ff6ad5';ctx.beginPath();ctx.arc(cx,cy-2,rad,Math.PI,0);
+  ctx.lineTo(cx+rad,cy+rad*0.8);
+  for(let i=0;i<3;i++){ctx.lineTo(cx+rad-(i*2+1)*rad/3,cy+rad*0.5);ctx.lineTo(cx+rad-(i*2+2)*rad/3,cy+rad*0.8);}
+  ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-rad*0.35,cy-2,rad*0.22,0,7);ctx.arc(cx+rad*0.35,cy-2,rad*0.22,0,7);ctx.fill();
+  ctx.fillStyle='#1b2333';ctx.beginPath();ctx.arc(cx-rad*0.30,cy-2,rad*0.11,0,7);ctx.arc(cx+rad*0.40,cy-2,rad*0.11,0,7);ctx.fill();
+}
+
+/* ===== INTÉRPRETE ===== */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function execProgram(stepMode){
+  if(running)return; resetState(false); running=true; cancel=false;
+  let ops=0,moves=0; const MAX=3000; let result=null;
+  const spd=()=>650-parseInt(document.getElementById('spd').value);
+  async function prim(kind){
+    if(result||cancel)return; ops++; if(ops>MAX){result='ciclo';return;}
+    if(kind==='avanzar'){
+      const {r,c,dir}=S.pac,nr=r+DIRS[dir][0],nc=c+DIRS[dir][1];
+      if(blocked(S,nr,nc)){result='choque';return;}
+      S.pac.r=nr;S.pac.c=nc;moves++;
+      if(S.grid[nr][nc]==='S'){const k=nr+','+nc;S.swOn[k]=!S.swOn[k];S.switchOn=!S.switchOn;}
+      if(nr===S.fr&&nc===S.fc)result='exito';
+    } else if(kind==='girar_der'){S.pac.dir=(S.pac.dir+1)%4;moves++;}
+    else if(kind==='girar_izq'){S.pac.dir=(S.pac.dir+3)%4;moves++;}
+    setMetrics(countBlocks(program),moves,'…');
+    document.getElementById('mSw').textContent=S.switchOn?'activado':'apagado';
+    draw();
+    if(stepMode)await waitStep(); else await sleep(spd());
+  }
+  async function exec(nodes){
+    for(const n of nodes){
+      if(result||cancel)return;
+      if(n.t==='avanzar')await prim('avanzar');
+      else if(n.t==='girar')await prim(n.dir==='der'?'girar_der':'girar_izq');
+      else if(n.t==='si'){ if(evalCond(S,n.cond))await exec(n.then); else if(n.els)await exec(n.els); }
+      else if(n.t==='repetir'){ for(let i=0;i<n.n&&!result&&!cancel;i++)await exec(n.body); }
+      else if(n.t==='mientras'){ let g=0; while(evalCond(S,n.cond)&&!result&&!cancel){g++;if(g>MAX){result='ciclo';break;}await exec(n.body);} }
+    }
+  }
+  await exec(program); running=false; finish(result,moves);
+}
+function waitStep(){return new Promise(res=>{stepResolver=res;});}
+document.getElementById('stepBtn').onclick=async()=>{ if(!running)execProgram(true); else if(stepResolver){const r=stepResolver;stepResolver=null;r();} };
+function finish(result){
+  const st=document.getElementById('status'),mRes=document.getElementById('mRes');
+  if(result==='exito'){st.className='status ok';st.textContent='✓ ¡Pac-Man alcanzó al fantasma!';mRes.textContent='ÉXITO';mRes.style.color='var(--ok)';}
+  else if(result==='choque'){st.className='status bad';st.textContent='✗ Choque: avanzaste hacia un muro o una puerta cerrada. Recuerda: la puerta abre ↔ el interruptor está activado.';mRes.textContent='CHOQUE';mRes.style.color='var(--bad)';}
+  else if(result==='ciclo'){st.className='status bad';st.textContent='✗ Tu algoritmo no termina (ciclo infinito). Revisa tu MIENTRAS.';mRes.textContent='CICLO';mRes.style.color='var(--bad)';}
+  else{st.className='status';st.textContent='Terminó sin llegar al fantasma. Agrega más pasos.';mRes.textContent='SIN LLEGAR';mRes.style.color='var(--muted)';}
+}
+
+/* ===== PROGRAMA ===== */
+function countBlocks(ns){let n=0;for(const x of ns){n++;if(x.t==='si'){n+=countBlocks(x.then);if(x.els)n+=countBlocks(x.els);}if(x.t==='repetir')n+=countBlocks(x.body);if(x.t==='mientras')n+=countBlocks(x.body);}return n;}
+function newCond(){return {neg1:false,s1:'pared_frente',op:null,neg2:false,s2:'libre_frente'};}
+function addBlock(container,type){
+  if(type==='avanzar')container.push({t:'avanzar'});
+  else if(type==='girar_der')container.push({t:'girar',dir:'der'});
+  else if(type==='girar_izq')container.push({t:'girar',dir:'izq'});
+  else if(type==='si')container.push({t:'si',cond:newCond(),then:[],els:null});
+  else if(type==='sino')container.push({t:'si',cond:newCond(),then:[],els:[]});
+  else if(type==='repetir')container.push({t:'repetir',n:3,body:[]});
+  else if(type==='mientras')container.push({t:'mientras',cond:newCond(),body:[]});
+  renderProgram();
+}
+function addMenu(container){
+  const s=document.createElement('select');s.className='sel';s.style.fontSize='12px';
+  s.innerHTML='<option value="">+ Agregar bloque…</option><option value="avanzar">Avanzar</option>'+
+    '<option value="girar_der">Girar a la derecha</option><option value="girar_izq">Girar a la izquierda</option>'+
+    '<option value="si">SI … ENTONCES</option><option value="sino">SI … ENTONCES … SI NO</option>'+
+    '<option value="repetir">REPETIR n VECES</option><option value="mientras">MIENTRAS … HACER</option>';
+  s.onchange=()=>{if(s.value)addBlock(container,s.value);};
+  return s;
+}
+function symName(op){ if(op==='Y')return mode==='simbolos'?'∧':'Y'; if(op==='O')return mode==='simbolos'?'∨':'O'; if(op==='SSI')return mode==='simbolos'?'↔':'si y solo si'; return ''; }
+function condEditor(cond){
+  const wrap=document.createElement('span');wrap.className='cond';
+  const mkNeg=(key)=>{const b=document.createElement('button');b.className='btn small warn';b.style.padding='3px 7px';
+    const set=()=>b.textContent=cond[key]?(mode==='simbolos'?'¬':'NO'):'—';set();b.title='Negación';
+    b.onclick=()=>{cond[key]=!cond[key];renderProgram();};return b;};
+  const mkSensor=(key)=>{const s=document.createElement('select');s.className='sel';
+    SENSORS.forEach(se=>{const o=document.createElement('option');o.value=se.k;o.textContent=mode==='simbolos'?se.sym:se.txt;if(cond[key]===se.k)o.selected=true;s.appendChild(o);});
+    s.onchange=()=>{cond[key]=s.value;renderProgram();};return s;};
+  const opSel=document.createElement('select');opSel.className='sel';
+  OPS.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=(v==='SSI'&&mode!=='simbolos')?'↔ (si y solo si)':t;if((cond.op||'')===v)o.selected=true;opSel.appendChild(o);});
+  opSel.onchange=()=>{cond.op=opSel.value||null;renderProgram();};
+  wrap.appendChild(mkNeg('neg1'));wrap.appendChild(mkSensor('s1'));wrap.appendChild(opSel);
+  if(cond.op){wrap.appendChild(mkNeg('neg2'));wrap.appendChild(mkSensor('s2'));}
+  const tv=document.createElement('button');tv.className='btn small';tv.style.background='#33406e';tv.textContent='Tabla de verdad';
+  tv.onclick=()=>showTV(cond);wrap.appendChild(tv);
+  return wrap;
+}
+function ruleTextOfCond(cond){
+  const lab=(k)=>mode==='simbolos'?SMAP[k].sym:SMAP[k].txt;
+  let t=(cond.neg1?(mode==='simbolos'?'¬':'NO '):'')+lab(cond.s1);
+  if(cond.op)t+=' '+symName(cond.op)+' '+(cond.neg2?(mode==='simbolos'?'¬':'NO '):'')+lab(cond.s2);
+  return t;
+}
+function renderProgram(){
+  const host=document.getElementById('prog');host.innerHTML='';host.appendChild(renderNodes(program));
+  const ra=document.getElementById('rootAdd');ra.innerHTML='';ra.appendChild(addMenu(program));
+  setMetrics(countBlocks(program),0,'—');renderLegend();
+}
+function renderNodes(nodes){
+  const box=document.createElement('div');
+  nodes.forEach((n,idx)=>{
+    const b=document.createElement('div');b.className='block';
+    const head=document.createElement('div');head.className='head';
+    const kw=document.createElement('span');kw.className='kw';
+    if(n.t==='avanzar'){b.classList.add('mov');kw.textContent='AVANZAR';head.appendChild(kw);}
+    else if(n.t==='girar'){b.classList.add('mov');kw.textContent='GIRAR '+(n.dir==='der'?'a la derecha ↻':'a la izquierda ↺');head.appendChild(kw);}
+    else if(n.t==='si'){b.classList.add('si');kw.textContent='SI';head.appendChild(kw);head.appendChild(condEditor(n.cond));const e=document.createElement('span');e.className='kw';e.textContent='ENTONCES';head.appendChild(e);}
+    else if(n.t==='repetir'){b.classList.add('rep');kw.textContent='REPETIR';head.appendChild(kw);
+      const inp=document.createElement('input');inp.type='number';inp.min=1;inp.max=50;inp.value=n.n;inp.className='sel';inp.style.width='58px';
+      inp.onchange=()=>{n.n=Math.max(1,Math.min(50,parseInt(inp.value)||1));};head.appendChild(inp);
+      const v=document.createElement('span');v.className='kw';v.textContent='VECES';head.appendChild(v);}
+    else if(n.t==='mientras'){b.classList.add('mie');kw.textContent='MIENTRAS';head.appendChild(kw);head.appendChild(condEditor(n.cond));const h=document.createElement('span');h.className='kw';h.textContent='HACER';head.appendChild(h);}
+    const x=document.createElement('button');x.className='x';x.textContent='✕';x.onclick=()=>{nodes.splice(idx,1);renderProgram();};head.appendChild(x);
+    b.appendChild(head);
+    if(n.t==='si'){
+      const c1=document.createElement('div');c1.className='container';c1.appendChild(renderNodes(n.then));
+      const m1=document.createElement('div');m1.style.marginTop='4px';m1.appendChild(addMenu(n.then));c1.appendChild(m1);b.appendChild(c1);
+      if(n.els){const lbl=document.createElement('div');lbl.className='branchlabel';lbl.textContent='SI NO';b.appendChild(lbl);
+        const c2=document.createElement('div');c2.className='container';c2.appendChild(renderNodes(n.els));
+        const m2=document.createElement('div');m2.style.marginTop='4px';m2.appendChild(addMenu(n.els));c2.appendChild(m2);b.appendChild(c2);}
+    } else if(n.t==='repetir'||n.t==='mientras'){
+      const c=document.createElement('div');c.className='container';c.appendChild(renderNodes(n.body));
+      const m=document.createElement('div');m.style.marginTop='4px';m.appendChild(addMenu(n.body));c.appendChild(m);b.appendChild(c);
+    }
+    box.appendChild(b);
+  });
+  return box;
+}
+/* tabla de verdad */
+function showTV(cond){
+  const modal=document.getElementById('tvModal');
+  document.getElementById('tvExpr').innerHTML='Expresión: <b>'+ruleTextOfCond(cond)+'</b>';
+  const single=!cond.op;
+  const p=mode==='simbolos'?SMAP[cond.s1].sym:'p',q=mode==='simbolos'?SMAP[cond.s2].sym:'q';
+  let html='<table class="tv"><tr><th>'+p+'</th>'+(single?'':'<th>'+q+'</th>')+'<th>Resultado</th></tr>';
+  const combos=single?[[true],[false]]:[[true,true],[true,false],[false,true],[false,false]];
+  combos.forEach(cmb=>{
+    let v1=cmb[0];if(cond.neg1)v1=!v1;let res;
+    if(single)res=v1; else {let v2=cmb[1];if(cond.neg2)v2=!v2;res=cond.op==='Y'?(v1&&v2):cond.op==='O'?(v1||v2):(v1===v2);}
+    html+='<tr><td class="'+(cmb[0]?'V':'Fx')+'">'+(cmb[0]?'V':'F')+'</td>'+(single?'':'<td class="'+(cmb[1]?'V':'Fx')+'">'+(cmb[1]?'V':'F')+'</td>')+'<td class="'+(res?'V':'Fx')+'">'+(res?'V':'F')+'</td></tr>';
+  });
+  html+='</table>';
+  if(!single){const n={Y:'conjunción (∧)',O:'disyunción (∨)',SSI:'bicondicional (↔): V cuando ambas valen lo mismo'}[cond.op];
+    html+='<p class="sub" style="margin-top:8px">Operador: <b>'+n+'</b>.</p>';}
+  document.getElementById('tvBody').innerHTML=html;modal.classList.add('show');
+}
+document.getElementById('tvClose').onclick=()=>document.getElementById('tvModal').classList.remove('show');
+
+/* ===== UI utils ===== */
+function setMetrics(b,m,res){document.getElementById('mBlocks').textContent=b;document.getElementById('mMoves').textContent=m;document.getElementById('mRes').textContent=res;}
+function resetState(clear){
+  cancel=true;running=false;stepResolver=null;
+  S.pac={r:S.startPac.r,c:S.startPac.c,dir:S.startDir};S.switchOn=false;S.swOn={};draw();
+  document.getElementById('mSw').textContent='apagado';
+  if(clear){const st=document.getElementById('status');st.className='status';st.textContent='Construye tu algoritmo y presiona Ejecutar.';setMetrics(countBlocks(program),0,'—');document.getElementById('mRes').style.color='var(--ink)';}
+}
+function loadEscObj(e){ S=parseEsc(e);fit();draw();resetState(true); document.getElementById('reto').textContent=e.label?('Escenario: '+e.label):'Escenario personalizado'; }
+function renderLegend(){
+  const sym=mode==='simbolos';
+  document.getElementById('legend').innerHTML=
+    'Sensores: '+SENSORS.map(s=>'<code>'+(sym?s.sym:s.txt)+'</code>').join(' ')+
+    '<br>Operadores: <code>'+(sym?'¬':'NO')+'</code> · <code>'+(sym?'∧':'Y')+'</code> · <code>'+(sym?'∨':'O')+'</code> · <code>'+(sym?'↔':'si y solo si')+'</code> (bicondicional).'+
+    '<br><b>Puerta:</b> abierta <code>↔</code> interruptor activado. Avanzar a un muro o puerta cerrada = choque.';
+}
+
+/* ===== SELECTOR ===== */
+const escSel=document.getElementById('escSel');
+(function(){
+  const groups={ej1:'Ejemplos',r1:'Ronda 1 (sin bucles)',r2:'Ronda 2 (bucles + interruptor/puerta)',ej2:'Ejemplos'};
+  const og={};
+  ESCENARIOS.forEach((e,i)=>{
+    const gk=e.grupo.startsWith('ej')?'ej':e.grupo;
+    const gname=e.grupo==='r1'?'Ronda 1 (sin bucles)':e.grupo==='r2'?'Ronda 2 (bucles + interruptor/puerta)':'Ejemplos';
+    if(!og[gname]){og[gname]=document.createElement('optgroup');og[gname].label=gname;escSel.appendChild(og[gname]);}
+    const o=document.createElement('option');o.value=i;o.textContent=e.label;og[gname].appendChild(o);
+  });
+})();
+let customEsc=null;
+function ensureCustomOption(){
+  if(document.getElementById('optCustom'))return;
+  const og=document.createElement('optgroup');og.label='Tu diseño';og.id='ogCustom';
+  const o=document.createElement('option');o.id='optCustom';o.value='custom';o.textContent='Escenario diseñado';
+  og.appendChild(o);escSel.appendChild(og);
+}
+function scenarioSolvable(gridRows){
+  const R=gridRows.length,Cn=gridRows[0].length;let P=null,F=null;
+  for(let r=0;r<R;r++)for(let c=0;c<Cn;c++){if(gridRows[r][c]==='P')P=[r,c];if(gridRows[r][c]==='F')F=[r,c];}
+  if(!P||!F)return false;
+  const DIRS4=[[-1,0],[0,1],[1,0],[0,-1]],seen=new Set(),q=[[P[0],P[1],false]];seen.add(P[0]+','+P[1]+',0');
+  while(q.length){const [r,c,pr]=q.shift();if(r===F[0]&&c===F[1])return true;
+    for(const [dr,dc] of DIRS4){const nr=r+dr,nc=c+dc;
+      if(nr<0||nc<0||nr>=R||nc>=Cn)continue;const cell=gridRows[nr][nc];
+      if(cell==='#')continue;const npr=(cell==='S')?!pr:pr;if(cell==='D'&&!npr)continue;
+      const k=nr+','+nc+','+(npr?1:0);if(!seen.has(k)){seen.add(k);q.push([nr,nc,npr]);}}}
+  return false;
+}
+escSel.onchange=()=>{
+  if(escSel.value==='custom'){
+    if(customEsc){loadEscObj(customEsc);}
+    else{const st=document.getElementById('status');st.className='status';st.textContent='Aún no has diseñado un escenario. Ve a la pestaña Diseñador y pulsa «Probar en el simulador».';}
+  } else { loadEscObj(ESCENARIOS[parseInt(escSel.value)]); }
+};
+document.getElementById('runBtn').onclick=()=>execProgram(false);
+document.getElementById('resetBtn').onclick=()=>resetState(true);
+document.getElementById('clearProg').onclick=()=>{program=[];renderProgram();resetState(true);};
+document.getElementById('toggleMode').onclick=()=>{
+  mode=mode==='texto'?'simbolos':'texto';
+  document.getElementById('modePill').textContent=mode;
+  document.getElementById('toggleMode').textContent=mode==='texto'?'símbolos (∧ ∨ ¬ ↔)':'texto';
+  renderProgram();
+};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+t.dataset.v).classList.add('active');
+});
+
+/* ===== DISEÑADOR ===== */
+const PAL=[['#','Muro','#1f3a8a'],['.','Camino','#05070f'],['P','Pac-Man','#ffd23f'],['F','Fantasma','#ff6ad5'],['S','Interruptor','#39d98a'],['D','Puerta','#ff8a3d'],['X','🧽 Borrar','#0a1024']];
+let dsTool='#';
+let dsGrid=Array.from({length:10},()=>Array(13).fill('#'));
+let dsPainting=false;
+function renderPalette(){
+  const host=document.getElementById('palette');host.innerHTML='';
+  PAL.forEach(([ch,name,col])=>{
+    const b=document.createElement('button');b.className='pbtn'+(dsTool===ch?' sel':'');
+    b.innerHTML=`<span class="sw" style="background:${col}"></span>${name}`;
+    b.onclick=()=>{dsTool=ch;renderPalette();};host.appendChild(b);
+  });
+}
+function paintCell(r,c){
+  if(dsTool==='X'){ dsGrid[r][c]='#'; renderPaint(); return; }
+  if(dsTool==='P'){ for(let a=0;a<10;a++)for(let b=0;b<13;b++)if(dsGrid[a][b]==='P')dsGrid[a][b]='.'; }
+  if(dsTool==='F'){ for(let a=0;a<10;a++)for(let b=0;b<13;b++)if(dsGrid[a][b]==='F')dsGrid[a][b]='.'; }
+  if(dsTool==='D'){ for(let a=0;a<10;a++)for(let b=0;b<13;b++)if(dsGrid[a][b]==='D')dsGrid[a][b]='.'; }
+  dsGrid[r][c]=dsTool;renderPaint();
+}
+function renderPaint(){
+  const host=document.getElementById('paint');host.innerHTML='';
+  const icon={'#':'','.':'','P':'🟡','F':'👻','S':'🔘','D':'🚪'};
+  const bg={'#':'#1f3a8a','.':'#05070f','P':'#221c05','F':'#2a1424','S':'#123d24','D':'#3a1a10'};
+  for(let r=0;r<10;r++)for(let c=0;c<13;c++){
+    const d=document.createElement('div');d.className='pcell';d.style.background=bg[dsGrid[r][c]];d.textContent=icon[dsGrid[r][c]];
+    d.onmousedown=()=>{dsPainting=true;paintCell(r,c);};
+    d.onmouseenter=()=>{if(dsPainting)paintCell(r,c);};
+    host.appendChild(d);
+  }
+}
+document.addEventListener('mouseup',()=>dsPainting=false);
+document.getElementById('dsClear').onclick=()=>{dsGrid=Array.from({length:10},()=>Array(13).fill('#'));renderPaint();document.getElementById('dsStatus').textContent='Cuadrícula vaciada.';};
+function dsToEsc(){
+  let nP=0,nF=0;
+  dsGrid.forEach(row=>row.forEach(ch=>{if(ch==='P')nP++;if(ch==='F')nF++;}));
+  if(nP!==1||nF!==1)return null;
+  return {label:'Personalizado',dir:parseInt(document.getElementById('dsDir').value),grid:dsGrid.map(r=>r.join(''))};
+}
+document.getElementById('dsTest').onclick=()=>{
+  const ds=document.getElementById('dsStatus');
+  let nP=0,nF=0;dsGrid.forEach(row=>row.forEach(ch=>{if(ch==='P')nP++;if(ch==='F')nF++;}));
+  if(nP!==1){ds.className='status bad';ds.textContent=nP===0?'⚠ Falta Pac-Man: pinta 1 casilla de inicio.':'⚠ Hay varios Pac-Man: deja solo 1.';return;}
+  if(nF!==1){ds.className='status bad';ds.textContent=nF===0?'⚠ Falta el fantasma: pinta 1 meta (la casilla a la que debe llegar).':'⚠ Hay varios fantasmas: deja solo 1.';return;}
+  const e={label:'tu diseño',dir:parseInt(document.getElementById('dsDir').value),grid:dsGrid.map(r=>r.join(''))};
+  const ok=scenarioSolvable(e.grid), hasD=e.grid.join('').includes('D');
+  customEsc=e; ensureCustomOption(); escSel.value='custom';
+  loadEscObj(e); program=[]; renderProgram();
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelector('.tab[data-v="jugar"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('v-jugar').classList.add('active');
+  const st=document.getElementById('status');
+  if(!ok){
+    st.className='status bad';
+    st.textContent='⚠ Este escenario no tiene solución: el fantasma no es alcanzable. Puedes probarlo igual, pero revisa que exista un camino'+(hasD?' y que el interruptor pueda abrir la puerta.':'.');
+    ds.className='status bad';ds.textContent='Cargado, pero el fantasma no es alcanzable. Revisa el diseño.';
+  } else {
+    st.className='status';st.textContent='Escenario diseñado cargado. Construye tu algoritmo y presiona Ejecutar.';
+    ds.className='status ok';ds.textContent='✓ Escenario válido y con solución. Ya puedes resolverlo con bloques.';
+  }
+  toast('Escenario diseñado cargado');
+};
+document.getElementById('dsExport').onclick=()=>{
+  const e=dsToEsc(); if(!e){toast('Falta Pac-Man o fantasma');return;}
+  const blob=new Blob([JSON.stringify(e,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='escenario_pacman.json';a.click();
+};
+document.getElementById('dsImp').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const o=JSON.parse(rd.result);dsGrid=o.grid.map(r=>r.split(''));document.getElementById('dsDir').value=o.dir||1;renderPaint();toast('Escenario importado');}catch(err){toast('Archivo inválido');}};
+  rd.readAsText(f);e.target.value='';
+};
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
+
+/* Hook para pruebas automatizadas (no afecta el uso normal) */
+window.SIM={
+  loadEscObj,execProgram,evalCond,dsToEsc,ESCENARIOS,
+  setProgram:p=>{program=p;},
+  render:()=>renderProgram(),
+  setMode:m=>{mode=m;document.getElementById('modePill').textContent=m;document.getElementById('toggleMode').textContent=m==='texto'?'símbolos (∧ ∨ ¬ ↔)':'texto';renderProgram();},
+  showTV:c=>showTV(c),
+  res:()=>document.getElementById('mRes').textContent.trim(),
+  getS:()=>S, setSwitch:v=>{S.switchOn=v;}
+};
+
+/* INIT */
+fit();loadEscObj(ESCENARIOS[0]);renderProgram();renderPalette();renderPaint();
+
+</script>
+</body>
+</html>

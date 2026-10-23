@@ -1,0 +1,199 @@
+[
+{
+"id": 100,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 1: En la fracción 3/8, ¿cómo se le llama técnicamente al número que está en la parte superior (el 3)?\n\nEscribe el concepto matemático de una sola palabra.",
+"answers": [
+"Numerador",
+"el numerador"
+]
+},
+{
+"id": 101,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 6: Si un estudiante obtuvo 32 aciertos de un total de 40 preguntas en su examen de Epistemología, ¿cuál es la fracción simplificada al máximo de sus respuestas correctas?\n\nResponde con una fracción, por ejemplo: 4/5.",
+"answers": [
+"4/5"
+]
+},
+{
+"id": 102,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 11: Vas a un restaurante y el consumo total es de 180 pesos. Si tienes un descuento del 15% por ser estudiante, ¿cuántos pesos te van a restar (descontar) del total?\n\nEscribe la respuesta usando el formato: # pesos",
+"answers": [
+"27 pesos",
+"27pesos",
+"27"
+]
+},
+{
+"id": 103,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 16: En condiciones normales, tu celular consume un 10% de batería en 20 minutos. Si activas el ahorro de energía y disminuyes la velocidad de consumo a la mitad, ¿cuántos minutos te durará ese mismo 10% de batería?\n\nResponde indicando el tiempo, por ejemplo: 40 minutos.",
+"answers": [
+"40 minutos",
+"40 min",
+"40"
+]
+},
+{
+"id": 104,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 2: Si la pantalla de tu celular muestra que te queda exactamente 1/10 de batería, ¿a qué porcentaje de carga equivale esta porción?\n\nEscribe el valor con el símbolo %, por ejemplo: 50%.",
+"answers": [
+"10%",
+"10 por ciento"
+]
+},
+{
+"id": 105,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 7: Reduce a su forma más pequeña o irreducible la fracción de almacenamiento 12/16.\n\nResponde en formato de fracción, por ejemplo: 1/2.",
+"answers": [
+"3/4"
+]
+},
+{
+"id": 106,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 12: Tienes 1/2 litro de jugo de naranja en un contenedor y quieres repartirlo en vasos pequeños cuya capacidad es de 1/8 de litro cada uno. ¿Cuántos vasos completos puedes llenar?\n\nEscribe solo el número o seguido de la palabra vasos.",
+"answers": [
+"4",
+"4 vasos"
+]
+},
+{
+"id": 107,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 17: Te quedan exactamente 1,200 MB en tu paquete de datos móviles y faltan 6 días para que termine tu ciclo de facturación. ¿Cuál debe ser tu tasa de consumo diario máximo para que el internet te dure exactamente los 6 días?\n\nResponde usando el formato: # MB",
+"answers": [
+"200 MB",
+"200MB",
+"200"
+]
+},
+{
+"id": 108,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 3: Si divides una pizza mediana en 8 rebanadas iguales y te comes 3 de ellas, ¿qué fracción de la pizza completa te queda todavía en la caja?\n\nResponde con una fracción, por ejemplo: 4/6.",
+"answers": [
+"5/8"
+]
+},
+{
+"id": 109,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 8: ¿Cómo se expresa la fracción mixta \"2 enteros y 1/3\" (por ejemplo, dos tazas y un tercio de leche) en una sola fracción impropia?\n\nResponde en formato de fracción, por ejemplo: 5/2.",
+"answers": [
+"7/3"
+]
+},
+{
+"id": 110,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 13: Si 5 cuadernos para tus materias escolares cuestan un total de 100 pesos, ¿cuánto costarán 8 cuadernos bajo el mismo esquema de proporcionalidad directa?\n\nResponde en el formato: # pesos",
+"answers": [
+"160 pesos",
+"160pesos",
+"160"
+]
+},
+{
+"id": 111,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 18: Si 4 trabajadores tardan 15 días en construir una barda perimetral para una escuela, ¿cuántos días tardarán 6 trabajadores en realizar exactamente la misma obra trabajando al mismo ritmo?\n\nResponde usando el formato: # días",
+"answers": [
+"10 días",
+"10 dias",
+"10"
+]
+},
+{
+"id": 112,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 4: ¿Cuál es el denominador de la fracción decimal que representa el 25% antes de realizar cualquier tipo de simplificación matemática?\n\nEscribe el número completo.",
+"answers": [
+"100"
+]
+},
+{
+"id": 113,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 9: Aplicando el método de productos cruzados para comparar las fracciones 2/3 y 8/12, ¿estas expresiones son equivalentes entre sí?\n\nResponde únicamente: Sí o No",
+"answers": [
+"Sí",
+"si"
+]
+},
+{
+"id": 114,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 14: La receta original de un postre requiere 3/4 de taza de leche. Si decides preparar únicamente la mitad (1/2) de la receta, ¿qué fracción exacta de taza de leche necesitas?\n\nResponde con una fracción, por ejemplo: 2/5.",
+"answers": [
+"3/8"
+]
+},
+{
+"id": 115,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 19: Una pantalla consumía 3 GB por hora viendo videos en alta definición. Al cambiar la configuración a Ultra HD, el consumo sube a 7 GB por hora. ¿En qué fracción aumentó el consumo por hora en comparación con el consumo original?\n\nResponde con una fracción, por ejemplo: 5/2.",
+"answers": [
+"4/3"
+]
+},
+{
+"id": 116,
+"col": 0,
+"label": "100 Euros",
+"question": "Pregunta 5: Si consumiste exactamente la mitad de una botella de agua, ¿qué fracción irreducible representa la cantidad de agua que te queda adentro de la botella?\n\nResponde en formato de fracción, por ejemplo: 1/4.",
+"answers": [
+"1/2"
+]
+},
+{
+"id": 117,
+"col": 1,
+"label": "200 Euros",
+"question": "Pregunta 10: Si una tienda de aplicaciones ofrece un descuento que equivale a la fracción simplificada de 3/20, ¿qué porcentaje de descuento te están aplicando en tu compra?\n\nResponde con el símbolo %, por ejemplo: 25%.",
+"answers": [
+"15%",
+"15 por ciento"
+]
+},
+{
+"id": 118,
+"col": 2,
+"label": "500 Euros",
+"question": "Pregunta 15: Si la carpeta de \"Videos y Descargas\" ocupa 72 GB del espacio total de un celular cuya capacidad de almacenamiento es de 128 GB, ¿qué fracción irreducible del total ocupa esta carpeta?\n\nResponde en formato de fracción, por ejemplo: 3/5.",
+"answers": [
+"9/16"
+]
+},
+{
+"id": 119,
+"col": 3,
+"label": "1000 Euros",
+"question": "Pregunta 20: Un paquete prepago de telefonía móvil cobra 100 pesos por una vigencia de 15 días. Si quieres evaluar un gasto proporcional equivalente para un mes completo de 30 días, ¿cuánto dinero deberías presupuestar?\n\nResponde en el formato: # pesos",
+"answers": [
+"200 pesos",
+"200pesos",
+"200"
+]
+}
+]

@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Preguntas Interactivo</title>
+    <style>
+        :root {
+            --color-bg: #f3f4f6;
+            --color-card-bg: #ffffff;
+            --color-text-main: #111827;
+            --color-text-muted: #4b5563;
+            
+            /* Colores adaptados exactamente de la imagen de referencia original */
+            --col-orange: #f08a5d;
+            --col-orange-hover: #e07a51;
+            --col-blue: #2081bd;
+            --col-blue-hover: #176596;
+            --col-green: #88d44c;
+            --col-green-hover: #72b53b;
+            --col-red: #e82b2b;
+            --col-red-hover: #c72020;
+
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 20px;
+            --transition-smooth: all 0.2s ease-in-out;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 10px 10px 25px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text-main);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            background: var(--color-card-bg);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--color-text-main);
+            margin-bottom: 15px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            border: none;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: var(--color-text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .btn-add {
+            background-color: #8b5cf6;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #7c3aed;
+        }
+
+        .mode-selector {
+            background: #e5e7eb;
+            padding: 4px;
+            border-radius: 50px;
+            display: inline-flex;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .mode-btn {
+            border: none;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            background: transparent;
+            color: var(--color-text-muted);
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--color-text-main);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .board-wrapper {
+            background: var(--color-card-bg);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+            margin-bottom: 25px;
+        }
+
+        /* Rediseño a columnas dinámicas para permitir añadir infinitas preguntas */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            min-width: 600px;
+        }
+
+        .board-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            aspect-ratio: 3 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 800;
+            text-align: center;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+            user-select: none;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            padding: 10px;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Colores adaptados del tablero original */
+        .card-col-0 { background-color: var(--col-orange); }
+        .card-col-0:hover { background-color: var(--col-orange-hover); }
+
+        .card-col-1 { background-color: var(--col-blue); }
+        .card-col-1:hover { background-color: var(--col-blue-hover); }
+
+        .card-col-2 { background-color: var(--col-green); }
+        .card-col-2:hover { background-color: var(--col-green-hover); }
+
+        .card-col-3 { background-color: var(--col-red); }
+        .card-col-3:hover { background-color: var(--col-red-hover); }
+
+        /* Comportamiento de tarjetas inactivas (dejando espacio libre pero invisible) */
+        .card.inactive {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .editor-active .card {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+        }
+
+        .editor-active .card.inactive {
+            opacity: 0.45 !important;
+            border: 2px dashed #374151;
+            background-color: #9ca3af !important;
+            visibility: visible !important;
+        }
+
+        .card-edit-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .editor-active .card-edit-badge {
+            display: flex;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 15px;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        #modal-confirm {
+            z-index: 1500;
+        }
+
+        .modal-content {
+            background: var(--color-card-bg);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh; /* Evita que el modal supere la altura de la pantalla */
+            display: flex;
+            flex-direction: column; /* Organiza encabezado, cuerpo y pie en columna */
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            animation: modalFadeIn 0.2s ease-out;
+            border: 1px solid #d1d5db;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-close-modal {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background: #111827;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+            z-index: 10;
+        }
+
+        .btn-close-modal:hover {
+            background: #374151;
+            transform: scale(1.05);
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto; /* Permite scroll vertical si el contenido excede la pantalla */
+            flex-grow: 1; /* Consume el espacio disponible dinámicamente */
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            line-height: 1.45;
+            margin-bottom: 22px;
+            color: var(--color-text-main);
+            font-weight: 700;
+            white-space: pre-wrap;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .input-row-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            flex-grow: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+            outline: none;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-purple {
+            background-color: #7c3aed;
+            color: white;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .btn-purple:hover {
+            background-color: #6d28d9;
+        }
+
+        .btn-send {
+            background-color: #555555;
+            color: white;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+            user-select: none;
+        }
+
+        .btn-send:hover {
+            background-color: #3f3f46;
+        }
+
+        .feedback {
+            padding: 14px;
+            border-radius: var(--radius-md);
+            margin-bottom: 18px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feedback.success {
+            display: flex;
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .feedback.error {
+            display: flex;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .reveal-box {
+            background-color: #f3f4f6;
+            border-left: 4px solid #7c3aed;
+            padding: 14px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .reveal-box.active {
+            display: block;
+        }
+
+        .modal-footer {
+            padding: 15px 30px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex-shrink: 0; /* Evita que el pie de página se colapse */
+        }
+
+        .backup-panel {
+            background: var(--color-card-bg);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .backup-text {
+            width: 100%;
+            height: 80px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            resize: vertical;
+        }
+
+        .badge-info {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        /* Notificaciones integradas tipo Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast-box {
+            background: #1f2937;
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            animation: slideInRight 0.3s ease-out;
+            pointer-events: auto;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Tablero de Preguntas Interactivo</h1>
+            
+            <div class="mode-selector">
+                <button class="mode-btn active" id="btn-mode-play" onclick="setMode('play')">Modo Juego</button>
+                <button class="mode-btn" id="id-mode-edit" onclick="setMode('edit')">Editor de Preguntas</button>
+            </div>
+
+            <div class="controls-row">
+                <!-- Botón exclusivo para agregar nuevas preguntas, visible solo en Modo Edición -->
+                <button class="btn btn-add" id="btn-add-question" style="display: none;" onclick="openAddModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    Agregar Nueva Pregunta
+                </button>
+                <button class="btn btn-secondary" onclick="confirmResetGame()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/></svg>
+                    Reiniciar Juego
+                </button>
+                <button class="btn btn-danger" onclick="confirmResetAll()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Restablecer Todo por Defecto
+                </button>
+            </div>
+        </header>
+
+        <div class="board-wrapper" id="board-container">
+            <div class="board-grid" id="main-board">
+                <div class="board-column" id="col-0"></div>
+                <div class="board-column" id="col-1"></div>
+                <div class="board-column" id="col-2"></div>
+                <div class="board-column" id="col-3"></div>
+            </div>
+        </div>
+
+        <!-- Panel de copia de seguridad (visible solo en modo edición) -->
+        <div class="backup-panel" id="backup-section" style="display: none;">
+            <h3 style="margin-bottom: 8px;">Crear un nuevo tablero / Respaldar preguntas</h3>
+            <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 12px;">
+                Puedes copiar este código de texto para guardar tus preguntas hechas a mano, o pegar un código guardado previamente para cargar un tablero completamente nuevo al instante.
+            </p>
+            <textarea class="form-control backup-text" id="backup-string" readonly onclick="this.select()"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="copyBackupToClipboard()">Copiar Configuración</button>
+                <button class="btn btn-secondary" onclick="importBackupBoard()">Importar tablero</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-area"></div>
+
+    <div class="modal-overlay" id="modal-confirm">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-body" style="padding: 25px;">
+                <h3 id="confirm-title" style="margin-bottom: 10px; font-size: 1.25rem;">¿Estás seguro?</h3>
+                <p id="confirm-msg" style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.4;"></p>
+            </div>
+            <div class="modal-footer" style="background: #f9fafb; display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px;">
+                <button class="btn btn-secondary" onclick="resolveConfirm(false)">Cancelar</button>
+                <button class="btn btn-danger" id="btn-confirm-action" onclick="resolveConfirm(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="modal-play">
+        <div class="modal-content">
+            <!-- La X ejecuta eliminateCardFromGame() para que se elimine al cerrarse de forma manual -->
+            <button class="btn-close-modal" onclick="eliminateCardFromGame()">&times;</button>
+            <div class="modal-body">
+                <div class="question-text" id="modal-play-question"></div>
+                
+                <div class="input-row-container">
+                    <input type="text" class="form-control" id="user-answer" placeholder="Escribe aquí tu respuesta." onkeydown="checkAnswerOnEnter(event)">
+                    <button class="btn-purple" onclick="revealCorrectAnswer()">Ver respuesta</button>
+                </div>
+
+                <div class="feedback success" id="feedback-success">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>¡Respuesta Correcta!</span>
+                </div>
+                <div class="feedback error" id="feedback-error">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span>Respuesta incorrecta. Inténtalo de nuevo.</span>
+                </div>
+
+                <div class="reveal-box" id="reveal-box-correct">
+                    <strong style="color: #7c3aed; display:block; margin-bottom: 4px;">Respuesta(s) Aceptada(s):</strong>
+                    <span id="correct-answer-list">Ninguna respuesta registrada.</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end; gap: 10px;">
+                <!-- El botón Regresar cierra el modal y retira la tarjeta del tablero por haber sido jugada -->
+                <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="eliminateCardFromGame()">Regresar</button>
+                <button class="btn-send" id="btn-check-ans" onclick="verifyAnswer()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-edit">
+        <div class="modal-content">
+            <button class="btn-close-modal" onclick="closeModal('modal-edit')">&times;</button>
+            <div class="modal-body" style="padding-top: 40px;">
+                <h2 id="edit-modal-title" style="margin-bottom: 15px; font-weight: 800;">Modificar Tarjeta</h2>
+                <div class="badge-info">
+                    Modifica el valor visible de la tarjeta, define la pregunta y especifica una o más respuestas válidas (separadas por comas si hay variaciones válidas).
+                </div>
+
+                <!-- Selección de la Columna / Categoría del tablero -->
+                <div class="form-group">
+                    <label style="display:block; font-weight:700; font-size:0.8rem; margin-bottom:6px; text-transform:uppercase;" for="edit-card-col">Columna / Categoría</label>
+                    <select class="form-control" id="edit-card-col">
+                        <option value="0">Naranja (1ra Columna)</option>
+                        <option value="1">Azul (2da Columna)</option>
+                        <option value="2">Verde (3ra Columna)</option>
+                        <option value="3">Rojo (4ta Columna)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block; font-weight:700; font-size:0.8rem; margin-bottom:6px; text-transform:uppercase;" for="edit-card-label">Valor de la tarjeta</label>
+                    <input type="text" class="form-control" id="edit-card-label" placeholder="Ej. 100 Pesos">
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block; font-weight:700; font-size:0.8rem; margin-bottom:6px; text-transform:uppercase;" for="edit-card-question">Pregunta</label>
+                    <textarea class="form-control" id="edit-card-question" rows="8" style="resize:vertical;" placeholder="Escribe la pregunta formulada aquí..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block; font-weight:700; font-size:0.8rem; margin-bottom:6px; text-transform:uppercase;" for="edit-card-answers">Respuestas válidas (Sepáralas por comas)</label>
+                    <input type="text" class="form-control" id="edit-card-answers" placeholder="ejemplo 1, ejemplo dos">
+                    <small style="color: var(--color-text-muted); font-size:0.75rem; display:block; margin-top:4px;">
+                        Las respuestas no distinguen entre mayúsculas, minúsculas, espacios adicionales ni acentos básicos.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end; gap: 10px;">
+                <!-- Botón de eliminación permanente, empujado a la izquierda mediante margin-right: auto -->
+                <button class="btn btn-danger" id="btn-delete-card" onclick="deleteCardPermanently()" style="display: none; margin-right: auto;">Eliminar Pregunta</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-edit')">Cancelar</button>
+                <button class="btn btn-success" id="btn-save-edit" onclick="saveCardEdits()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_TEMPLATES = [
+            // FILA 1
+            { 
+                id: 0, 
+                col: 0, 
+                label: "100 Pesos", 
+                question: "Pregunta 1: Si una barra de chocolate se divide en 5 partes iguales y se consumen las 5 partes, ¿cómo se le clasifica a esta fracción y qué resultado entero representa?\n\nCompleta una de las dos opciones en el espacio en blanco.\nUna fracción [...]\nUna unidad [...]", 
+                answers: ["Una fracción entera", "fracción entera", "Una fracción aparente", "fracción aparente", "Una unidad completa", "unidad completa", "entera", "aparente"] 
+            },
+            { 
+                id: 1, 
+                col: 1, 
+                label: "200 Pesos", 
+                question: "Pregunta 6: Si multiplicas tanto el numerador como el denominador de la fracción 3/5 por el número 3, ¿qué fracción equivalente obtienes?\n\nEscribe la fracción, por ejemplo: 3/5.", 
+                answers: ["9/15"] 
+            },
+            { 
+                id: 2, 
+                col: 2, 
+                label: "500 Pesos", 
+                question: "Pregunta 11: Tienes 4/5 de una barra de chocolate. Si decides regalarle 1/5 de la barra a un amigo, ¿qué fracción de chocolate te queda?\n\nResponde con una fracción, por ejemplo, 4/6.", 
+                answers: ["3/5"] 
+            },
+            { 
+                id: 3, 
+                col: 3, 
+                label: "1000 Pesos", 
+                question: "Pregunta 16: Tienes un paquete de datos móviles con 1,200 MB disponibles y tu consumo habitual es una tasa alta de 600 MB por día, lo que te rinde para 2 días. Si reduces tu consumo diario a la mitad (300 MB por día), ¿para cuántos días te alcanzará el internet restante?\n\nEscriba su respuesta con el siguiente formato: # días\nPor ejemplo: 6 días.", 
+                answers: ["4 días", "4 dias", "4"] 
+            },
+            
+            // FILA 2
+            { 
+                id: 4, 
+                col: 0, 
+                label: "100 Pesos", 
+                question: "Pregunta 2: Escribe cómo se lee formalmente la fracción 5/8.\n\nEscriba la correcta pronunciación sin faltas de ortografía.\nPor ejemplo: Para 8/10 la respuesta sería \"ocho décimos\"", 
+                answers: ["Cinco octavos"] 
+            },
+            { 
+                id: 5, 
+                col: 1, 
+                label: "200 Pesos", 
+                question: "Pregunta 7: Al simplificar la fracción 6/8 dividiendo ambos términos entre su factor común, ¿qué fracción irreducible obtienes?\n\nEscribe la fracción, por ejemplo 1/2.", 
+                answers: ["3/4"] 
+            },
+            { 
+                id: 6, 
+                col: 2, 
+                label: "500 Pesos", 
+                question: "Pregunta 12: Si un usuario tiene un plan de Wi-Fi residencial donde descargar 2 videojuegos idénticos de manera simultánea duplica la demanda de megabits por segundo, ¿qué tipo de proporcionalidad se está presentando?\n\nEscribe el concepto.", 
+                answers: ["Proporcionalidad directa", "directa"] 
+            },
+            { 
+                id: 7, 
+                col: 3, 
+                label: "1000 Pesos", 
+                question: "Pregunta 17: El tiempo que duran tus datos móviles es inversamente proporcional a la tasa de consumo diario. Si necesitas que tus megabytes duren el triple de tiempo para llegar al fin de mes, ¿a qué fracción debes reducir tu consumo diario habitual?\n\nResponde con una fracción, por ejemplo, 4/5.", 
+                answers: ["1/3"] 
+            },
+
+            // FILA 3
+            { 
+                id: 8, 
+                col: 0, 
+                label: "100 Dólares", 
+                question: "Pregunta 3: Si el menú de configuración de tu celular indica que has utilizado el 90% del almacenamiento, ¿qué significa este porcentaje en relación con cada 100 partes de la memoria?\n\nLa respuesta se debe indicar como (# partes de cada #)\nPor ejemplo: 60 partes de cada 80\n(Es decir 60/80 = 75%)", 
+                answers: ["90 partes de cada 100"] 
+            },
+            { 
+                id: 9, 
+                col: 1, 
+                label: "200 Dólares", 
+                question: "Pregunta 8: Transforma el porcentaje del 75% a su representation decimal exacta.\n\nEscriba el valor con dos decimales, por ejemplo: 0.25", 
+                answers: ["0.75"] 
+            },
+            { 
+                id: 10, 
+                col: 2, 
+                label: "500 Dólares", 
+                question: "Pregunta 13: Un estudiante junta 1/4 de pizza de pepperoni y 2/4 de pizza de queso en una sola caja. Al combinarlas, ¿qué fracción total de pizza tiene en la caja?\n\nResponde con una fracción, por ejemplo, 7/10.", 
+                answers: ["3/4"] 
+            },
+            { 
+                id: 11, 
+                col: 3, 
+                label: "1000 Dólares", 
+                question: "Pregunta 18: Una batería portátil de carga rápida está conectada a 2 teléfonos celulares idénticos en paralelo y agota toda su energía en exactamente 10 minutos. Si duplicas la cantidad de teléfonos y conectas 4 equipos al mismo tiempo para que consuman energía a la misma velocidad, ¿cuántos días o minutos tardarán en agotar la batería?\n\nResponde indicando si se trata de días o minutos con el siguiente formato: # (minutos o días).\nPor ejemplo: 6 días.", 
+                answers: ["5 minutos", "5"] 
+            },
+
+            // FILA 4
+            { 
+                id: 12, 
+                col: 0, 
+                label: "100 Dólares", 
+                question: "Pregunta 4: ¿Cuál es la principal función de la línea fraccionaria en una expresión matemática además de separar el numerador del denominador?\n\nComplete alguna de las frases.\nRepresentar una _______________________________\nSirve para ____________________________________", 
+                answers: ["Representar una operación de división", "Representar una división", "Sirve para dividir"] 
+            },
+            { 
+                id: 13, 
+                col: 1, 
+                label: "200 Dólares", 
+                question: "Pregunta 9: Si tienes la fracción impropia 5/4 (cinco cuartos), ¿cómo se expresa en forma de fracción mixta?\n\nLa respuesta debe seguir este formato: # entero y #/#\nPor ejemplo: 1 entero y 4/6 o 2 enteros y 1/2", 
+                answers: ["1 entero y 1/4"] 
+            },
+            { 
+                id: 14, 
+                col: 2, 
+                label: "500 Dólares", 
+                question: "Pregunta 14: Si una plataforma de streaming consume 0.3 GB por hora en su calidad más baja, ¿cuántos gigabytes completos se habrán consumido si mantienes la reproducción durante 10 horas seguidas?\n\nEscribe la respuesta usando el siguiente formato: # GB", 
+                answers: ["3 GB", "3GB", "3"] 
+            },
+            { 
+                id: 15, 
+                col: 3, 
+                label: "1000 Dólares", 
+                question: "Pregunta 19: Para una visualización de video estable en calidad estándar se requiere un ancho de banda constante de 3 Mbps por pantalla. Si en un hogar se conectan al mismo tiempo 4 pantallas para ver videos en esta misma calidad, ¿cuál es la velocidad total mínima en Megabits por segundo (Mbps) que debe tener el plan contratado para que no se congele el video?\n\nEscribe la respuesta en el siguiente formato: # Mbps\nPor ejemplo: 8 Mbps.", 
+                answers: ["12 Mbps", "12Mbps", "12"] 
+            },
+
+            // FILA 5
+            { 
+                id: 16, 
+                col: 0, 
+                label: "100 Euros", 
+                question: "Pregunta 5: Si un estudiante divide su tiempo de estudio en 4 bloques iguales y ya completó 1 bloque, ¿qué fracción propia representa el tiempo que ya estudió?\n\nSu respuesta puede ser en forma de texto o fracción.\nPor ejemplo: Dos quintos o 2/5.", 
+                answers: ["1/4", "un cuarto"] 
+            },
+            { 
+                id: 17, 
+                col: 1, 
+                label: "200 Euros", 
+                question: "Pregunta 10: Si un reporte escolar te muestra que la proporción de alumnos aprobados en un examen es de 15/20, simplifica esta fracción a su mínima expresión.\n\nLa respuesta debe ser una fracción, por ejemplo, 1/5.", 
+                answers: ["3/4"] 
+            },
+            { 
+                id: 18, 
+                col: 2, 
+                label: "500 Euros", 
+                question: "Pregunta 15: Si para preparar una porción de café utilizas 2 cucharadas de azúcar, ¿cuántas cucharadas vas a necesitar para preparar 6 porciones iguales bajo una relación directamente proporcional?\n\nEscribe tu respuesta con el siguiente formato: # cucharadas.\nPor ejemplo: 5 cucharadas.", 
+                answers: ["12 cucharadas", "12 cucharadas.", "12"] 
+            },
+            { 
+                id: 19, 
+                col: 3, 
+                label: "1000 Euros", 
+                question: "Pregunta 20: La constante de proporcionalidad en el consumo de una batería es igual al total de la energía disponible, que en este caso es un 10%. Si la tasa de consumo es de 0.5% por minuto, calcula cuántos minutos de vida le quedan exactamente al teléfono.\n\nResponde con el siguiente formato: # minutos.\nPor ejemplo: 8 minutos.", 
+                answers: ["20 minutos", "20"] 
+            }
+        ];
+
+        let boardQuestions = [];
+        let activeMode = 'play';
+        let selectedCardId = null;
+        let isAddingNew = false; // Flag para controlar si estamos agregando una tarjeta nueva o editando una existente
+        let confirmPromiseResolver = null;
+
+        window.onload = async function() {
+            loadBoardData();
+            // Plataforma: ?banco=nombre carga un banco de preguntas de la carpeta bancos/
+            const banco = new URLSearchParams(location.search).get('banco');
+            if (banco && /^[a-z0-9-]+$/.test(banco)) {
+                try {
+                    const r = await fetch('bancos/' + banco + '.json');
+                    if (!r.ok) throw new Error(r.status);
+                    boardQuestions = (await r.json()).map(q => ({ ...q, inactive: false }));
+                    saveBoardData();
+                    history.replaceState(null, '', location.pathname);
+                    showToast('Banco de preguntas cargado.');
+                } catch (e) { showToast('No se pudo cargar el banco de preguntas.'); }
+            }
+            renderBoard();
+            updateBackupJSON();
+        }
+
+        function showToast(message) {
+            const toastArea = document.getElementById('toast-area');
+            const toast = document.createElement('div');
+            toast.className = 'toast-box';
+            toast.innerText = message;
+            toastArea.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        function showConfirm(title, message) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText = message;
+            document.getElementById('modal-confirm').classList.add('active');
+            return new Promise((resolve) => {
+                confirmPromiseResolver = resolve;
+            });
+        }
+
+        function resolveConfirm(decision) {
+            document.getElementById('modal-confirm').classList.remove('active');
+            if (confirmPromiseResolver) {
+                confirmPromiseResolver(decision);
+                confirmPromiseResolver = null;
+            }
+        }
+
+        function loadBoardData() {
+            try {
+                const storedData = localStorage.getItem('board_questions_data');
+                if (storedData) {
+                    boardQuestions = JSON.parse(storedData);
+                    if (!Array.isArray(boardQuestions)) {
+                        throw new Error("Datos corruptos");
+                    }
+                } else {
+                    resetToDefaultData(false);
+                }
+            } catch (e) {
+                resetToDefaultData(false);
+            }
+        }
+
+        function saveBoardData() {
+            localStorage.setItem('board_questions_data', JSON.stringify(boardQuestions));
+            updateBackupJSON();
+        }
+
+        async function resetToDefaultData(askConfirmation = true) {
+            if (askConfirmation) {
+                const confirmed = await showConfirm(
+                    "Restablecer Todo por Defecto", 
+                    "¿Estás seguro de restablecer por completo todo el tablero? Perderás todas tus preguntas y respuestas personalizadas."
+                );
+                if (!confirmed) return;
+            }
+            boardQuestions = DEFAULT_TEMPLATES.map(item => ({
+                id: item.id,
+                col: item.col,
+                label: item.label,
+                question: item.question,
+                answers: [...item.answers],
+                inactive: false
+            }));
+            saveBoardData();
+            renderBoard();
+            if (askConfirmation) {
+                showToast("El tablero ha sido restaurado con la configuración por defecto.");
+            }
+        }
+
+        function renderBoard() {
+            // Limpiar las 4 columnas de renderizado
+            for (let c = 0; c < 4; c++) {
+                document.getElementById(`col-${c}`).innerHTML = '';
+            }
+
+            // Filtrar y ordenar las preguntas dentro de sus columnas respectivas
+            boardQuestions.forEach(card => {
+                const columnContainer = document.getElementById(`col-${card.col}`);
+                if (!columnContainer) return; // Salvaguarda en caso de que la columna no exista
+
+                const cardElement = document.createElement('div');
+                cardElement.id = `card-${card.id}`;
+                cardElement.className = `card card-col-${card.col}`;
+                
+                if (card.inactive) {
+                    cardElement.classList.add('inactive');
+                }
+
+                cardElement.innerHTML = `
+                    <span>${escapeHTML(card.label)}</span>
+                    <div class="card-edit-badge">
+                        <svg width="12" height="12" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </div>
+                `;
+
+                cardElement.onclick = () => handleCardClick(card.id);
+                columnContainer.appendChild(cardElement);
+            });
+        }
+
+        function handleCardClick(id) {
+            const card = boardQuestions.find(q => String(q.id) === String(id));
+            if (!card) return;
+
+            selectedCardId = id;
+
+            if (activeMode === 'edit') {
+                openEditModal(card);
+            } else {
+                openPlayModal(card);
+            }
+        }
+
+        function setMode(mode) {
+            activeMode = mode;
+            const container = document.getElementById('board-container');
+            const btnPlay = document.getElementById('btn-mode-play');
+            const btnEdit = document.getElementById('id-mode-edit');
+            const btnAdd = document.getElementById('btn-add-question');
+            const backupSection = document.getElementById('backup-section');
+
+            if (mode === 'edit') {
+                container.classList.add('editor-active');
+                btnPlay.classList.remove('active');
+                btnEdit.classList.add('active');
+                btnAdd.style.display = 'inline-flex';
+                backupSection.style.display = 'block';
+            } else {
+                container.classList.remove('editor-active');
+                btnPlay.classList.add('active');
+                btnEdit.classList.remove('active');
+                btnAdd.style.display = 'none';
+                backupSection.style.display = 'none';
+            }
+            renderBoard();
+        }
+
+        function openPlayModal(card) {
+            const questionText = document.getElementById('modal-play-question');
+            questionText.innerText = card.question;
+
+            document.getElementById('user-answer').value = '';
+            document.getElementById('feedback-success').style.display = 'none';
+            document.getElementById('feedback-error').style.display = 'none';
+            document.getElementById('reveal-box-correct').classList.remove('active');
+
+            // Asegura que al abrir cualquier pregunta el botón inicie con el texto original "Enviar"
+            document.getElementById('btn-check-ans').innerText = 'Enviar';
+
+            document.getElementById('modal-play').classList.add('active');
+            
+            setTimeout(() => {
+                document.getElementById('user-answer').focus();
+            }, 100);
+        }
+
+        // Abre el modal de edición configurado para editar un elemento existente
+        function openEditModal(card) {
+            isAddingNew = false;
+            selectedCardId = card.id;
+
+            document.getElementById('edit-modal-title').innerText = "Modificar Tarjeta";
+            document.getElementById('edit-card-col').value = card.col;
+            document.getElementById('edit-card-label').value = card.label;
+            document.getElementById('edit-card-question').value = card.question;
+            document.getElementById('edit-card-answers').value = card.answers.join(', ');
+            
+            // Mostrar botón para eliminar ya que se está editando una pregunta existente
+            document.getElementById('btn-delete-card').style.display = 'inline-flex';
+
+            document.getElementById('modal-edit').classList.add('active');
+        }
+
+        // Abre el modal de edición limpio configurado para crear una nueva pregunta
+        function openAddModal() {
+            isAddingNew = true;
+            selectedCardId = null;
+
+            document.getElementById('edit-modal-title').innerText = "Agregar Nueva Pregunta";
+            document.getElementById('edit-card-col').value = "0";
+            document.getElementById('edit-card-label').value = "";
+            document.getElementById('edit-card-question').value = "";
+            document.getElementById('edit-card-answers').value = "";
+            
+            // Ocultar botón eliminar porque es una pregunta completamente nueva que aún no existe
+            document.getElementById('btn-delete-card').style.display = 'none';
+
+            document.getElementById('modal-edit').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            selectedCardId = null;
+        }
+
+        function checkAnswerOnEnter(event) {
+            if (event.key === 'Enter') {
+                verifyAnswer();
+            }
+        }
+
+        function cleanString(str) {
+            return str
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Elimina acentos
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"") // Elimina puntuación
+                .replace(/\s+/g, ' ') // Colapsa múltiples espacios
+                .trim();
+        }
+
+        function verifyAnswer() {
+            if (selectedCardId === null) return;
+            const card = boardQuestions.find(q => String(q.id) === String(selectedCardId));
+            if (!card) return;
+
+            const userText = document.getElementById('user-answer').value;
+            const cleanedUserText = cleanString(userText);
+
+            const isCorrect = card.answers.some(answer => cleanString(answer) === cleanedUserText);
+
+            const successBlock = document.getElementById('feedback-success');
+            const errorBlock = document.getElementById('feedback-error');
+
+            if (isCorrect) {
+                successBlock.style.display = 'flex';
+                errorBlock.style.display = 'none';
+                document.getElementById('btn-check-ans').innerText = 'Enviar';
+            } else {
+                successBlock.style.display = 'none';
+                errorBlock.style.display = 'flex';
+                document.getElementById('btn-check-ans').innerText = 'Intentar de nuevo';
+            }
+        }
+
+        function revealCorrectAnswer() {
+            if (selectedCardId === null) return;
+            const card = boardQuestions.find(q => String(q.id) === String(selectedCardId));
+            if (!card) return;
+
+            const correctSpan = document.getElementById('correct-answer-list');
+            correctSpan.innerText = card.answers.join('   /   ');
+
+            const revealBox = document.getElementById('reveal-box-correct');
+            revealBox.classList.add('active');
+        }
+
+        function eliminateCardFromGame() {
+            if (selectedCardId === null) return;
+            const index = boardQuestions.findIndex(q => String(q.id) === String(selectedCardId));
+            if (index !== -1) {
+                boardQuestions[index].inactive = true;
+                saveBoardData();
+                renderBoard();
+            }
+            closeModal('modal-play');
+        }
+
+        function saveCardEdits() {
+            const colVal = parseInt(document.getElementById('edit-card-col').value);
+            const labelVal = document.getElementById('edit-card-label').value.trim();
+            const questionVal = document.getElementById('edit-card-question').value.trim();
+            const answersVal = document.getElementById('edit-card-answers').value;
+
+            if (!labelVal || !questionVal || !answersVal.trim()) {
+                showToast("Por favor, rellena todos los campos antes de guardar.");
+                return;
+            }
+
+            const answersArray = answersVal.split(',').map(ans => ans.trim()).filter(ans => ans.length > 0);
+
+            if (isAddingNew) {
+                // Generar un ID único basado en tiempo Unix
+                const newCard = {
+                    id: Date.now(),
+                    col: colVal,
+                    label: labelVal,
+                    question: questionVal,
+                    answers: answersArray,
+                    inactive: false
+                };
+                boardQuestions.push(newCard);
+                showToast("Pregunta agregada con éxito.");
+            } else {
+                if (selectedCardId === null) return;
+                const index = boardQuestions.findIndex(q => String(q.id) === String(selectedCardId));
+                if (index === -1) return;
+
+                boardQuestions[index].col = colVal;
+                boardQuestions[index].label = labelVal;
+                boardQuestions[index].question = questionVal;
+                boardQuestions[index].answers = answersArray;
+                showToast("Cambios guardados con éxito.");
+            }
+
+            saveBoardData();
+            renderBoard();
+            closeModal('modal-edit');
+        }
+
+        // Función para eliminar definitivamente una pregunta del listado (Corregida e Infalible)
+        async function deleteCardPermanently() {
+            if (selectedCardId === null) return;
+            
+            // Se guarda el ID de forma local para evitar cambios por asincronía (condiciones de carrera)
+            const cardIdToDelete = selectedCardId; 
+            
+            const confirmed = await showConfirm(
+                "Eliminar Pregunta Permanentemente",
+                "¿Estás completamente seguro de que deseas eliminar permanentemente esta pregunta del tablero? Esta acción no se puede deshacer."
+            );
+            
+            if (!confirmed) return;
+            
+            // Filtrar usando conversión de tipos robusta para evitar disparidades String/Number de localStorage
+            boardQuestions = boardQuestions.filter(q => String(q.id) !== String(cardIdToDelete));
+            
+            saveBoardData();
+            renderBoard();
+            closeModal('modal-edit');
+            showToast("La pregunta ha sido eliminada permanentemente del tablero.");
+        }
+
+        async function confirmResetGame() {
+            const confirmed = await showConfirm(
+                "Reiniciar Partida", 
+                "¿Estás seguro de reiniciar el juego? Se mantendrán las preguntas creadas/editadas y se volverán a activar todas las tarjetas en el tablero."
+            );
+            if (!confirmed) return;
+            
+            boardQuestions.forEach(card => {
+                card.inactive = false;
+            });
+            saveBoardData();
+            renderBoard();
+            showToast("¡El juego ha sido reiniciado! Las preguntas regresaron al tablero.");
+        }
+
+        function confirmResetAll() {
+            resetToDefaultData(true);
+        }
+
+        function updateBackupJSON() {
+            const backupTextarea = document.getElementById('backup-string');
+            backupTextarea.value = JSON.stringify(boardQuestions);
+        }
+
+        function copyBackupToClipboard() {
+            const textarea = document.getElementById('backup-string');
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast("¡Configuración de tablero copiada con éxito!");
+            } catch (err) {
+                showToast("No se pudo copiar de forma automática.");
+            }
+        }
+
+        async function importBackupBoard() {
+            const backupString = prompt("Pega aquí el código JSON del tablero que deseas cargar:");
+            if (!backupString) return;
+
+            try {
+                const parsed = JSON.parse(backupString);
+                if (Array.isArray(parsed)) {
+                    const isValid = parsed.every(item => 
+                        item.hasOwnProperty('id') && 
+                        item.hasOwnProperty('col') && 
+                        item.hasOwnProperty('label') && 
+                        item.hasOwnProperty('question') && 
+                        item.hasOwnProperty('answers')
+                    );
+
+                    if (isValid) {
+                        boardQuestions = parsed;
+                        saveBoardData();
+                        renderBoard();
+                        showToast("¡Tablero cargado con éxito!");
+                    } else {
+                        showToast("El formato de datos no es correcto para este tablero.");
+                    }
+                } else {
+                    showToast("El código debe contener un array válido de preguntas.");
+                }
+            } catch (e) {
+                showToast("Fallo al interpretar el código de importación.");
+            }
+        }
+
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
