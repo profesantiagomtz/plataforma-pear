@@ -1,6 +1,7 @@
 import { sb, esc, md, modal, $, $$, run, toast, fmtDate, fmtDateTime, todayStr, parseDay, dayName, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { moduloView } from './modulo.js';
+import { ediemsView } from './ediems.js';
 import { logEvent } from './live.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
@@ -152,6 +153,7 @@ export const studentRoutes = {
   material: { title: 'Material', icon: '📚', nav: true, render: material },
   tareas: { title: 'Tareas', icon: '✅', nav: true, render: tareas },
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
+  ediems: { title: 'EDIEMS', icon: '🎯', nav: true, render: ediemsView },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   cronograma: { title: 'Cronograma', icon: '🗓️', nav: true, render: calendarView },
   perfil: { title: 'Perfil', icon: '👤', nav: true, render: profileView },

@@ -191,8 +191,8 @@ const howBox = (p) => { const [ic, tx] = HOW[p.type] || []; return tx ? `<div cl
 // ---------- vista principal ----------
 export async function moduloView(el, { profile, param }) {
   const id = param[0];
-  if (!/^m1-[1-7]$/.test(id || '')) { el.innerHTML = '<div class="empty">Módulo no encontrado.</div>'; return; }
-  const preview = profile.role === 'teacher';
+  if (!/^(m1-[1-7]|ed-(10|[1-9]))$/.test(id || '')) { el.innerHTML = '<div class="empty">Módulo no encontrado.</div>'; return; }
+  const preview = profile.role === 'teacher'; const ed = id.startsWith('ed-'); const home = ed ? '#/ediems' : '#/material';
   let mod;
   try { mod = (await import(`../content/${id}.js`)).default; } catch (e) { console.error(e); el.innerHTML = '<div class="msg err">No se pudo cargar el módulo.</div>'; return; }
   const pages = [{ type: 'intro', t: 'Inicio' }, ...mod.pages];
@@ -211,7 +211,7 @@ export async function moduloView(el, { profile, param }) {
   const canGo = () => { if (!guided) return true; const p = pages[i]; if (p.type === 'intro' || p.type === 'practica') return true; return isDone(i); };
   const log = (kind, detail) => logEvent(kind, id, i, { title: title(i), ...detail });
 
-  el.innerHTML = `<div class="mod"><div class="modtop"><a href="#/material" class="back">← Material</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon wbtn" id="gloss" aria-label="Diccionario" ${Object.keys(WORDS).length ? '' : 'hidden'}>📖 <span>Palabras</span></button><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
+  el.innerHTML = `<div class="mod"><div class="modtop"><a href="${home}" class="back">← ${ed ? 'EDIEMS' : 'Material'}</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon wbtn" id="gloss" aria-label="Diccionario" ${Object.keys(WORDS).length ? '' : 'hidden'}>📖 <span>Palabras</span></button><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
     ${preview ? '<div class="msg info prevbar">👁️ <b>Vista previa del docente</b> · el avance no se guarda. <label class="check" style="display:inline-flex;margin:0 0 0 10px"><input type="checkbox" id="gmode" checked> Ver con guía y bloqueos de alumno</label></div>' : ''}
     <div class="modbody"><aside class="modside" id="mside"></aside><main class="modmain"><div class="steps" id="steps"></div><div id="howslot"></div><article class="lesson" id="stage"></article>
     <div class="fnav"><button class="btn ghost" id="prev">← Atrás</button><span id="ct"></span><button class="btn big" id="next">Siguiente →</button></div></main></div></div>`;
@@ -291,8 +291,8 @@ export async function moduloView(el, { profile, param }) {
   function lessonRead() { const old = st.done[i] || {}; mark(i, 1, { r: 1 }); if (!old.r) log('lesson_read', { secs: old.t || 0 }); $('.nexthint', el) && ($('.nexthint', el).hidden = false); }
   function maybeDone() { if (pct() >= 100 && !doneLogged) { doneLogged = true; log('module_done', {}); toast('🏆 ¡Completaste el módulo!', 'ok'); } }
 
-  const intro = () => `<header><span class="kick">🎓 Módulo ${esc(mod.unit)}</span><h1>${esc(mod.title)}</h1><p class="sub">${esc(mod.sub || '')}</p></header>
-    <div class="three"><div><span>📖</span><b>1. Lee</b><small>poquito a poco</small></div><div><span>✍️</span><b>2. Practica</b><small>se revisa solo</small></div><div><span>🏁</span><b>3. Entrega</b><small>tu práctica final</small></div></div>
+  const intro = () => `<header><span class="kick">${ed ? '🎯 Preparación' : '🎓 Módulo'} ${esc(mod.unit)}</span><h1>${esc(mod.title)}</h1><p class="sub">${esc(mod.sub || '')}</p></header>
+    <div class="three"><div><span>📖</span><b>1. Lee</b><small>poquito a poco</small></div><div><span>✍️</span><b>2. Practica</b><small>se revisa solo</small></div>${ed ? '<div><span>🎯</span><b>3. Repasa</b><small>y haz el simulacro</small></div>' : '<div><span>🏁</span><b>3. Entrega</b><small>tu práctica final</small></div>'}</div>
     <div class="chips"><span class="chip">⏱️ ${mod.minutes || 60} min aprox.</span><span class="chip">📘 ${pages.filter((p) => p.type === 'lesson').length} lecciones</span><span class="chip">🎲 ${pages.filter((p) => !['lesson', 'intro', 'practica'].includes(p.type)).length} actividades</span>${mod.weight ? `<span class="chip">⭐ Vale ${mod.weight} % del curso</span>` : ''}</div>
     <div class="co co-def"><div class="co-l">Al terminar podrás…</div><ul class="goals">${mod.goals.map((g) => `<li>${rich(g)}</li>`).join('')}</ul></div>
     <div class="co co-ana"><div class="co-l">⚠️ Importante</div><p>Para pasar a la siguiente parte tienes que <b>terminar la actual</b> (leerla o resolverla). Si te equivocas, no pasa nada: puedes intentar otra vez. Tu profe ve tu avance.</p></div>
@@ -300,7 +300,7 @@ export async function moduloView(el, { profile, param }) {
 
   const go = (k) => { flush(i); i = Math.max(0, Math.min(pages.length - 1, k)); draw(); };
   $('#prev', el).onclick = () => go(i - 1);
-  $('#next', el).onclick = () => { if (!canGo()) return; if (i === pages.length - 1) { maybeDone(); location.hash = '#/material'; } else go(i + 1); };
+  $('#next', el).onclick = () => { if (!canGo()) return; if (i === pages.length - 1) { maybeDone(); location.hash = home; } else go(i + 1); };
   $('#mside', el).addEventListener('click', (e) => { const b = e.target.closest('.sl'); if (b && !b.disabled) { go(+b.dataset.k); $('#mside', el).classList.remove('open'); $('.scrim')?.remove(); } });
   $('#mmenu', el).onclick = () => { const s = $('#mside', el); s.classList.toggle('open'); if (s.classList.contains('open')) { const sc = document.createElement('div'); sc.className = 'scrim on'; sc.onclick = () => { s.classList.remove('open'); sc.remove(); }; document.body.append(sc); } };
   $('#gloss', el).onclick = () => modal('📖 Diccionario: palabras de este módulo', `<p class="muted small">Si no entiendes una palabra, aquí está explicada en fácil.</p><div class="words nob">${Object.entries(WORDS).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([t, d]) => `<div class="wd"><b>${esc(t)}</b><span>${rich(d)}</span></div>`).join('')}</div>`, { wide: true });
