@@ -1,0 +1,200 @@
+[
+{
+"id": 0,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 1: ¿Cuánto es 5 + 3?\n\nEscribe solo el número.",
+"answers": [
+"8",
+"ocho"
+]
+},
+{
+"id": 1,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 6: ¿Cuánto es 6 × 7?\n\nEscribe solo el número.",
+"answers": [
+"42"
+]
+},
+{
+"id": 2,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 11: ¿Cuánto es 12 ÷ 4 (doce entre cuatro)?\n\nEscribe solo el número.",
+"answers": [
+"3",
+"tres"
+]
+},
+{
+"id": 3,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 16: Una pizza tiene 8 rebanadas y te comes 2. ¿Cuántas rebanadas quedan?\n\nEscribe solo el número.",
+"answers": [
+"6",
+"seis"
+]
+},
+{
+"id": 4,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 2: ¿Cuánto es 10 − 4?\n\nEscribe solo el número.",
+"answers": [
+"6",
+"seis"
+]
+},
+{
+"id": 5,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 7: ¿Cuánto es la mitad de 20?\n\nEscribe solo el número.",
+"answers": [
+"10",
+"diez"
+]
+},
+{
+"id": 6,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 12: Una pizza se parte en 2 pedazos iguales. ¿Qué fracción es un pedazo?\n\nEscribe la fracción así: 1/3",
+"answers": [
+"1/2",
+"un medio",
+"medio"
+]
+},
+{
+"id": 7,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 17: ¿Cuánto es 2 × 2 × 2?\n\nEscribe solo el número.",
+"answers": [
+"8",
+"ocho"
+]
+},
+{
+"id": 8,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 3: ¿Cuánto es 2 × 3?\n\nEscribe solo el número.",
+"answers": [
+"6",
+"seis"
+]
+},
+{
+"id": 9,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 8: 3 decenas y 5 unidades, ¿qué número forman?\n\nEscribe solo el número.",
+"answers": [
+"35"
+]
+},
+{
+"id": 10,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 13: En cuneiforme, la cuña vale 10 y el clavo vale 1. ¿Qué número son 3 cuñas y 2 clavos?\n\nEscribe solo el número.",
+"answers": [
+"32"
+]
+},
+{
+"id": 11,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 18: ¿Cuál es el número más grande que divide exacto a 8 y a 12?\n\nPista: prueba con 2, 3, 4… Escribe solo el número.",
+"answers": [
+"4",
+"cuatro"
+]
+},
+{
+"id": 12,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 4: ¿Cuánto es la mitad de 10?\n\nEscribe solo el número.",
+"answers": [
+"5",
+"cinco"
+]
+},
+{
+"id": 13,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 9: ¿Cuántos minutos tiene una hora?\n\nEscribe solo el número.",
+"answers": [
+"60",
+"sesenta"
+]
+},
+{
+"id": 14,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 14: ¿Cuánto es el 50% (la mitad) de 40?\n\nEscribe solo el número.",
+"answers": [
+"20",
+"veinte"
+]
+},
+{
+"id": 15,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 19: ¿Cuánto es el 10% de 200?\n\nPista: el 10% es dividir entre 10. Escribe solo el número.",
+"answers": [
+"20",
+"veinte"
+]
+},
+{
+"id": 16,
+"col": 0,
+"label": "100 Euros",
+"question": "Pregunta 5: ¿Cuántos lados tiene un triángulo?\n\nEscribe solo el número.",
+"answers": [
+"3",
+"tres"
+]
+},
+{
+"id": 17,
+"col": 1,
+"label": "200 Euros",
+"question": "Pregunta 10: ¿Es verdad que 5 es mayor que 8?\n\nEscribe: Verdadero o Falso.",
+"answers": [
+"Falso",
+"F",
+"falsa",
+"no"
+]
+},
+{
+"id": 18,
+"col": 2,
+"label": "500 Euros",
+"question": "Pregunta 15: ¿Cuánto es el 25% de 100?\n\nEscribe solo el número.",
+"answers": [
+"25"
+]
+},
+{
+"id": 19,
+"col": 3,
+"label": "1000 Euros",
+"question": "Pregunta 20: Simplifica la fracción 2/4 (divide arriba y abajo entre 2).\n\nEscribe la fracción así: 1/3",
+"answers": [
+"1/2"
+]
+}
+]
