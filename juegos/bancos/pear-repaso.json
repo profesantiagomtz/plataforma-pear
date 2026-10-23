@@ -1,0 +1,201 @@
+[
+{
+"id": 0,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 1: ¿Cuál es el valor de verdad de la proposición «2 + 2 = 5»?\n\nResponde: Verdadero o Falso.",
+"answers": [
+"Falso",
+"F",
+"falsa"
+]
+},
+{
+"id": 1,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 6: Si p es verdadera y q es falsa, ¿cuál es el valor de verdad de «p y q» (p ∧ q)?\n\nResponde: Verdadero o Falso.",
+"answers": [
+"Falso",
+"F",
+"falsa"
+]
+},
+{
+"id": 2,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 11: Si p es falsa, ¿cuál es el valor de verdad de «si p entonces q» (p → q), sin importar q?\n\nResponde: Verdadero o Falso.",
+"answers": [
+"Verdadero",
+"V",
+"verdadera"
+]
+},
+{
+"id": 3,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 16: ¿Cuántos renglones tiene la tabla de verdad de una proposición con 3 variables (p, q, r)?\n\nEscribe solo el número.",
+"answers": [
+"8",
+"ocho"
+]
+},
+{
+"id": 4,
+"col": 0,
+"label": "100 Pesos",
+"question": "Pregunta 2: ¿Cuántos símbolos (dígitos) distintos usa nuestro sistema decimal?\n\nEscribe solo el número.",
+"answers": [
+"10",
+"diez"
+]
+},
+{
+"id": 5,
+"col": 1,
+"label": "200 Pesos",
+"question": "Pregunta 7: En la numeración maya, ¿cuánto vale una barra?\n\nEscribe solo el número.",
+"answers": [
+"5",
+"cinco"
+]
+},
+{
+"id": 6,
+"col": 2,
+"label": "500 Pesos",
+"question": "Pregunta 12: En numeración cuneiforme babilónica, ¿qué número forman 2 cuñas (de 10) y 3 clavos (de 1)?\n\nEscribe el número decimal.",
+"answers": [
+"23"
+]
+},
+{
+"id": 7,
+"col": 3,
+"label": "1000 Pesos",
+"question": "Pregunta 17: Un número cuneiforme tiene dos posiciones: la izquierda tiene 1 clavo (vale ×60) y la derecha 2 cuñas y 5 clavos. ¿Qué número decimal es?\n\nEscribe el número decimal.",
+"answers": [
+"85"
+]
+},
+{
+"id": 8,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 3: ¿Cuál es el siguiente múltiplo de 7 después del 21?\n\nEscribe solo el número.",
+"answers": [
+"28"
+]
+},
+{
+"id": 9,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 8: ¿Cuál es el MCD (máximo común divisor) de 12 y 18?\n\nEscribe solo el número.",
+"answers": [
+"6"
+]
+},
+{
+"id": 10,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 13: ¿Cuál es el MCM (mínimo común múltiplo) de 4 y 6?\n\nEscribe solo el número.",
+"answers": [
+"12"
+]
+},
+{
+"id": 11,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 18: Convierte 72 km/h a metros por segundo.\n\nEscribe el resultado, por ejemplo: 10 m/s.",
+"answers": [
+"20",
+"20 m/s",
+"20 metros por segundo"
+]
+},
+{
+"id": 12,
+"col": 0,
+"label": "100 Dólares",
+"question": "Pregunta 4: ¿Cuánto es 2 elevado a la 3 (2³)?\n\nEscribe solo el número.",
+"answers": [
+"8"
+]
+},
+{
+"id": 13,
+"col": 1,
+"label": "200 Dólares",
+"question": "Pregunta 9: ¿Cuánto es la raíz cuadrada de 81?\n\nEscribe solo el número.",
+"answers": [
+"9"
+]
+},
+{
+"id": 14,
+"col": 2,
+"label": "500 Dólares",
+"question": "Pregunta 14: ¿Cuánto es el 20% de 150?\n\nEscribe solo el número.",
+"answers": [
+"30"
+]
+},
+{
+"id": 15,
+"col": 3,
+"label": "1000 Dólares",
+"question": "Pregunta 19: Escribe 3 400 000 en notación científica.\n\nUsa el formato: 3.4 x 10^6",
+"answers": [
+"3.4 x 10^6",
+"3.4x10^6",
+"3.4 × 10^6",
+"3.4*10^6",
+"3.4 por 10 a la 6"
+]
+},
+{
+"id": 16,
+"col": 0,
+"label": "100 Euros",
+"question": "Pregunta 5: ¿Cuántos metros hay en 1 kilómetro?\n\nEscribe el número, por ejemplo: 100 m.",
+"answers": [
+"1000",
+"1000 m",
+"1000 metros",
+"1 000",
+"mil"
+]
+},
+{
+"id": 17,
+"col": 1,
+"label": "200 Euros",
+"question": "Pregunta 10: Simplifica al máximo la fracción 6/8.\n\nResponde con una fracción, por ejemplo: 1/2.",
+"answers": [
+"3/4"
+]
+},
+{
+"id": 18,
+"col": 2,
+"label": "500 Euros",
+"question": "Pregunta 15: Resuelve respetando la jerarquía de operaciones: 3 + 4 × 2\n\nEscribe solo el resultado.",
+"answers": [
+"11"
+]
+},
+{
+"id": 19,
+"col": 3,
+"label": "1000 Euros",
+"question": "Pregunta 20: Resuelve: 2 × (5 + 3)² − 10\n\nEscribe solo el resultado.",
+"answers": [
+"118"
+]
+}
+]

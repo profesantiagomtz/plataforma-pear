@@ -3,6 +3,7 @@ import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
 import { ediemsView } from './ediems.js';
+import { datosView } from './datos.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
 import { seguimiento, loadSeguimiento, statsFor, alertBadges } from './seguimiento.js';
 import { asistencia } from './asistencia.js';
@@ -418,12 +419,13 @@ async function vistaAlumno(el, { param, profile }) {
   el.innerHTML = `<div class="msg info" style="margin:0 0 14px">👁️ <b>Vista previa de alumno.</b> Aquí ves <b>exactamente lo que ven tus alumnos</b>: lo que ocultaste no aparece.
     <label class="check" style="margin:8px 0 0"><input type="checkbox" id="sh" ${showHidden ? 'checked' : ''}> Incluir también lo oculto y lo «solo docente» (solo para que lo revises; los alumnos no lo ven)</label></div>
   <div class="head"><h1>Vista alumno</h1></div>
-  <div class="tabs">${[['material', 'Material'], ['tareas', 'Tareas'], ['ediems', '🎯 EDIEMS'], ['cronograma', 'Cronograma']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('')}</div><div id="pv"></div>`;
+  <div class="tabs">${[['material', 'Material'], ['tareas', 'Tareas'], ['datos', '📊 Ciencia de Datos'], ['ediems', '🎯 EDIEMS'], ['cronograma', 'Cronograma']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('')}</div><div id="pv"></div>`;
   $$('.tabs button', el).forEach((b) => b.onclick = () => { location.hash = '#/vista/' + b.dataset.t; });
   const box = $('#pv', el);
   $('#sh', el).onchange = (e) => { sessionStorage.setItem('pear-showhidden', e.target.checked ? '1' : '0'); vistaAlumno(el, { param, profile }); };
   if (tab === 'tareas') await tareasPreview(box, { showHidden });
   else if (tab === 'cronograma') await calendarView(box);
+  else if (tab === 'datos') await datosView(box, { profile: { ...profile, role: 'student-preview' }, param: [] });
   else if (tab === 'ediems') await ediemsView(box, { profile: { ...profile, role: 'student-preview' }, param: [] });
   else await studentMaterial(box, { preview: true, profile, showHidden });
 }
@@ -438,6 +440,7 @@ export const teacherRoutes = {
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
   envivo: { title: 'En vivo', icon: '📡', nav: true, render: envivo },
   avance: { title: 'Avance', icon: '📈', nav: true, render: avance },
+  datos: { title: 'Ciencia de Datos', icon: '📊', nav: true, render: datosView },
   ediems: { title: 'EDIEMS', icon: '🎯', nav: true, render: ediemsView },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },

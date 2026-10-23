@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Equipos y Transacciones</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            
+            /* Colores de divisas */
+            --color-mxn: #10b981; /* Verde */
+            --color-usd: #3b82f6; /* Azul */
+            --color-eur: #f59e0b; /* Ámbar/Dorado */
+            --color-danger: #ef4444; /* Rojo */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: #1e293b;
+            font-weight: 800;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #f8fafc;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-danger {
+            background-color: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-success {
+            background-color: var(--color-mxn);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .team-config-row {
+            display: grid;
+            grid-template-columns: 1.5fr repeat(3, 1fr);
+            gap: 12px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .team-config-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .team-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .team-card-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .currency-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .currency-name {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .currency-value {
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 1.05rem;
+        }
+
+        .currency-value.positive {
+            color: #059669;
+        }
+
+        .currency-value.negative {
+            color: #dc2626;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tx-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .tx-table th, .tx-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tx-table th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .tx-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .currency-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .badge-mxn { background-color: var(--color-mxn); }
+        .badge-usd { background-color: var(--color-usd); }
+        .badge-eur { background-color: var(--color-eur); }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background-color: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            margin-top: 10px;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            animation: scaleUp 0.2s ease-out;
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-area">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="18" height="18" rx="4" fill="#3b82f6" fill-opacity="0.1" stroke="#3b82f6" stroke-width="2"/>
+                    <path d="M12 8V16" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 12H16" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <div>
+                    <h1 style="text-align: left;">Finanzas de Equipos</h1>
+                    <p style="text-align: left;">Control de Saldos y Transacciones Multidivisa</p>
+                </div>
+            </div>
+        </header>
+
+        <div id="dashboard-actions" class="top-actions" style="display: none;">
+            <span id="active-teams-counter" style="font-weight: 700; color: #475569;"></span>
+            <button class="btn btn-secondary" onclick="confirmarRegresoConfig()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Configurar Equipos
+            </button>
+        </div>
+
+        <!-- ================= PANTALLA 1: CONFIGURACIÓN ================= -->
+        <div id="screen-setup" class="screen active">
+            <div class="card">
+                <div class="card-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Configuración de Equipos Iniciales
+                </div>
+
+                <div class="form-group" style="max-width: 300px; margin-bottom: 25px;">
+                    <label for="teams-count">Número de Equipos (1 a 10):</label>
+                    <select id="teams-count" class="form-control" onchange="actualizarFormularioEquipos()">
+                        <option value="1">1 Equipo</option>
+                        <option value="2">2 Equipos</option>
+                        <option value="3" selected>3 Equipos</option>
+                        <option value="4">4 Equipos</option>
+                        <option value="5">5 Equipos</option>
+                        <option value="6">6 Equipos</option>
+                        <option value="7">7 Equipos</option>
+                        <option value="8">8 Equipos</option>
+                        <option value="9">9 Equipos</option>
+                        <option value="10">10 Equipos</option>
+                    </select>
+                </div>
+
+                <div id="teams-config-container"></div>
+
+                <div style="margin-top: 25px; text-align: right;">
+                    <button class="btn btn-primary" onclick="guardarConfiguracion()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Guardar e Iniciar Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PANTALLA 2: DASHBOARD PRINCIPAL ================= -->
+        <div id="screen-dashboard" class="screen">
+            <!-- 1. Tarjetas de Equipos -->
+            <div class="card">
+                <div class="card-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    Estado Actual de los Equipos (Saldos Acumulados)
+                </div>
+                <div id="teams-dashboard-grid" class="teams-grid"></div>
+            </div>
+
+            <div class="dashboard-layout">
+                <!-- Columna Izquierda: Entradas de Transacciones e Intercambio de Divisas -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <!-- Registro de Transacciones -->
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Registrar Nueva Transacción
+                        </div>
+                        
+                        <form id="tx-form" onsubmit="registrarTransaccion(event)">
+                            <div class="form-group">
+                                <label for="tx-item">Nombre del Artículo / Concepto:</label>
+                                <input type="text" id="tx-item" class="form-control" placeholder="Ej. Computadora, Renta de Oficina..." required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label for="tx-currency">Divisa:</label>
+                                    <select id="tx-currency" class="form-control" required>
+                                        <option value="MXN">Peso Mexicano (MXN)</option>
+                                        <option value="USD">Dólar (USD)</option>
+                                        <option value="EUR">Euro (EUR)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tx-amount">Precio:</label>
+                                    <input type="number" id="tx-amount" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                                <div class="form-group">
+                                    <label for="tx-buyer">Comprador (Resta Dinero):</label>
+                                    <select id="tx-buyer" class="form-control" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tx-seller">Vendedor (Suma Dinero):</label>
+                                    <select id="tx-seller" class="form-control" required></select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                Registrar Operación
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Conversor Rápido y Transferencia de Divisas -->
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 3l4 4-4 4M21 7H3M7 21l-4-4 4-4M3 17h18" />
+                            </svg>
+                            Conversor y Transferencia de Divisas
+                        </div>
+                        
+                        <!-- Configuración de Divisas -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-from">De (Moneda Origen):</label>
+                                <select id="conv-from" class="form-control" onchange="actualizarSugerenciaTipoCambio()">
+                                    <option value="MXN">Peso Mexicano (MXN)</option>
+                                    <option value="USD" selected>Dólar (USD)</option>
+                                    <option value="EUR">Euro (EUR)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-to">A (Moneda Destino):</label>
+                                <select id="conv-to" class="form-control" onchange="actualizarSugerenciaTipoCambio()">
+                                    <option value="MXN" selected>Peso Mexicano (MXN)</option>
+                                    <option value="USD">Dólar (USD)</option>
+                                    <option value="EUR">Euro (EUR)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Cantidades y Tasas -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-rate">Tipo de Cambio (Valor):</label>
+                                <input type="number" id="conv-rate" class="form-control" step="0.0001" min="0.00001" value="18.0000" oninput="calcularConversion()">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-amount">Cantidad a Convertir:</label>
+                                <input type="number" id="conv-amount" class="form-control" step="0.01" min="0" placeholder="0.00" value="100" oninput="calcularConversion()">
+                            </div>
+                        </div>
+
+                        <!-- Destinatarios de la Conversión / Transferencia -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-team-from">Entrega (Resta Origen):</label>
+                                <select id="conv-team-from" class="form-control" required></select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="conv-team-to">Recibe (Suma Destino):</label>
+                                <select id="conv-team-to" class="form-control" required></select>
+                            </div>
+                        </div>
+
+                        <!-- Cuadro de Vista Previa del Cálculo -->
+                        <div style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em;">Equivalencia del Cálculo</div>
+                            <div id="conv-result" style="font-size: 1.6rem; font-weight: 800; color: var(--accent-color); font-family: monospace;">$1,800.00 MXN</div>
+                        </div>
+
+                        <!-- Botón para ejecutar la transacción en los saldos -->
+                        <button type="button" class="btn btn-success" style="width: 100%;" onclick="ejecutarConversionFinanciera()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 1v22M7 1v22M3 5h18M3 19h18" />
+                            </svg>
+                            Ejecutar Transferencia y Conversión
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Historial de Operaciones -->
+                <div class="card" style="display: flex; flex-direction: column; margin-bottom: 0;">
+                    <div class="card-title" style="justify-content: space-between;">
+                        <span style="display: flex; align-items: center; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="12 8 12 12 14 14"></polyline>
+                                <path d="M3.05 11a9 9 0 1 1 .49 4M2.9 5v6h6"></path>
+                            </svg>
+                            Historial de Transacciones
+                        </span>
+                        <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="confirmarBorrarHistorial()">
+                            Vaciar Historial
+                        </button>
+                    </div>
+
+                    <div class="table-responsive" style="flex-grow: 1; max-height: 520px;">
+                        <table class="tx-table">
+                            <thead>
+                                <tr>
+                                    <th>Artículo</th>
+                                    <th>Divisa/Monto</th>
+                                    <th>Comprador / Vendedor</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tx-history-tbody"></tbody>
+                        </table>
+                        <div id="no-tx-placeholder" class="no-data">
+                            No se han registrado transacciones todavía.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE TOASTS -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MODALES DE DIÁLOGO -->
+    <div id="modal-confirm" class="modal-overlay">
+        <div class="modal">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #1e293b;">¿Regresar a Configuración?</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">
+                Si decides volver a la pantalla de configuración, podrás editar los nombres de los equipos y sus saldos iniciales. 
+                <strong style="color: var(--color-danger);">Nota:</strong> Las transacciones registradas hasta ahora se mantendrán, pero si agregas o quitas equipos, estas transacciones podrían quedar desajustadas.
+            </p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modal-confirm')">Cancelar</button>
+                <button class="btn btn-primary" onclick="irAConfiguracion()">Aceptar e Ir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-delete-txs" class="modal-overlay">
+        <div class="modal">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #dc2626;">¿Vaciar Historial?</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">
+                ¿Estás seguro de que quieres eliminar todas las transacciones registradas? Los saldos de los equipos volverán a sus montos iniciales definidos en la configuración. Esta acción no se puede deshacer.
+            </p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modal-delete-txs')">Cancelar</button>
+                <button class="btn btn-danger" onclick="borrarHistorialTransacciones()">Eliminar Todo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY_TEAMS = "finanzas_equipos_data";
+        const STORAGE_KEY_TXS = "finanzas_transacciones_data";
+        const STORAGE_KEY_COUNT = "finanzas_equipos_count";
+        const STORAGE_KEY_SCREEN = "finanzas_active_screen";
+
+        let appState = {
+            teams: [],          
+            transactions: [],   
+            activeScreen: 'setup' 
+        };
+
+        window.addEventListener('load', () => {
+            inicializarAplicacion();
+            actualizarSugerenciaTipoCambio();
+        });
+
+        // Obtiene saldo actual neto de un equipo en una divisa específica recalculando el historial
+        function obtenerSaldoActual(teamId, divisa) {
+            const teamObj = appState.teams.find(t => t.id === teamId);
+            if (!teamObj) return 0;
+            
+            let saldo = 0;
+            if (divisa === 'MXN') saldo = parseFloat(teamObj.initialMXN) || 0;
+            else if (divisa === 'USD') saldo = parseFloat(teamObj.initialUSD) || 0;
+            else if (divisa === 'EUR') saldo = parseFloat(teamObj.initialEUR) || 0;
+
+            appState.transactions.forEach(tx => {
+                if (tx.currency === divisa) {
+                    if (tx.buyerId === teamId) {
+                        saldo -= parseFloat(tx.amount);
+                    }
+                    if (tx.sellerId === teamId) {
+                        saldo += parseFloat(tx.amount);
+                    }
+                }
+            });
+
+            return saldo;
+        }
+
+        function inicializarAplicacion() {
+            const storedTeams = localStorage.getItem(STORAGE_KEY_TEAMS);
+            const storedTxs = localStorage.getItem(STORAGE_KEY_TXS);
+            const storedCount = localStorage.getItem(STORAGE_KEY_COUNT);
+            const storedScreen = localStorage.getItem(STORAGE_KEY_SCREEN);
+
+            if (storedCount) {
+                document.getElementById('teams-count').value = storedCount;
+            }
+
+            if (storedTeams) {
+                appState.teams = JSON.parse(storedTeams);
+                appState.transactions = storedTxs ? JSON.parse(storedTxs) : [];
+                appState.activeScreen = storedScreen || 'setup';
+                
+                if (appState.activeScreen === 'dashboard') {
+                    renderizarDashboard();
+                    cambiarPantalla('dashboard');
+                } else {
+                    actualizarFormularioEquipos(true);
+                    cambiarPantalla('setup');
+                }
+            } else {
+                actualizarFormularioEquipos(false);
+                cambiarPantalla('setup');
+            }
+        }
+
+        function cambiarPantalla(screenName) {
+            appState.activeScreen = screenName;
+            localStorage.setItem(STORAGE_KEY_SCREEN, screenName);
+
+            const setupScreen = document.getElementById('screen-setup');
+            const dashboardScreen = document.getElementById('screen-dashboard');
+            const topActions = document.getElementById('dashboard-actions');
+
+            if (screenName === 'setup') {
+                setupScreen.classList.add('active');
+                dashboardScreen.classList.remove('active');
+                topActions.style.display = 'none';
+            } else if (screenName === 'dashboard') {
+                setupScreen.classList.remove('active');
+                dashboardScreen.classList.add('active');
+                topActions.style.display = 'flex';
+                
+                const count = appState.teams.length;
+                document.getElementById('active-teams-counter').innerText = 
+                    `${count} ${count === 1 ? 'Equipo Registrado' : 'Equipos Registrados'}`;
+            }
+        }
+
+        function actualizarFormularioEquipos(cargarGuardados = false) {
+            const countSelector = document.getElementById('teams-count');
+            const cantidad = parseInt(countSelector.value);
+            localStorage.setItem(STORAGE_KEY_COUNT, cantidad);
+
+            const container = document.getElementById('teams-config-container');
+            container.innerHTML = '';
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'team-config-row';
+            headerDiv.style.background = '#e2e8f0';
+            headerDiv.style.fontWeight = '700';
+            headerDiv.style.padding = '8px 15px';
+            headerDiv.innerHTML = `
+                <div>Nombre del Equipo</div>
+                <div>Fondo MXN ($)</div>
+                <div>Fondo USD ($)</div>
+                <div>Fondo EUR (€)</div>
+            `;
+            container.appendChild(headerDiv);
+
+            for (let i = 1; i <= cantidad; i++) {
+                let nombrePredeterminado = `Equipo ${i}`;
+                let initMXN = 0;
+                let initUSD = 0;
+                let initEUR = 0;
+
+                if (cargarGuardados && appState.teams[i - 1]) {
+                    nombrePredeterminado = appState.teams[i - 1].name;
+                    initMXN = appState.teams[i - 1].initialMXN;
+                    initUSD = appState.teams[i - 1].initialUSD;
+                    initEUR = appState.teams[i - 1].initialEUR;
+                } else if (appState.teams[i - 1]) {
+                    nombrePredeterminado = appState.teams[i - 1].name || `Equipo ${i}`;
+                    initMXN = appState.teams[i - 1].initialMXN || 0;
+                    initUSD = appState.teams[i - 1].initialUSD || 0;
+                    initEUR = appState.teams[i - 1].initialEUR || 0;
+                }
+
+                const fila = document.createElement('div');
+                fila.className = 'team-config-row';
+                fila.innerHTML = `
+                    <div class="form-group" style="margin:0;">
+                        <input type="text" id="config-name-${i}" class="form-control" value="${nombrePredeterminado}" placeholder="Nombre del Equipo" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <input type="number" id="config-mxn-${i}" class="form-control" value="${initMXN}" min="0" step="0.01" placeholder="MXN Inicial">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <input type="number" id="config-usd-${i}" class="form-control" value="${initUSD}" min="0" step="0.01" placeholder="USD Inicial">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <input type="number" id="config-eur-${i}" class="form-control" value="${initEUR}" min="0" step="0.01" placeholder="EUR Inicial">
+                    </div>
+                `;
+                container.appendChild(fila);
+            }
+        }
+
+        function guardarConfiguracion() {
+            const cantidad = parseInt(document.getElementById('teams-count').value);
+            const nuevosEquipos = [];
+
+            for (let i = 1; i <= cantidad; i++) {
+                const nameInput = document.getElementById(`config-name-${i}`);
+                const mxnInput = document.getElementById(`config-mxn-${i}`);
+                const usdInput = document.getElementById(`config-usd-${i}`);
+                const eurInput = document.getElementById(`config-eur-${i}`);
+
+                const nameValue = nameInput.value.trim() || `Equipo ${i}`;
+                const mxnValue = parseFloat(mxnInput.value) || 0;
+                const usdValue = parseFloat(usdInput.value) || 0;
+                const eurValue = parseFloat(eurInput.value) || 0;
+
+                nuevosEquipos.push({
+                    id: `team_${i}`,
+                    name: nameValue,
+                    initialMXN: mxnValue,
+                    initialUSD: usdValue,
+                    initialEUR: eurValue
+                });
+            }
+
+            appState.teams = nuevosEquipos;
+            localStorage.setItem(STORAGE_KEY_TEAMS, JSON.stringify(appState.teams));
+            mostrarToast("¡Equipos configurados correctamente!");
+
+            renderizarDashboard();
+            cambiarPantalla('dashboard');
+        }
+
+        /* ================= LÓGICA DE DIBUJADO DE LA INTERFAZ (RENDER) ================= */
+
+        function renderizarDashboard() {
+            calcularYRenderizarTarjetasSaldos();
+            llenarSelectoresTransacciones();
+            renderizarHistorialTransacciones();
+        }
+
+        function calcularYRenderizarTarjetasSaldos() {
+            const container = document.getElementById('teams-dashboard-grid');
+            container.innerHTML = '';
+
+            const saldosCalculados = {};
+            
+            appState.teams.forEach(team => {
+                saldosCalculados[team.id] = {
+                    name: team.name,
+                    MXN: team.initialMXN,
+                    USD: team.initialUSD,
+                    EUR: team.initialEUR
+                };
+            });
+
+            appState.transactions.forEach(tx => {
+                const monto = parseFloat(tx.amount);
+                const divisa = tx.currency;
+
+                if (tx.buyerId && tx.buyerId !== 'externo' && saldosCalculados[tx.buyerId]) {
+                    saldosCalculados[tx.buyerId][divisa] -= monto;
+                }
+
+                if (tx.sellerId && tx.sellerId !== 'externo' && saldosCalculados[tx.sellerId]) {
+                    saldosCalculados[tx.sellerId][divisa] += monto;
+                }
+            });
+
+            appState.teams.forEach(team => {
+                const saldo = saldosCalculados[team.id];
+                const card = document.createElement('div');
+                card.className = 'team-card';
+
+                const formatMXN = formatMoneda(saldo.MXN, 'MXN');
+                const formatUSD = formatMoneda(saldo.USD, 'USD');
+                const formatEUR = formatMoneda(saldo.EUR, 'EUR');
+
+                card.innerHTML = `
+                    <div class="team-card-header">
+                        <span>${escapeHTML(saldo.name)}</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="currency-row">
+                        <span class="currency-name">🇲🇽 Pesos (MXN):</span>
+                        <span class="currency-value ${saldo.MXN >= 0 ? 'positive' : 'negative'}">${formatMXN}</span>
+                    </div>
+                    <div class="currency-row">
+                        <span class="currency-name">🇺🇸 Dólares (USD):</span>
+                        <span class="currency-value ${saldo.USD >= 0 ? 'positive' : 'negative'}">${formatUSD}</span>
+                    </div>
+                    <div class="currency-row">
+                        <span class="currency-name">🇪🇺 Euros (EUR):</span>
+                        <span class="currency-value ${saldo.EUR >= 0 ? 'positive' : 'negative'}">${formatEUR}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function llenarSelectoresTransacciones() {
+            const selectComprador = document.getElementById('tx-buyer');
+            const selectVendedor = document.getElementById('tx-seller');
+            const selectConvFrom = document.getElementById('conv-team-from');
+            const selectConvTo = document.getElementById('conv-team-to');
+
+            selectComprador.innerHTML = '<option value="" disabled selected>Selecciona Comprador...</option>';
+            selectVendedor.innerHTML = '<option value="" disabled selected>Selecciona Vendedor...</option>';
+            selectConvFrom.innerHTML = '<option value="" disabled selected>Selecciona Origen...</option>';
+            selectConvTo.innerHTML = '<option value="" disabled selected>Selecciona Destino...</option>';
+
+            const optCompradorBanco = document.createElement('option');
+            optCompradorBanco.value = 'externo';
+            optCompradorBanco.innerText = '🏦 Externo / Banco (Capital Externo)';
+            selectComprador.appendChild(optCompradorBanco);
+
+            const optVendedorBanco = document.createElement('option');
+            optVendedorBanco.value = 'externo';
+            optVendedorBanco.innerText = '🏦 Externo / Banco (Capital Externo)';
+            selectVendedor.appendChild(optVendedorBanco);
+
+            const optConvFromBanco = document.createElement('option');
+            optConvFromBanco.value = 'externo';
+            optConvFromBanco.innerText = '🏦 Externo / Banco (Caja Externa)';
+            selectConvFrom.appendChild(optConvFromBanco);
+
+            const optConvToBanco = document.createElement('option');
+            optConvToBanco.value = 'externo';
+            optConvToBanco.innerText = '🏦 Externo / Banco (Caja Externa)';
+            selectConvTo.appendChild(optConvToBanco);
+
+            appState.teams.forEach(team => {
+                const optB = document.createElement('option');
+                optB.value = team.id;
+                optB.innerText = team.name;
+                selectComprador.appendChild(optB);
+
+                const optS = document.createElement('option');
+                optS.value = team.id;
+                optS.innerText = team.name;
+                selectVendedor.appendChild(optS);
+
+                const optCF = document.createElement('option');
+                optCF.value = team.id;
+                optCF.innerText = team.name;
+                selectConvFrom.appendChild(optCF);
+
+                const optCT = document.createElement('option');
+                optCT.value = team.id;
+                optCT.innerText = team.name;
+                selectConvTo.appendChild(optCT);
+            });
+        }
+
+        function renderizarHistorialTransacciones() {
+            const tbody = document.getElementById('tx-history-tbody');
+            const placeholder = document.getElementById('no-tx-placeholder');
+            tbody.innerHTML = '';
+
+            if (appState.transactions.length === 0) {
+                placeholder.style.display = 'block';
+                return;
+            } else {
+                placeholder.style.display = 'none';
+            }
+
+            const txsReversadas = [...appState.transactions].reverse();
+
+            txsReversadas.forEach(tx => {
+                const tr = document.createElement('tr');
+                let buyerName = "Externo / Banco";
+                let sellerName = "Externo / Banco";
+
+                if (tx.buyerId !== 'externo') {
+                    const buyerObj = appState.teams.find(t => t.id === tx.buyerId);
+                    buyerName = buyerObj ? buyerObj.name : "Equipo Desconocido";
+                }
+
+                if (tx.sellerId !== 'externo') {
+                    const sellerObj = appState.teams.find(t => t.id === tx.sellerId);
+                    sellerName = sellerObj ? sellerObj.name : "Equipo Desconocido";
+                }
+
+                let badgeClass = 'badge-mxn';
+                let divisaSimbolo = '$';
+                if (tx.currency === 'USD') {
+                    badgeClass = 'badge-usd';
+                } else if (tx.currency === 'EUR') {
+                    badgeClass = 'badge-eur';
+                    divisaSimbolo = '€';
+                }
+
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">
+                        ${escapeHTML(tx.item)}
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">
+                            ${tx.timestamp || ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="currency-badge ${badgeClass}">${tx.currency}</span>
+                        <strong style="font-family: monospace; margin-left: 5px;">
+                            ${divisaSimbolo}${parseFloat(tx.amount).toFixed(2)}
+                        </strong>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem;">
+                            <span style="color: var(--color-danger); font-weight:600;">Compró:</span> ${escapeHTML(buyerName)}
+                        </div>
+                        <div style="font-size: 0.85rem; margin-top: 2px;">
+                            <span style="color: #059669; font-weight:600;">Vendió:</span> ${escapeHTML(sellerName)}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 4px 8px; border-radius: 6px;" onclick="eliminarTransaccion('${tx.id}')" title="Eliminar Transacción">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ================= OPERACIONES DE TRANSACCIONES ================= */
+
+        function registrarTransaccion(e) {
+            e.preventDefault();
+
+            const itemInput = document.getElementById('tx-item');
+            const currencyInput = document.getElementById('tx-currency');
+            const amountInput = document.getElementById('tx-amount');
+            const buyerInput = document.getElementById('tx-buyer');
+            const sellerInput = document.getElementById('tx-seller');
+
+            const item = itemInput.value.trim();
+            const currency = currencyInput.value;
+            const amount = parseFloat(amountInput.value);
+            const buyerId = buyerInput.value;
+            const sellerId = sellerInput.value;
+
+            if (buyerId === sellerId) {
+                mostrarToast("⚠️ El comprador y el vendedor no pueden ser el mismo equipo.", true);
+                return;
+            }
+
+            if (!item || isNaN(amount) || amount <= 0) {
+                mostrarToast("⚠️ Por favor ingresa datos de transacción válidos.", true);
+                return;
+            }
+
+            // VALIDACIÓN: El comprador debe tener dinero suficiente en esa divisa específica
+            if (buyerId !== 'externo') {
+                const saldoDisponible = obtenerSaldoActual(buyerId, currency);
+                if (amount > saldoDisponible) {
+                    const buyerObj = appState.teams.find(t => t.id === buyerId);
+                    const buyerName = buyerObj ? buyerObj.name : "El comprador";
+                    mostrarToast(`❌ Fondos insuficientes. ${buyerName} solo dispone de ${formatMoneda(saldoDisponible, currency)} en ${currency}.`, true);
+                    return;
+                }
+            }
+
+            const fechaActual = new Date();
+            const timestamp = `${fechaActual.toLocaleDateString()} a las ${fechaActual.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+
+            const nuevaTx = {
+                id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                item: item,
+                currency: currency,
+                amount: amount,
+                buyerId: buyerId,
+                sellerId: sellerId,
+                timestamp: timestamp
+            };
+
+            appState.transactions.push(nuevaTx);
+            localStorage.setItem(STORAGE_KEY_TXS, JSON.stringify(appState.transactions));
+
+            itemInput.value = '';
+            amountInput.value = '';
+            buyerInput.value = '';
+            sellerInput.value = '';
+
+            renderizarDashboard();
+            mostrarToast("💸 Transacción registrada con éxito");
+        }
+
+        /* ================= CONVERSOR Y TRANSFERENCIA DE DIVISAS ================= */
+        
+        const TASAS_SUGERIDAS = {
+            "USD_MXN": 18.00,
+            "MXN_USD": 0.0556,
+            "EUR_MXN": 19.50,
+            "MXN_EUR": 0.0513,
+            "EUR_USD": 1.08,
+            "USD_EUR": 0.9259
+        };
+
+        function actualizarSugerenciaTipoCambio() {
+            const de = document.getElementById('conv-from').value;
+            const a = document.getElementById('conv-to').value;
+            const rateInput = document.getElementById('conv-rate');
+
+            if (de === a) {
+                rateInput.value = "1.0000";
+                rateInput.disabled = true;
+            } else {
+                rateInput.disabled = false;
+                const clave = `${de}_${a}`;
+                if (TASAS_SUGERIDAS[clave]) {
+                    rateInput.value = TASAS_SUGERIDAS[clave].toFixed(4);
+                } else {
+                    rateInput.value = "1.0000";
+                }
+            }
+            calcularConversion();
+        }
+
+        function calcularConversion() {
+            const de = document.getElementById('conv-from').value;
+            const a = document.getElementById('conv-to').value;
+            const rate = parseFloat(document.getElementById('conv-rate').value) || 0;
+            const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
+            const resultDiv = document.getElementById('conv-result');
+
+            let finalValue = amount * rate;
+            if (de === a) {
+                finalValue = amount;
+            }
+
+            let prefijo = '$';
+            if (a === 'EUR') prefijo = '€';
+
+            resultDiv.innerText = `${prefijo}${finalValue.toLocaleString('es-MX', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })} ${a}`;
+        }
+
+        // Ejecuta la conversión contable de divisas entre equipos en el historial
+        function ejecutarConversionFinanciera() {
+            const teamFromId = document.getElementById('conv-team-from').value;
+            const teamToId = document.getElementById('conv-team-to').value;
+            const deCurrency = document.getElementById('conv-from').value;
+            const aCurrency = document.getElementById('conv-to').value;
+            const rate = parseFloat(document.getElementById('conv-rate').value) || 0;
+            const amountFrom = parseFloat(document.getElementById('conv-amount').value) || 0;
+
+            if (!teamFromId || !teamToId) {
+                mostrarToast("⚠️ Debes seleccionar los equipos de origen y destino.", true);
+                return;
+            }
+
+            if (amountFrom <= 0) {
+                mostrarToast("⚠️ La cantidad a convertir debe ser mayor a 0.", true);
+                return;
+            }
+
+            if (rate <= 0) {
+                mostrarToast("⚠️ El tipo de cambio debe ser mayor a 0.", true);
+                return;
+            }
+
+            if (teamFromId === 'externo' && teamToId === 'externo') {
+                mostrarToast("⚠️ No es necesario registrar conversiones donde ambos lados sean el Banco.", true);
+                return;
+            }
+
+            // IDENTIFICAR EXACTAMENTE EL FLUJO:
+            // payerId: Es la cuenta real que debe financiar la compra (si teamFromId es externo, asume que el destinatario paga por su conversión)
+            const payerId = (teamFromId !== 'externo') ? teamFromId : teamToId;
+            // receiverId: Es la cuenta real que se beneficia de recibir la divisa convertida
+            const receiverId = (teamToId !== 'externo') ? teamToId : teamFromId;
+
+            // Validar que el pagador real tenga dinero suficiente de la moneda de origen (MXN, USD, EUR)
+            if (payerId !== 'externo') {
+                const saldoDisponible = obtenerSaldoActual(payerId, deCurrency);
+                if (amountFrom > saldoDisponible) {
+                    const payerObj = appState.teams.find(t => t.id === payerId);
+                    const name = payerObj ? payerObj.name : "El pagador";
+                    mostrarToast(`❌ Fondos insuficientes. ${name} solo tiene ${formatMoneda(saldoDisponible, deCurrency)} en ${deCurrency} para financiar la conversión.`, true);
+                    return;
+                }
+            }
+
+            let amountTo = amountFrom * rate;
+            if (deCurrency === aCurrency) {
+                amountTo = amountFrom;
+            }
+
+            const fechaActual = new Date();
+            const timestamp = `${fechaActual.toLocaleDateString()} a las ${fechaActual.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+
+            // RESOLUCIÓN DE NOMBRES PARA EL REGISTRO DE HISTORIAL
+            let namePayer = "Externo / Banco";
+            let nameReceiver = "Externo / Banco";
+            
+            if (payerId !== 'externo') {
+                const pObj = appState.teams.find(t => t.id === payerId);
+                if (pObj) namePayer = pObj.name;
+            }
+            if (receiverId !== 'externo') {
+                const rObj = appState.teams.find(t => t.id === receiverId);
+                if (rObj) nameReceiver = rObj.name;
+            }
+
+            const timestampUnique = Date.now();
+
+            // TRANSACCIÓN 1: Restar la divisa de origen (MXN/USD/EUR) de la cuenta del pagador real
+            if (payerId !== 'externo') {
+                const txDeduccion = {
+                    id: `tx_${timestampUnique}_ded_${Math.random().toString(36).substr(2, 5)}`,
+                    item: `Cambio: Entrega ${deCurrency} (Retirado de ${namePayer} para conversión)`,
+                    currency: deCurrency,
+                    amount: amountFrom,
+                    buyerId: payerId,
+                    sellerId: 'externo',
+                    timestamp: timestamp
+                };
+                appState.transactions.push(txDeduccion);
+            }
+
+            // TRANSACCIÓN 2: Sumar la nueva divisa de destino convertida a la cuenta del receptor real
+            if (receiverId !== 'externo') {
+                const txAdicion = {
+                    id: `tx_${timestampUnique}_add_${Math.random().toString(36).substr(2, 5)}`,
+                    item: `Cambio: Recibe ${aCurrency} (Depositado a ${nameReceiver})`,
+                    currency: aCurrency,
+                    amount: amountTo,
+                    buyerId: 'externo',
+                    sellerId: receiverId,
+                    timestamp: timestamp
+                };
+                appState.transactions.push(txAdicion);
+            }
+
+            localStorage.setItem(STORAGE_KEY_TXS, JSON.stringify(appState.transactions));
+
+            // Reiniciar inputs del formulario del conversor
+            document.getElementById('conv-amount').value = '100';
+            document.getElementById('conv-team-from').value = '';
+            document.getElementById('conv-team-to').value = '';
+
+            renderizarDashboard();
+            calcularConversion();
+            mostrarToast("🔄 Conversión y transferencia financiera ejecutada con éxito.");
+        }
+
+        /* ================= CONTROL DE ELIMINACIÓN Y MODALES ================= */
+
+        function eliminarTransaccion(txId) {
+            // Analizar si la transacción es parte de una operación de conversión
+            const parts = txId.split('_');
+            let transaccionesAEliminar = [txId];
+
+            // Si el ID tiene la estructura tx_{timestamp}_{ded|add}_{random}
+            if (parts.length >= 3 && (parts[2] === 'ded' || parts[2] === 'add')) {
+                const timestampBase = parts[1];
+                const tipoOpuesto = parts[2] === 'ded' ? 'add' : 'ded';
+                
+                // Buscar su transacción hermana en el estado
+                const sibling = appState.transactions.find(tx => {
+                    const sParts = tx.id.split('_');
+                    return sParts.length >= 3 && sParts[1] === timestampBase && sParts[2] === tipoOpuesto;
+                });
+
+                if (sibling) {
+                    transaccionesAEliminar.push(sibling.id);
+                }
+            }
+
+            // Eliminar los movimientos correspondientes
+            appState.transactions = appState.transactions.filter(tx => !transaccionesAEliminar.includes(tx.id));
+            localStorage.setItem(STORAGE_KEY_TXS, JSON.stringify(appState.transactions));
+            
+            renderizarDashboard();
+
+            if (transaccionesAEliminar.length > 1) {
+                mostrarToast("🔄 Conversión revertida por completo. Saldos restaurados.");
+            } else {
+                mostrarToast("🗑️ Transacción eliminada. Saldos recalculados.");
+            }
+        }
+
+        function borrarHistorialTransacciones() {
+            appState.transactions = [];
+            localStorage.removeItem(STORAGE_KEY_TXS);
+            
+            cerrarModal('modal-delete-txs');
+            renderizarDashboard();
+            mostrarToast("💥 Historial de transacciones completamente borrado.");
+        }
+
+        function confirmarRegresoConfig() {
+            abrirModal('modal-confirm');
+        }
+
+        function irAConfiguracion() {
+            cerrarModal('modal-confirm');
+            actualizarFormularioEquipos(true);
+            cambiarPantalla('setup');
+        }
+
+        function confirmarBorrarHistorial() {
+            abrirModal('modal-delete-txs');
+        }
+
+        function abrirModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        /* ================= UTILERÍAS ================= */
+
+        function mostrarToast(mensaje, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (isError) {
+                toast.style.backgroundColor = '#ef4444';
+            }
+            toast.innerText = mensaje;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3500);
+        }
+
+        function formatMoneda(valor, divisa) {
+            let prefijo = '$';
+            if (divisa === 'EUR') {
+                prefijo = '€';
+            }
+            return `${valor < 0 ? '-' : ''}${prefijo}${Math.abs(valor).toLocaleString('es-MX', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
