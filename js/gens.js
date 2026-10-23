@@ -204,7 +204,7 @@ export function make(name, n = 5) {
 }
 
 // ---- revisión ----
-const clearNum = (s) => String(s).replace(/\s/g, '').replace(/−/g, '-').replace(/,/g, '.');
+const clearNum = (s) => String(s).replace(/[\s$]/g, '').replace(/−/g, '-').replace(/,/g, '.');
 function parseValue(s) {
   s = clearNum(s); if (!s) return NaN;
   if (/^-?\d+(\.\d+)?\/-?\d+(\.\d+)?$/.test(s)) { const [a, b] = s.split('/').map(Number); return b ? a / b : NaN; }

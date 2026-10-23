@@ -2,6 +2,7 @@ import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parse
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
+import { ediemsView } from './ediems.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
 import { seguimiento, loadSeguimiento, statsFor, alertBadges } from './seguimiento.js';
 import { asistencia } from './asistencia.js';
@@ -436,6 +437,7 @@ export const teacherRoutes = {
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
   envivo: { title: 'En vivo', icon: '📡', nav: true, render: envivo },
   avance: { title: 'Avance', icon: '📈', nav: true, render: avance },
+  ediems: { title: 'EDIEMS', icon: '🎯', nav: true, render: ediemsView },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },
   cronograma: { title: 'Cronograma', icon: '🗓️', nav: true, render: calendarView },
