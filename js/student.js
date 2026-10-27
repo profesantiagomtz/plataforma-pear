@@ -154,7 +154,7 @@ export const studentRoutes = {
   material: { title: 'Material', icon: '📚', nav: true, render: material },
   tareas: { title: 'Tareas', icon: '✅', nav: true, render: tareas },
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
-  datos: { title: 'Ciencia de Datos', icon: '📊', nav: true, render: datosView },
+  datos: { title: 'Ciencia de Datos', icon: '🎲', nav: true, render: datosView },
   ediems: { title: 'EDIEMS', icon: '🎯', nav: true, render: ediemsView },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   cronograma: { title: 'Cronograma', icon: '🗓️', nav: true, render: calendarView },

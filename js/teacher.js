@@ -440,7 +440,7 @@ export const teacherRoutes = {
   notas: { title: 'Notas', icon: '📊', nav: true, render: notas },
   envivo: { title: 'En vivo', icon: '📡', nav: true, render: envivo },
   avance: { title: 'Avance', icon: '📈', nav: true, render: avance },
-  datos: { title: 'Ciencia de Datos', icon: '📊', nav: true, render: datosView },
+  datos: { title: 'Ciencia de Datos', icon: '🎲', nav: true, render: datosView },
   ediems: { title: 'EDIEMS', icon: '🎯', nav: true, render: ediemsView },
   modulo: { title: 'Módulo', icon: '🎓', nav: false, render: moduloView },
   anuncios: { title: 'Avisos', icon: '📣', nav: true, render: anuncios },
