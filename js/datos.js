@@ -13,7 +13,7 @@ const ACTS = [
   { ic: '👾', t: 'Pac-Lógica', u: 'Tema 1.1 · Lógica', goal: 'Darle órdenes a Pac-Man, una por una, para que llegue hasta el fantasma.',
     main: [J + 'paclogica.html', '▶️ Abrir Pac-Lógica'],
     steps: [
-      'Da clic en el botón morado **▶️ Abrir Pac-Lógica**. Se abre en otra pestaña.',
+      'Da clic en el botón azul **▶️ Abrir Pac-Lógica**. Se abre en otra pestaña.',
       'Vas a ver a **Pac-Man** 🟡 y al **fantasma** 👻. Pac-Man solo camina **hacia donde mira** (al principio mira a la derecha →).',
       'A la derecha de la pantalla da clic en la cajita **«+ Agregar bloque…»** y elige **Avanzar**. Hazlo **3 veces** (3 bloques «Avanzar»).',
       'En la misma cajita elige **Girar a la derecha**. Ahora Pac-Man mira hacia abajo ↓.',
@@ -27,7 +27,7 @@ const ACTS = [
   { ic: '🚢', t: 'Batalla Naval Cuneiforme', u: 'Tema 1.2 · Sistemas numéricos', goal: 'Hundir los barcos de la computadora escribiendo números como los antiguos babilonios.',
     main: ['#/datos/naval', '▶️ Jugar Batalla Naval'],
     steps: [
-      'Da clic en el botón morado **▶️ Jugar Batalla Naval**.',
+      'Da clic en el botón azul **▶️ Jugar Batalla Naval**.',
       'Aprende los 2 símbolos: la **cuña** ◀ vale **10** y el **clavo** ▼ vale **1**.',
       'Dentro del juego verás las instrucciones otra vez. ¡No te preocupes, hay un botón de **💡 Ayuda**!',
     ],
@@ -35,7 +35,7 @@ const ACTS = [
   { ic: '🃏', t: 'Tablero de preguntas', u: 'Repaso · operaciones y fracciones', goal: 'Contestar preguntas en equipo para ganar puntos (pesos, dólares y euros).',
     main: [J + 'tablero.html?banco=basico', '▶️ Abrir tablero (fácil)'],
     steps: [
-      'Da clic en el botón morado **▶️ Abrir tablero (fácil)**.',
+      'Da clic en el botón azul **▶️ Abrir tablero (fácil)**.',
       'Elige una **tarjeta** y dale clic. Las de **100** son las más fáciles; las de **1000** valen más pero son más difíciles.',
       'Lee la pregunta. Escribe tu respuesta en el cuadro **«Escribe aquí tu respuesta»**.',
       'Da clic en **Enviar**. Si sale en verde, ¡ganaste esos puntos! Si sale en rojo, piensa otra vez y da clic en **Intentar de nuevo**.',
@@ -47,7 +47,7 @@ export async function datosView(el, { profile, param }) {
   if (param[0] === 'naval') return naval(el, profile);
   const teacher = profile.role === 'teacher';
   const { data: me } = teacher ? { data: null } : await sb.from('module_progress').select('pct,done').eq('student_id', profile.id).eq('module', 'cd-naval').maybeSingle();
-  el.innerHTML = `<div class="head"><h1>📊 Ciencia de Datos</h1></div>
+  el.innerHTML = `<div class="head"><h1>🎲 Ciencia de Datos</h1></div>
     <div class="msg info">Aquí hay <b>3 juegos</b> para practicar matemáticas. Elige uno y <b>sigue los pasos en orden</b>, uno por uno. 🙂</div>
     ${teacher ? '' : `<div class="stats"><div class="stat"><b>${me?.done?.games || 0}</b><span>Partidas de Batalla Naval</span></div><div class="stat"><b>${me?.pct != null ? me.pct + ' %' : '—'}</b><span>Tu mejor puntería</span></div></div>`}
     ${ACTS.map((a, i) => `<div class="card act"><div class="head" style="margin:0 0 6px"><span style="font-size:2rem">${a.ic}</span><h2 style="margin:0;flex:1">${i + 1}. ${esc(a.t)}</h2><span class="badge brand">${esc(a.u)}</span></div>

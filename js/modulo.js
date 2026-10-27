@@ -249,7 +249,7 @@ export async function moduloView(el, { profile, param }) {
       $('#start', el).onclick = () => go(Math.min(Math.max(1, st.last || 1), firstOpen() || 1));
       mark(0, 1);
     } else {
-      stage.innerHTML = PAGE[p.type](p, ctx) + `<div class="nexthint" hidden>👉 Ya terminaste aquí. Toca <b>SIGUIENTE →</b> (abajo).</div>` + (i === pages.length - 1 && pct() >= 100 ? '<div class="badge ok"><div class="bg1">🎉 ¡Módulo completado!</div><div class="bg2">Terminaste todas las lecciones y actividades.</div></div>' : '');
+      stage.innerHTML = PAGE[p.type](p, ctx) + `<div class="nexthint" hidden>👉 Ya terminaste aquí. Toca <b>SIGUIENTE →</b> (abajo).</div>` + (i === pages.length - 1 && pct() >= 100 ? '<div class="badge ok done-badge"><div class="bg1">🎉 ¡Módulo completado!</div><div class="bg2">Terminaste todas las lecciones y actividades.</div></div>' : '');
       ctx.mounts.forEach((m) => m(stage));
       if (p.type === 'lesson') setupLesson(stage);
       const a = ctx.act; const res = $('.res', stage);
