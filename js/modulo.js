@@ -216,7 +216,7 @@ export async function moduloView(el, { profile, param }) {
   const log = (kind, detail) => logEvent(kind, id, i, { title: title(i), ...detail });
 
   el.innerHTML = `<div class="mod"><div class="modtop"><a href="${home}" class="back">← ${ed ? 'EDIEMS' : 'Material'}</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon wbtn" id="gloss" aria-label="Diccionario" ${Object.keys(WORDS).length ? '' : 'hidden'}>📖 <span>Palabras</span></button><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
-    ${preview ? '<div class="msg info prevbar">👁️ <b>Vista previa del docente</b> · el avance no se guarda. <label class="check" style="display:inline-flex;margin:0 0 0 10px"><input type="checkbox" id="gmode" checked> Ver con guía y bloqueos de alumno</label></div>' : ''}
+    ${preview ? '<div class="msg info prevbar">👁️ <b>Vista previa del docente</b> · el avance no se guarda. <label class="check" style="display:inline-flex;margin:0 0 0 10px"><input type="checkbox" id="gmode" checked> Ver con guía y bloqueos de alumno</label>' + (pages.some((p) => p.type === 'hoja' || p.type === 'practica') ? '<div style="margin-top:8px"><button class="btn sm" id="goae">🏁 Ir directo a la actividad final</button></div>' : '') + '</div>' : ''}
     <div class="modbody"><aside class="modside" id="mside"></aside><main class="modmain"><div class="steps" id="steps"></div><div id="howslot"></div><article class="lesson" id="stage"></article>
     <div class="fnav"><button class="btn ghost" id="prev">← Atrás</button><span id="ct"></span><button class="btn big" id="next">Siguiente →</button></div></main></div></div>`;
 
@@ -309,6 +309,7 @@ export async function moduloView(el, { profile, param }) {
   $('#mmenu', el).onclick = () => { const s = $('#mside', el); s.classList.toggle('open'); if (s.classList.contains('open')) { const sc = document.createElement('div'); sc.className = 'scrim on'; sc.onclick = () => { s.classList.remove('open'); sc.remove(); }; document.body.append(sc); } };
   $('#gloss', el).onclick = () => modal('📖 Diccionario: palabras de este módulo', `<p class="muted small">Si no entiendes una palabra, aquí está explicada en fácil.</p><div class="words nob">${Object.entries(WORDS).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([t, d]) => `<div class="wd"><b>${esc(t)}</b><span>${rich(d)}</span></div>`).join('')}</div>`, { wide: true });
   $('#gmode', el)?.addEventListener('change', (e) => { guided = e.target.checked; draw(); });
+  $('#goae', el)?.addEventListener('click', () => { guided = false; const g = $('#gmode', el); if (g) g.checked = false; go(pages.findIndex((p) => p.type === 'hoja' || p.type === 'practica')); });
   $('#steps', el).innerHTML = pages.map(() => '<i></i>').join('');
 
   // tiempo en la página (solo cuenta si la pestaña está visible) y limpieza al salir
