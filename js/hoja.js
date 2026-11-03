@@ -126,6 +126,20 @@ const FACTOR = (t) => (t <= 1 ? 1 : t === 2 ? 0.8 : t === 3 ? 0.6 : 0.4);
 const r2 = (x) => Math.round(x * 100) / 100;
 export const sugerida = (first) => Math.round(PTS.reduce((a, pt, i) => a + pt * FACTOR(first[i] || 99), 0) * 10) / 10;
 
+// Explicación para el alumno (se pone en la retroalimentación al calificar).
+export function explicacion(first, tries) {
+  const L = [`Tu calificación: ${sugerida(first)} de 10.`, '', 'Así se calculó, paso por paso:'];
+  STEPS.forEach((s, i) => {
+    const f = first[i], pt = PTS[i];
+    if (f == null) { L.push(`✘ Paso ${i + 1}, ${s.t}: no lo terminaste bien → 0 de ${pt}.`); return; }
+    const err = f - 1;
+    L.push(`${err ? '•' : '✔'} Paso ${i + 1}, ${s.t}: bien al ${f === 1 || f === 3 ? f + '.er' : f + '.º'} intento${err ? ` (te equivocaste ${err} ${err === 1 ? 'vez' : 'veces'})` : ''} → ${r2(pt * FACTOR(f))} de ${pt}.`);
+  });
+  L.push('', 'Regla para todos: cada paso vale puntos. Si te sale bien al 1.er intento vale completo; al 2.º, el 80 %; al 3.º, el 60 %; al 4.º o más, el 40 %.',
+    `Tocaste COMPROBAR ${tries.reduce((a, b) => a + (b || 0), 0)} veces en total.`);
+  return L.join('\n');
+}
+
 function intentos(first, tries) {
   const L = ['', '', '📊 INTENTOS PARA LLEGAR A LA RESPUESTA CORRECTA (los cuenta la plataforma)'];
   const ord = (t) => (t === 1 || t === 3 ? `${t}.er` : `${t}.º`);
