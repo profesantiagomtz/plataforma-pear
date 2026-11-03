@@ -124,7 +124,11 @@ export const demo = { c1: 'Jabón', q1: 2, p1: 15, t1: 30, c2: 'Leche', q2: 3, p
 export const PTS = [12, 6, 9, 9, 9, 9, 6]; // suman 60: lo máximo que vale la actividad de evaluación (60 de 100)
 const FACTOR = (t) => (t <= 1 ? 1 : t === 2 ? 0.8 : t === 3 ? 0.6 : 0.4);
 const r2 = (x) => Math.round(x * 100) / 100;
-export const sugerida = (first) => Math.round(PTS.reduce((a, pt, i) => a + pt * FACTOR(first[i] || 99), 0) * 10) / 10;
+export const sugerida = (first) => Math.round(PTS.reduce((a, pt, i) => a + (first[i] ? pt * FACTOR(first[i]) : 0), 0) * 10) / 10;
+// Busca la hoja guardada en el avance de un módulo (module_progress.done).
+export const hojaDe = (done) => { let c = null; Object.values(done || {}).forEach((d) => { if (Array.isArray(d?.c?.first)) c = d.c; }); return c; };
+export const pasosBien = (c) => (c?.first || []).filter((f) => f != null).length;
+export const textoHoja = (c) => resumen(c.v || {}) + intentos(c.first, c.tries || []);
 
 // Explicación para el alumno (se pone en la retroalimentación al calificar).
 export function explicacion(first, tries) {
@@ -208,7 +212,9 @@ export function hojaPage(p, ctx, head) {
           if (!r.ok) { c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 400); }
           paint(); report(false);
           if (r.ok && cards[i + 1] && !ok[i + 1]) cards[i + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
-          if (n() === STEPS.length) $('.hj-send', root).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (n() === STEPS.length) { $('.hj-send', root).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Se envía sola al terminar, por si el alumno no toca el botón.
+            if (r.ok && !ctx.preview) enviar(ctx.profile, p.unit, v, intentos(first, tries)).then(() => { $('.hj-sent', root).hidden = false; toast('¡Tu hoja ya le llegó a tu profe! ✔', 'ok'); }).catch((err) => toast(err.message || 'No se pudo enviar. Toca el botón azul.', 'err')); }
         });
         $$('[data-k]', c).forEach((f) => f.addEventListener('input', () => { if (ok[i]) { ok[i] = false; $('.gf', c).innerHTML = '✏️ Cambiaste algo: toca <b>COMPROBAR</b> otra vez.'; $('.gf', c).className = 'gf'; paint(); } }));
         $$('[data-k]', c).forEach((f) => f.addEventListener('change', () => { read(); report(true); }));

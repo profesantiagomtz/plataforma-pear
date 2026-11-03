@@ -2,7 +2,7 @@ import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parse
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
-import { sugerida, explicacion } from './hoja.js';
+import { sugerida, explicacion, hojaDe, pasosBien, textoHoja } from './hoja.js';
 import { ediemsView } from './ediems.js';
 import { datosView } from './datos.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
@@ -320,20 +320,28 @@ async function entregas(el, { param }) {
   ]);
   const sm = new Map(subs.map((s) => [s.student_id, s]));
   const list = studs.filter((s) => !a.group_id || s.group_id === a.group_id);
+  // Hojas interactivas hechas en la plataforma (aunque el alumno no haya tocado ENVIAR).
+  const hm = new Map();
+  if (a.is_ae && a.unit_id) {
+    const { data: u } = await sb.from('units').select('code').eq('id', a.unit_id).maybeSingle();
+    if (u?.code) { const { data: mp } = await sb.from('module_progress').select('student_id,done').eq('module', 'm1-' + u.code.split('.')[1]);
+      (mp || []).forEach((r) => { const c = hojaDe(r.done); if (c) hm.set(r.student_id, c); }); }
+  }
+  const hojaBadge = (s) => { const c = hm.get(s.id); if (!c) return ''; const n = pasosBien(c); return n === 7 ? ' <span class="badge ok">✏️ Hoja terminada en la plataforma</span>' : ` <span class="badge warn">✏️ Hoja ${n}/7 (sin terminar)</span>`; };
   el.innerHTML = `<div class="head"><h1>Entregas</h1></div>
   <div class="toolbar"><select id="sel">${opt(asg, 'id', (x) => x.title, a.id)}</select></div>
   <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Estado</th><th class="num">Calificación</th><th></th></tr></thead><tbody>${list.map((s) => { const x = sm.get(s.id);
-    return `<tr><td>${esc(s.full_name)}</td><td>${x ? `<span class="badge ${x.score == null ? 'info' : 'ok'}">${x.score == null ? 'Entregada' : 'Calificada'}</span> <span class="muted small">${fmtDateTime(x.submitted_at)}</span>` : '<span class="badge">Sin entregar</span>'}</td>
-    <td class="num">${x ? gradeBadge(x.score, a.max_score) : '—'}</td><td class="right"><button class="btn soft sm" data-s="${s.id}">${x ? 'Revisar' : 'Calificar'}</button></td></tr>`; }).join('')}</tbody></table></div>`;
+    return `<tr><td>${esc(s.full_name)}</td><td>${x ? `<span class="badge ${x.score == null ? 'info' : 'ok'}">${x.score == null ? 'Entregada' : 'Calificada'}</span> <span class="muted small">${fmtDateTime(x.submitted_at)}</span>` : '<span class="badge">Sin entregar</span>'}${hojaBadge(s)}</td>
+    <td class="num">${x ? gradeBadge(x.score, a.max_score) : '—'}</td><td class="right"><button class="btn soft sm" data-s="${s.id}">${x || hm.get(s.id) ? 'Revisar' : 'Calificar'}</button></td></tr>`; }).join('')}</tbody></table></div>`;
   $('#sel', el).onchange = (e) => { location.hash = '#/entregas/' + e.target.value; };
-  el.onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) review(a, list.find((s) => s.id === b.dataset.s), sm.get(b.dataset.s), () => entregas(el, { param: [a.id] })); };
+  el.onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) review(a, list.find((s) => s.id === b.dataset.s), sm.get(b.dataset.s), () => entregas(el, { param: [a.id] }), hm.get(b.dataset.s)); };
 }
 
 // Regla del profe: una actividad de evaluación vale como máximo el 60 % de su puntaje.
 const AE_TOPE = 0.6;
 const topeDe = (a) => (a.is_ae ? Math.round(a.max_score * AE_TOPE * 10) / 10 : a.max_score);
 
-function review(a, s, x, done) {
+function review(a, s, x, done, hoja) {
   const md = modal(s.full_name, `<p><b>${esc(a.title)}</b></p>
     ${x ? `<div class="card flat"><div class="muted small">Entregado ${fmtDateTime(x.submitted_at)}${a.due_at && new Date(x.submitted_at) > new Date(a.due_at) ? ' · <span class="badge bad">Tarde</span>' : ''}</div>
       ${x.body ? `<div class="pre" style="margin-top:6px">${esc(x.body)}</div>` : ''}${x.link_url ? `<p><a href="${isUrl(x.link_url) ? esc(x.link_url) : '#'}" target="_blank" rel="noopener">Abrir enlace</a></p>` : ''}${x.file_path ? '<p><button class="btn soft sm" id="vf">Ver archivo</button></p>' : ''}</div>` : '<p class="muted">El alumno aún no entrega. Puedes calificar de todos modos.</p>'}
@@ -349,21 +357,22 @@ function review(a, s, x, done) {
   });
   $('#sv', e).onclick = () => { const v = $('#sc', e).value; const n = v === '' ? null : Number(v); if (n != null && (n < 0 || n > topeDe(a))) return toast(`La calificación debe estar entre 0 y ${topeDe(a)}${a.is_ae ? ' (en actividades de evaluación lo máximo es el 60 %)' : ''}`, 'err'); save(n, $('#fb', e).value.trim() || null); };
   $('#un', e)?.addEventListener('click', () => save(null, $('#fb', e).value.trim() || null));
-  if (x?.body?.startsWith('📝 Hoja')) autoHoja(a, s, x, e);
+  if (hoja) autoHoja(a, x, e, hoja);
 }
 
 // Hoja interactiva: calcula la calificación con los intentos que guardó la plataforma
 // (no con el texto de la entrega, que el alumno podría editar) y la deja lista para guardar.
-async function autoHoja(a, s, x, e) {
-  const { data } = await sb.from('module_progress').select('module,done').eq('student_id', s.id);
-  let c = null;
-  (data || []).forEach((r) => Object.values(r.done || {}).forEach((d) => { if (Array.isArray(d?.c?.first)) c = d.c; }));
-  if (!c) return;
+function autoHoja(a, x, e, c) {
+  const n = pasosBien(c);
+  if (!x?.body?.startsWith('📝 Hoja')) { const card = document.createElement('div'); card.className = 'card flat';
+    card.innerHTML = n === 7 ? `<div class="muted small">✏️ Hizo la hoja en la plataforma pero no tocó ENVIAR. Esto es lo que contestó:</div><div class="pre" style="margin-top:6px">${esc(textoHoja(c))}</div>`
+      : `<div class="muted small">✏️ Empezó la hoja en la plataforma: lleva <b>${n} de 7</b> pasos bien. Los pasos sin terminar valen 0.</div>`;
+    $('.row', e).before(card); }
   const sug = sugerida(c.first); const score = Math.round(sug / 100 * a.max_score * 10) / 10; const fb = explicacion(c.first, c.tries || []);
   const box = document.createElement('div'); box.className = 'msg info';
-  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (lo máximo en esta actividad es 60 de 100), según los intentos de cada paso. ${x.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
+  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (lo máximo en esta actividad es 60 de 100), según los intentos de cada paso. ${x?.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
   $('.row', e).before(box);
-  if (x.score == null) { $('#sc', e).value = score; if (!$('#fb', e).value.trim()) { $('#fb', e).value = fb; $('#fb', e).rows = 12; } }
+  if (x?.score == null) { $('#sc', e).value = score; if (!$('#fb', e).value.trim()) { $('#fb', e).value = fb; $('#fb', e).rows = 12; } }
 }
 
 // ============================ CALIFICACIONES ============================
