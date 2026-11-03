@@ -120,15 +120,15 @@ export const demo = { c1: 'Jabón', q1: 2, p1: 15, t1: 30, c2: 'Leche', q2: 3, p
   f1: 2, n1: 9, f2: 3, n2: 3, f3: 3, x1: 2, x2: 3, x3: 3,
   w1: 'Compramos fruta, leche y jabón', w2: 'Mi abuela usaba té de manzanilla', w3: 'Para saber si me alcanza el dinero' };
 
-// Puntos de cada paso (suman 10) y cuánto se respeta según el intento en que salió bien.
-export const PTS = [2, 1, 1.5, 1.5, 1.5, 1.5, 1];
+// Puntos de cada paso (suman 60) y cuánto se respeta según el intento en que salió bien.
+export const PTS = [12, 6, 9, 9, 9, 9, 6]; // suman 60: lo máximo que vale la actividad de evaluación (60 de 100)
 const FACTOR = (t) => (t <= 1 ? 1 : t === 2 ? 0.8 : t === 3 ? 0.6 : 0.4);
 const r2 = (x) => Math.round(x * 100) / 100;
 export const sugerida = (first) => Math.round(PTS.reduce((a, pt, i) => a + pt * FACTOR(first[i] || 99), 0) * 10) / 10;
 
 // Explicación para el alumno (se pone en la retroalimentación al calificar).
 export function explicacion(first, tries) {
-  const L = [`Tu calificación: ${sugerida(first)} de 10.`, '', 'Así se calculó, paso por paso:'];
+  const L = [`Tu calificación: ${sugerida(first)} de 60 (60 es lo máximo de esta actividad).`, '', 'Así se calculó, paso por paso:'];
   STEPS.forEach((s, i) => {
     const f = first[i], pt = PTS[i];
     if (f == null) { L.push(`✘ Paso ${i + 1}, ${s.t}: no lo terminaste bien → 0 de ${pt}.`); return; }
@@ -144,7 +144,7 @@ function intentos(first, tries) {
   const L = ['', '', '📊 INTENTOS PARA LLEGAR A LA RESPUESTA CORRECTA (los cuenta la plataforma)'];
   const ord = (t) => (t === 1 || t === 3 ? `${t}.er` : `${t}.º`);
   PTS.forEach((pt, i) => L.push(`- Paso ${i + 1}: correcto al ${ord(first[i])} intento → ${r2(pt * FACTOR(first[i]))} de ${pt} pts`));
-  L.push(`Total de veces que tocó COMPROBAR: ${tries.reduce((a, b) => a + b, 0)}`, `Calificación sugerida: ${sugerida(first)} de 10`,
+  L.push(`Total de veces que tocó COMPROBAR: ${tries.reduce((a, b) => a + b, 0)}`, `Calificación sugerida: ${sugerida(first)} de 60 (60 = actividad perfecta)`,
     '(1.er intento = 100 % del paso, 2.º = 80 %, 3.º = 60 %, 4 o más = 40 %)');
   return L.join('\n');
 }
