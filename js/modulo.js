@@ -4,10 +4,11 @@ import { make, check, answerText, shuffle } from './gens.js';
 import * as W from './widgets.js';
 import { steps as exprSteps } from './expr.js';
 import { logEvent, setPresence, plain } from './live.js';
+import { hojaPage } from './hoja.js';
 
 const rich = (s) => String(s ?? '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
 const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const KICK = { guia: '🤝 Con ayuda', lesson: '📘 Lección', match: '🧩 Actividad', mc: '🔁 Repaso rápido', order: '🔢 Actividad', cloze: '✏️ Actividad', gen: '🎲 Práctica', tt: '📊 Actividad', abaco: '🧮 Actividad', write: '📝 Actividad', practica: '🏁 Práctica final' };
+const KICK = { guia: '🤝 Con ayuda', lesson: '📘 Lección', match: '🧩 Actividad', mc: '🔁 Repaso rápido', order: '🔢 Actividad', cloze: '✏️ Actividad', gen: '🎲 Práctica', tt: '📊 Actividad', abaco: '🧮 Actividad', write: '📝 Actividad', practica: '🏁 Práctica final', hoja: '🏁 Actividad de evaluación' };
 const HOW = {
   guia: ['🤝', 'Yo te voy guiando <b>paso a paso</b>. Contesta cada pregunta y toca <b>COMPROBAR</b>. Si te trabas, toca <b>💡 PISTA</b>. No pasa nada si te equivocas.'],
   lesson: ['👀', 'Lee cada parte y toca <b>ENTENDIDO 👍</b> para ver la siguiente.'],
@@ -19,6 +20,7 @@ const HOW = {
   tt: ['👆', 'Toca cada casilla gris: <b>1 toque = V</b>, <b>2 toques = F</b>. Cuando termines toca <b>REVISAR</b>.'],
   abaco: ['👆', 'Toca las bolitas hasta que el ábaco muestre el número de arriba. Luego toca <b>COMPROBAR</b>.'],
   write: ['⌨️', 'Escribe tu respuesta en el cuadro (2 o 3 renglones). Toca <b>REVISAR</b> y busca las palomitas ✔.'],
+  hoja: ['✏️', 'Rellena los cuadros de cada paso y toca <b>COMPROBAR</b>. Si sale en rojo, lee la ayuda y corrige. Al terminar los 7 pasos, toca <b>📤 ENVIAR A MI PROFE</b>. También cópiala en tu <b>cuaderno</b>.'],
   practica: ['📝', 'Esta práctica la haces en tu <b>cuaderno o celular</b>. <b>Marca cada paso</b> cuando lo termines y al final súbela en <b>TAREAS</b>.'],
 };
 
@@ -168,6 +170,8 @@ const PAGE = {
     return `${head(p)}<p class="pwp">${rich(p.prompt)}</p><textarea class="pwt" rows="5" placeholder="${esc(p.ph || '✏️ Escribe aquí…')}"></textarea><ul class="crit"></ul><div class="chk"><button class="btn big" data-check>✅ REVISAR</button><span class="res" role="status"></span></div>${p.take ? `<p class="take"><b>💡 Pista:</b> ${rich(p.take)}</p>` : ''}`;
   },
 
+  hoja(p, ctx) { return hojaPage(p, ctx, head); },
+
   practica(p, ctx) {
     ctx.act = {
       manual: true, practice: true,
@@ -201,14 +205,14 @@ export async function moduloView(el, { profile, param }) {
   const WORDS = {}; pages.forEach((p) => (p.blocks || []).forEach((b) => { if (b.k === 'words') b.items.forEach(([t, d]) => { WORDS[t.replace(/<[^>]+>|\*\*/g, '')] = d; }); }));
   let guided = true; let i = Math.min(st.last, pages.length - 1); let timer; let curSecs = 0; let doneLogged = false;
   const title = (k) => plain(pages[k].t || 'Inicio');
-  const thr = (k) => (pages[k].type === 'practica' ? 0.99 : 0.6);
+  const thr = (k) => (['practica', 'hoja'].includes(pages[k].type) ? 0.99 : 0.6);
   const isDone = (k) => { const d = st.done[k]; return !!d && ((d.s || 0) >= thr(k) || !!d.sk); };
   const pct = () => Math.round(pages.filter((_, k) => isDone(k)).length / pages.length * 100);
   const firstOpen = () => { const k = pages.findIndex((_, x) => !isDone(x)); return k < 0 ? pages.length - 1 : k; };
   const save = () => { if (preview) return; clearTimeout(timer); timer = setTimeout(() => sb.from('module_progress').upsert({ student_id: profile.id, module: id, done: st.done, last: i, pct: pct(), updated_at: new Date().toISOString() }).then(({ error }) => { if (error) console.warn('progreso', error.message); }), 500); };
   const mark = (k, s, extra) => { const old = st.done[k] || {}; st.done[k] = { ...old, s: Math.round(Math.max(s, old.s || 0) * 100) / 100, at: Date.now(), ...(extra || {}) }; save(); drawProgress(); nav(); };
   const flush = (k) => { if (curSecs > 0) { const old = st.done[k] || {}; st.done[k] = { ...old, t: (old.t || 0) + curSecs }; curSecs = 0; save(); } };
-  const canGo = () => { if (!guided) return true; const p = pages[i]; if (p.type === 'intro' || p.type === 'practica') return true; return isDone(i); };
+  const canGo = () => { if (!guided) return true; const p = pages[i]; if (['intro', 'practica', 'hoja'].includes(p.type)) return true; return isDone(i); };
   const log = (kind, detail) => logEvent(kind, id, i, { title: title(i), ...detail });
 
   el.innerHTML = `<div class="mod"><div class="modtop"><a href="${home}" class="back">← ${ed ? 'EDIEMS' : 'Material'}</a><div class="mt"><b>${esc(mod.title)}</b><span>${esc(mod.sub || '')}</span></div><div class="mp"><div class="bar"><i></i></div><small></small></div><button class="icon wbtn" id="gloss" aria-label="Diccionario" ${Object.keys(WORDS).length ? '' : 'hidden'}>📖 <span>Palabras</span></button><button class="icon" id="mmenu" aria-label="Contenido">☰</button></div>
@@ -241,7 +245,7 @@ export async function moduloView(el, { profile, param }) {
   };
 
   function draw() {
-    const stage = $('#stage', el); const p = pages[i]; const ctx = { mounts: [], act: null }; curSecs = 0;
+    const stage = $('#stage', el); const p = pages[i]; const ctx = { mounts: [], act: null, profile, preview }; curSecs = 0;
     window.scrollTo(0, 0);
     $('#howslot', el).innerHTML = p.type === 'intro' ? '' : howBox(p);
     if (p.type === 'intro') {
@@ -255,7 +259,7 @@ export async function moduloView(el, { profile, param }) {
       const a = ctx.act; const res = $('.res', stage);
       if (a) {
         if (a.manual) a.mount?.(stage, (r, extra) => {
-          if (a.practice) { const frac = r.n / r.tot; mark(i, frac, { c: r.c }); log('practice_step', { n: r.n, tot: r.tot }); if (frac === 1) maybeDone(); }
+          if (a.practice) { const frac = r.n / r.tot; mark(i, frac, { c: r.c }); if (!r.quiet) log('practice_step', { n: r.n, tot: r.tot }); if (frac === 1) maybeDone(); }
           else result(r, a.need || 1);
           if (p.type === 'mc') $('[data-retry]', stage).hidden = false;
         }, st.done[i]);
@@ -293,7 +297,7 @@ export async function moduloView(el, { profile, param }) {
 
   const intro = () => `<header><span class="kick">${ed ? '🎯 Preparación' : '🎓 Módulo'} ${esc(mod.unit)}</span><h1>${esc(mod.title)}</h1><p class="sub">${esc(mod.sub || '')}</p></header>
     <div class="three"><div><span>📖</span><b>1. Lee</b><small>poquito a poco</small></div><div><span>✍️</span><b>2. Practica</b><small>se revisa solo</small></div>${ed ? '<div><span>🎯</span><b>3. Repasa</b><small>y haz el simulacro</small></div>' : '<div><span>🏁</span><b>3. Entrega</b><small>tu práctica final</small></div>'}</div>
-    <div class="chips"><span class="chip">⏱️ ${mod.minutes || 60} min aprox.</span><span class="chip">📘 ${pages.filter((p) => p.type === 'lesson').length} lecciones</span><span class="chip">🎲 ${pages.filter((p) => !['lesson', 'intro', 'practica'].includes(p.type)).length} actividades</span>${mod.weight ? `<span class="chip">⭐ Vale ${mod.weight} % del curso</span>` : ''}</div>
+    <div class="chips"><span class="chip">⏱️ ${mod.minutes || 60} min aprox.</span><span class="chip">📘 ${pages.filter((p) => p.type === 'lesson').length} lecciones</span><span class="chip">🎲 ${pages.filter((p) => !['lesson', 'intro', 'practica', 'hoja'].includes(p.type)).length} actividades</span>${mod.weight ? `<span class="chip">⭐ Vale ${mod.weight} % del curso</span>` : ''}</div>
     <div class="co co-def"><div class="co-l">Al terminar podrás…</div><ul class="goals">${mod.goals.map((g) => `<li>${rich(g)}</li>`).join('')}</ul></div>
     <div class="co co-ana"><div class="co-l">⚠️ Importante</div><p>Para pasar a la siguiente parte tienes que <b>terminar la actual</b> (leerla o resolverla). Si te equivocas, no pasa nada: puedes intentar otra vez. Tu profe ve tu avance.</p></div>
     <button class="btn big block" id="start">${Object.keys(st.done).length > 1 ? '▶️ Continuar donde me quedé' : '▶️ COMENZAR'}</button>`;

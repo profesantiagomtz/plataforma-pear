@@ -27,3 +27,4 @@ export const tt = (t, sub, vars, cols, hint, nav) => ({ type: 'tt', t, sub, vars
 export const abaco = (t, sub, targets, rods = 4, nav) => ({ type: 'abaco', t, sub, targets, rods, nav });
 export const write = (t, sub, prompt, crit, min, take, nav) => ({ type: 'write', t, sub, prompt, crit, min, take, nav });
 export const practica = (o) => ({ type: 'practica', nav: 'Práctica final', ...o });
+export const hoja = (o) => ({ type: 'hoja', nav: 'Actividad de evaluación', ...o });
