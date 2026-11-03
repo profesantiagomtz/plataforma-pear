@@ -329,11 +329,15 @@ async function entregas(el, { param }) {
   el.onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) review(a, list.find((s) => s.id === b.dataset.s), sm.get(b.dataset.s), () => entregas(el, { param: [a.id] })); };
 }
 
+// Regla del profe: una actividad de evaluación vale como máximo el 60 % de su puntaje.
+const AE_TOPE = 0.6;
+const topeDe = (a) => (a.is_ae ? Math.round(a.max_score * AE_TOPE * 10) / 10 : a.max_score);
+
 function review(a, s, x, done) {
   const md = modal(s.full_name, `<p><b>${esc(a.title)}</b></p>
     ${x ? `<div class="card flat"><div class="muted small">Entregado ${fmtDateTime(x.submitted_at)}${a.due_at && new Date(x.submitted_at) > new Date(a.due_at) ? ' · <span class="badge bad">Tarde</span>' : ''}</div>
       ${x.body ? `<div class="pre" style="margin-top:6px">${esc(x.body)}</div>` : ''}${x.link_url ? `<p><a href="${isUrl(x.link_url) ? esc(x.link_url) : '#'}" target="_blank" rel="noopener">Abrir enlace</a></p>` : ''}${x.file_path ? '<p><button class="btn soft sm" id="vf">Ver archivo</button></p>' : ''}</div>` : '<p class="muted">El alumno aún no entrega. Puedes calificar de todos modos.</p>'}
-    <div class="row"><div><label for="sc">Calificación (máx. ${a.max_score})</label><input id="sc" type="number" step="0.5" min="0" max="${a.max_score}" value="${x?.score ?? ''}"></div></div>
+    <div class="row"><div><label for="sc">Calificación (máx. ${topeDe(a)}${a.is_ae ? ' de ' + a.max_score + ', por ser actividad de evaluación' : ''})</label><input id="sc" type="number" step="0.1" min="0" max="${topeDe(a)}" value="${x?.score ?? ''}"></div></div>
     <label for="fb">Retroalimentación</label><textarea id="fb" rows="3">${esc(x?.feedback)}</textarea>
     <div class="foot">${x?.score != null ? '<button class="btn ghost" id="un">Quitar calificación</button>' : ''}<button class="btn" id="sv">Guardar</button></div>`);
   const e = md.el;
@@ -343,7 +347,7 @@ function review(a, s, x, done) {
     const { error } = x ? await sb.from('submissions').update(row).eq('id', x.id) : await sb.from('submissions').insert({ ...row, submitted_at: new Date().toISOString() });
     if (error) throw error; md.close(); toast('Guardado', 'ok'); done();
   });
-  $('#sv', e).onclick = () => { const v = $('#sc', e).value; const n = v === '' ? null : Number(v); if (n != null && (n < 0 || n > a.max_score)) return toast(`La calificación debe estar entre 0 y ${a.max_score}`, 'err'); save(n, $('#fb', e).value.trim() || null); };
+  $('#sv', e).onclick = () => { const v = $('#sc', e).value; const n = v === '' ? null : Number(v); if (n != null && (n < 0 || n > topeDe(a))) return toast(`La calificación debe estar entre 0 y ${topeDe(a)}${a.is_ae ? ' (en actividades de evaluación lo máximo es el 60 %)' : ''}`, 'err'); save(n, $('#fb', e).value.trim() || null); };
   $('#un', e)?.addEventListener('click', () => save(null, $('#fb', e).value.trim() || null));
   if (x?.body?.startsWith('📝 Hoja')) autoHoja(a, s, x, e);
 }
