@@ -120,6 +120,21 @@ export const demo = { c1: 'Jabón', q1: 2, p1: 15, t1: 30, c2: 'Leche', q2: 3, p
   f1: 2, n1: 9, f2: 3, n2: 3, f3: 3, x1: 2, x2: 3, x3: 3,
   w1: 'Compramos fruta, leche y jabón', w2: 'Mi abuela usaba té de manzanilla', w3: 'Para saber si me alcanza el dinero' };
 
+// Puntos de cada paso (suman 10) y cuánto se respeta según el intento en que salió bien.
+export const PTS = [2, 1, 1.5, 1.5, 1.5, 1.5, 1];
+const FACTOR = (t) => (t <= 1 ? 1 : t === 2 ? 0.8 : t === 3 ? 0.6 : 0.4);
+const r2 = (x) => Math.round(x * 100) / 100;
+export const sugerida = (first) => Math.round(PTS.reduce((a, pt, i) => a + pt * FACTOR(first[i] || 99), 0) * 10) / 10;
+
+function intentos(first, tries) {
+  const L = ['', '', '📊 INTENTOS PARA LLEGAR A LA RESPUESTA CORRECTA (los cuenta la plataforma)'];
+  const ord = (t) => (t === 1 || t === 3 ? `${t}.er` : `${t}.º`);
+  PTS.forEach((pt, i) => L.push(`- Paso ${i + 1}: correcto al ${ord(first[i])} intento → ${r2(pt * FACTOR(first[i]))} de ${pt} pts`));
+  L.push(`Total de veces que tocó COMPROBAR: ${tries.reduce((a, b) => a + b, 0)}`, `Calificación sugerida: ${sugerida(first)} de 10`,
+    '(1.er intento = 100 % del paso, 2.º = 80 %, 3.º = 60 %, 4 o más = 40 %)');
+  return L.join('\n');
+}
+
 function resumen(v) {
   const L = ['📝 Hoja «Mi lista del mercado» (hecha en la plataforma)', '', 'PASO 1. Mi lista', '- Plátanos: 12 × $5 = $60'];
   ROWS.forEach((r) => L.push(`- ${String(v['c' + r]).trim()}: ${v['q' + r]} × $${v['p' + r]} = $${v['t' + r]}`));
@@ -133,7 +148,7 @@ function resumen(v) {
   return L.join('\n');
 }
 
-async function enviar(profile, unit, v) {
+async function enviar(profile, unit, v, extra) {
   const { data: u } = await sb.from('units').select('id').eq('code', unit).maybeSingle();
   if (!u) throw new Error('No encontré el propósito ' + unit + '.');
   const { data: as } = await sb.from('assignments').select('id,title').eq('unit_id', u.id).eq('is_ae', true).eq('published', true).order('created_at', { ascending: false }).limit(1);
@@ -141,7 +156,7 @@ async function enviar(profile, unit, v) {
   if (!a) throw new Error('Tu profe todavía no abre la tarea de esta actividad. Avísale y vuelve a intentarlo después.');
   const { data: s } = await sb.from('submissions').select('id,score,body').eq('assignment_id', a.id).eq('student_id', profile.id).maybeSingle();
   if (s && s.score != null) throw new Error('Tu profe ya calificó esta actividad; ya no se puede cambiar.');
-  const body = resumen(v) + (s?.body && !s.body.startsWith('📝 Hoja') ? '\n\n— Lo que habías escrito antes —\n' + s.body : '');
+  const body = resumen(v) + extra + (s?.body && !s.body.startsWith('📝 Hoja') ? '\n\n— Lo que habías escrito antes —\n' + s.body : '');
   const row = { assignment_id: a.id, student_id: profile.id, body, submitted_at: new Date().toISOString() };
   const { error } = s ? await sb.from('submissions').update(row).eq('id', s.id) : await sb.from('submissions').insert(row);
   if (error) throw error;
@@ -154,6 +169,7 @@ export function hojaPage(p, ctx, head) {
     manual: true, practice: true,
     mount(root, done, saved) {
       const v = { ...(saved?.c?.v || {}) }; const ok = STEPS.map(() => false);
+      const tries = STEPS.map((_, i) => saved?.c?.tries?.[i] || 0); const first = STEPS.map((_, i) => saved?.c?.first?.[i] ?? null);
       const cards = $$('.hj-step', root);
       const fields = $$('[data-k]', root);
       fields.forEach((f) => { if (v[f.dataset.k] != null) f.value = v[f.dataset.k]; });
@@ -165,12 +181,14 @@ export function hojaPage(p, ctx, head) {
         $('.pgl', root).textContent = `${n()} de ${STEPS.length} pasos correctos`;
         $('.hj-send', root).hidden = n() < STEPS.length;
       };
-      const report = (quiet) => done({ n: n(), tot: STEPS.length, c: { v: { ...v }, ok: [...ok] }, quiet });
+      const report = (quiet) => done({ n: n(), tot: STEPS.length, c: { v: { ...v }, ok: [...ok], tries: [...tries], first: [...first] }, quiet });
       // Al volver a entrar se revisa en silencio lo que ya tenía.
-      STEPS.forEach((s, i) => { ok[i] = s.check(v).ok; }); paint();
+      // Un paso solo cuenta si el alumno tocó COMPROBAR y salió correcto.
+      STEPS.forEach((s, i) => { ok[i] = first[i] != null && s.check(v).ok; }); paint();
       cards.forEach((c, i) => {
         $('[data-hc]', c).addEventListener('click', () => {
           read(); const r = STEPS[i].check(v); ok[i] = r.ok; const f = $('.gf', c);
+          if (first[i] == null && $$('[data-k]', c).some((x) => String(x.value).trim())) { tries[i]++; if (r.ok) first[i] = tries[i]; }
           f.className = 'gf ' + (r.ok ? 'ok' : 'bad');
           f.innerHTML = r.ok ? '✅ <b>¡Bien!</b> Este paso está correcto.' : '❌ ' + r.msg;
           if (!r.ok) { c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 400); }
@@ -183,10 +201,10 @@ export function hojaPage(p, ctx, head) {
       });
       $('[data-send]', root).addEventListener('click', async (e) => {
         const b = e.currentTarget; read();
-        if (STEPS.some((s) => !s.check(v).ok)) { toast('Revisa otra vez los pasos: alguno cambió.', 'err'); return; }
+        if (STEPS.some((s, i) => !s.check(v).ok || first[i] == null)) { toast('Revisa otra vez los pasos: alguno cambió.', 'err'); return; }
         if (ctx.preview) { toast('Vista de profe: aquí el alumno envía su hoja a TAREAS.', 'ok'); return; }
         b.disabled = true; const old = b.textContent; b.textContent = 'Enviando…';
-        try { await enviar(ctx.profile, p.unit, v); report(false); $('.hj-sent', root).hidden = false; toast('¡Hoja enviada a tu profe! ✔', 'ok'); }
+        try { await enviar(ctx.profile, p.unit, v, intentos(first, tries)); report(false); $('.hj-sent', root).hidden = false; toast('¡Hoja enviada a tu profe! ✔', 'ok'); }
         catch (err) { toast(err.message || 'No se pudo enviar. Inténtalo otra vez.', 'err'); }
         finally { b.disabled = false; b.textContent = old; }
       });
