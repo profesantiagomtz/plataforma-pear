@@ -355,9 +355,9 @@ async function autoHoja(a, s, x, e) {
   let c = null;
   (data || []).forEach((r) => Object.values(r.done || {}).forEach((d) => { if (Array.isArray(d?.c?.first)) c = d.c; }));
   if (!c) return;
-  const sug = sugerida(c.first); const score = Math.round(sug / 10 * a.max_score * 10) / 10; const fb = explicacion(c.first, c.tries || []);
+  const sug = sugerida(c.first); const score = Math.round(sug / 100 * a.max_score * 10) / 10; const fb = explicacion(c.first, c.tries || []);
   const box = document.createElement('div'); box.className = 'msg info';
-  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (${sug} de 10), según los intentos de cada paso. ${x.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
+  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (lo máximo en esta actividad es 60 de 100), según los intentos de cada paso. ${x.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
   $('.row', e).before(box);
   if (x.score == null) { $('#sc', e).value = score; if (!$('#fb', e).value.trim()) { $('#fb', e).value = fb; $('#fb', e).rows = 12; } }
 }
