@@ -2,7 +2,7 @@
 import { sb, esc, $, $$, fmtDateTime, computeGrades, fmtNum, bySurname, listName } from './ui.js';
 import { describe, ago, fmtSecs, plain } from './live.js';
 
-const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final' };
+const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final', hoja: 'Actividad de evaluación' };
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
 const days = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
 
@@ -116,6 +116,7 @@ async function expediente(el, id, tools) {
       if (!d) state = '<span class="badge">⏳ Pendiente</span>';
       else if (pg.type === 'intro') state = '<span class="badge ok">✅ Entró</span>';
       else if (pg.type === 'lesson') state = d.r ? '<span class="badge ok">📖 Leída</span>' : '<span class="badge info">Empezó</span>';
+      else if (pg.type === 'hoja') { const ok = d.c?.ok || []; const n = ok.filter(Boolean).length; state = `<span class="badge ${n === 7 ? 'ok' : 'info'}">✏️ ${n}/7 pasos</span>`; }
       else if (pg.type === 'practica') { const c = d.c || []; const n = c.filter(Boolean).length; state = `<span class="badge ${n === c.length && n ? 'ok' : 'info'}">📝 ${n}/${pg.steps.length} pasos</span>`; }
       else if (d.sk) state = '<span class="badge warn">⏭️ Saltada</span>';
       else if ((d.s || 0) >= 0.6) state = '<span class="badge ok">✅ Superada</span>';

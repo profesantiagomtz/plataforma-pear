@@ -1,4 +1,4 @@
-import { lesson, def, ex, ana, warn, it, p, md, img, flow, tiles, tbl, steps, words, vis, alt, viz, match, mc, order, cloze, gen, guia, write, practica } from '../js/mk.js';
+import { lesson, def, ex, ana, warn, it, p, md, img, flow, tiles, tbl, steps, words, vis, alt, viz, match, mc, order, cloze, gen, guia, write, hoja } from '../js/mk.js';
 
 export default {
   id: 'm1-3', unit: '1.3', title: 'Números naturales y enteros', sub: 'Positivos y negativos, divisores, múltiplos, MCD y MCM (todo explicado con ejemplos)', minutes: 130, weight: 10,
@@ -186,16 +186,11 @@ export default {
 
     lesson('Resumen del módulo', 'Lo más importante', [
       md('- **Familias:** naturales (contar), enteros (con negativos), racionales (fracciones), irracionales (π, √2).\n- **Resta = suma del opuesto.** Ley de signos: iguales (+), distintos (−).\n- **Múltiplo:** contar de salto en salto · **Divisor:** cabe exacto.\n- **Primo:** solo se divide entre 1 y él mismo.\n- **MCD:** divisor más grande en común → **repartir**. **MCM:** múltiplo más chico en común → **coincidir**.'),
-    ], 'Ya puedes hacer tu presupuesto.', 'Resumen'),
+    ], 'Ya puedes hacer tu lista del mercado.', 'Resumen'),
 
-    practica({
-      t: 'Presupuesto de salud comunitaria', sub: 'Tu evidencia: vale el 10 % del curso',
-      intro: 'Vas a armar un **presupuesto** (una lista de gastos e ingresos) sobre prácticas de **salud comunitaria**: alimentación, medicina tradicional e higiene, en distintos momentos de la historia.',
-      mat: 'Cuaderno u hojas, calculadora (opcional) e internet o libros para investigar.',
-      ejemplo: '**Época:** mi colonia hoy 🏘️. **Compras:** 12 frutas a $5 → 12 × 5 = **$60** (con la distributiva: 12 × 5 = 10 × 5 + 2 × 5 = 50 + 10).<br>**Saldo:** ingresos $200 − gastos $230 = **−$30** (me faltan $30). <br>**MCD:** si tengo 12 manzanas y 18 naranjas y quiero hacer paquetes iguales sin que sobre nada, hago **6 paquetes** (MCD = 6). <br>**MCM:** si compro una cosa cada 4 días y otra cada 6 días, las dos coinciden cada **12 días**.',
-      steps: ['**Elige una época y una comunidad** (un mercado antiguo, un pueblo del siglo XIX, tu colonia hoy) e investiga qué hacían para su salud: qué comían, qué plantas usaban, cómo se aseaban.', 'Haz una **tabla con al menos 10 conceptos** (alimentos, plantas, artículos de higiene…) con cantidad, valor por unidad y total.', 'Calcula los totales usando la **propiedad distributiva** en al menos 2 conceptos (como en el ejemplo).', 'Incluye **ingresos (+) y gastos (−)** y calcula el **saldo** con números enteros (puede salir negativo).', 'Usa el **MCD** para repartir productos en paquetes iguales sin que sobre nada.', 'Usa el **MCM** para planear compras que se repiten cada cierto número de días y decir cuándo coinciden.', '**Factoriza en primos** al menos 3 de los números que uses.', 'Escribe una **conclusión** de 8 renglones: ¿qué prácticas de salud destacan y cómo cambian de una época a otra?'],
-      deliver: 'Un reporte (PDF, documento o fotos legibles) con tu tabla, tus cuentas, el MCD, el MCM, las factorizaciones y tu conclusión.',
-      rubric: [['Contexto histórico y cultural', 'Claro y con fuentes', 'Parcial', 'Sin contexto'], ['Enteros y propiedades', 'Correctos y justificados', 'Algunos errores', 'Incorrectos'], ['Factorización, MCD y MCM', 'Bien aplicados al problema', 'Aplicados sin explicar', 'No están'], ['Presentación y conclusión', 'Ordenada y fundamentada', 'Incompleta', 'Desordenada']],
+    hoja({
+      t: 'Mi lista del mercado', sub: 'Tu evidencia: vale el 10 % del curso', unit: '1.3',
+      intro: 'Vas a hacer tu <b>lista de compras para estar sanos</b> y usar con ella lo que aprendiste: multiplicar en partes, números negativos, MCD, MCM y números primos. Hazla <b>aquí</b> y también <b>cópiala en tu cuaderno</b>.',
     }),
   ],
 };
