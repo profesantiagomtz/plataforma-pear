@@ -116,7 +116,7 @@ async function expediente(el, id, tools) {
       if (!d) state = '<span class="badge">⏳ Pendiente</span>';
       else if (pg.type === 'intro') state = '<span class="badge ok">✅ Entró</span>';
       else if (pg.type === 'lesson') state = d.r ? '<span class="badge ok">📖 Leída</span>' : '<span class="badge info">Empezó</span>';
-      else if (pg.type === 'hoja') { const ok = d.c?.ok || []; const n = ok.filter(Boolean).length; state = `<span class="badge ${n === 7 ? 'ok' : 'info'}">✏️ ${n}/7 pasos</span>`; }
+      else if (pg.type === 'hoja') { const ok = d.c?.ok || []; const n = ok.filter(Boolean).length; const t = (d.c?.tries || []).reduce((a, b) => a + b, 0); state = `<span class="badge ${n === 7 ? 'ok' : 'info'}">✏️ ${n}/7 pasos · ${t} intentos</span>`; }
       else if (pg.type === 'practica') { const c = d.c || []; const n = c.filter(Boolean).length; state = `<span class="badge ${n === c.length && n ? 'ok' : 'info'}">📝 ${n}/${pg.steps.length} pasos</span>`; }
       else if (d.sk) state = '<span class="badge warn">⏭️ Saltada</span>';
       else if ((d.s || 0) >= 0.6) state = '<span class="badge ok">✅ Superada</span>';

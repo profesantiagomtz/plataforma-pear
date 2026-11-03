@@ -20,7 +20,7 @@ const HOW = {
   tt: ['👆', 'Toca cada casilla gris: <b>1 toque = V</b>, <b>2 toques = F</b>. Cuando termines toca <b>REVISAR</b>.'],
   abaco: ['👆', 'Toca las bolitas hasta que el ábaco muestre el número de arriba. Luego toca <b>COMPROBAR</b>.'],
   write: ['⌨️', 'Escribe tu respuesta en el cuadro (2 o 3 renglones). Toca <b>REVISAR</b> y busca las palomitas ✔.'],
-  hoja: ['✏️', 'Rellena los cuadros de cada paso y toca <b>COMPROBAR</b>. Si sale en rojo, lee la ayuda y corrige. Al terminar los 7 pasos, toca <b>📤 ENVIAR A MI PROFE</b>. También cópiala en tu <b>cuaderno</b>.'],
+  hoja: ['✏️', 'Rellena los cuadros de cada paso y toca <b>COMPROBAR</b>. Si sale en rojo, lee la ayuda y corrige. <b>Ojo:</b> tu profe verá cuántas veces tocaste COMPROBAR en cada paso; piensa bien antes de tocarlo. Al terminar los 7 pasos, toca <b>📤 ENVIAR A MI PROFE</b>. También cópiala en tu <b>cuaderno</b>.'],
   practica: ['📝', 'Esta práctica la haces en tu <b>cuaderno o celular</b>. <b>Marca cada paso</b> cuando lo termines y al final súbela en <b>TAREAS</b>.'],
 };
 

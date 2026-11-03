@@ -2,6 +2,7 @@ import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parse
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
+import { sugerida, explicacion } from './hoja.js';
 import { ediemsView } from './ediems.js';
 import { datosView } from './datos.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
@@ -344,6 +345,21 @@ function review(a, s, x, done) {
   });
   $('#sv', e).onclick = () => { const v = $('#sc', e).value; const n = v === '' ? null : Number(v); if (n != null && (n < 0 || n > a.max_score)) return toast(`La calificación debe estar entre 0 y ${a.max_score}`, 'err'); save(n, $('#fb', e).value.trim() || null); };
   $('#un', e)?.addEventListener('click', () => save(null, $('#fb', e).value.trim() || null));
+  if (x?.body?.startsWith('📝 Hoja')) autoHoja(a, s, x, e);
+}
+
+// Hoja interactiva: calcula la calificación con los intentos que guardó la plataforma
+// (no con el texto de la entrega, que el alumno podría editar) y la deja lista para guardar.
+async function autoHoja(a, s, x, e) {
+  const { data } = await sb.from('module_progress').select('module,done').eq('student_id', s.id);
+  let c = null;
+  (data || []).forEach((r) => Object.values(r.done || {}).forEach((d) => { if (Array.isArray(d?.c?.first)) c = d.c; }));
+  if (!c) return;
+  const sug = sugerida(c.first); const score = Math.round(sug / 10 * a.max_score * 10) / 10; const fb = explicacion(c.first, c.tries || []);
+  const box = document.createElement('div'); box.className = 'msg info';
+  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (${sug} de 10), según los intentos de cada paso. ${x.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
+  $('.row', e).before(box);
+  if (x.score == null) { $('#sc', e).value = score; if (!$('#fb', e).value.trim()) { $('#fb', e).value = fb; $('#fb', e).rows = 12; } }
 }
 
 // ============================ CALIFICACIONES ============================
