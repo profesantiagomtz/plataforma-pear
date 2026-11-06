@@ -158,3 +158,7 @@ export function computeGrades(units, assignments, subs) {
   return { perUnit, total };
 }
 export const fmtNum = (n) => (n == null ? '—' : (Math.round(n * 10) / 10).toString());
+
+// Regla del profe: una actividad de evaluación vale como máximo el 60 % de su puntaje (60 de 100).
+export const AE_TOPE = 0.6;
+export const topeDe = (a) => (a.is_ae ? Math.round(a.max_score * AE_TOPE * 10) / 10 : a.max_score);

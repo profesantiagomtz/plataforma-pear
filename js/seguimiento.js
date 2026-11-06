@@ -1,5 +1,5 @@
 // Seguimiento completo de alumnos: tabla general con alertas + expediente individual.
-import { sb, esc, $, $$, fmtDateTime, computeGrades, fmtNum, bySurname, listName } from './ui.js';
+import { sb, esc, $, $$, fmtDateTime, computeGrades, fmtNum, bySurname, listName, topeDe } from './ui.js';
 import { describe, ago, fmtSecs, plain } from './live.js';
 
 const KINDNAME = { intro: 'Inicio', lesson: 'Lección', match: 'Actividad', mc: 'Repaso', order: 'Actividad', cloze: 'Actividad', gen: 'Práctica', tt: 'Actividad', abaco: 'Actividad', write: 'Actividad', practica: 'Práctica final', hoja: 'Actividad de evaluación' };
@@ -102,10 +102,10 @@ async function expediente(el, id, tools) {
 
   // calificaciones por propósito
   const gradeRows = D.units.map((u) => { const g = st.grades.perUnit[u.id]; const aes = st.applies.filter((a) => a.unit_id === u.id && a.is_ae);
-    return `<tr><td><span class="code">${esc(u.code)}</span> ${esc(u.title)}</td><td class="num">${aes.length ? aes.map((a) => { const x = sf.get(a.id); return x ? (x.score != null ? `${fmtNum(x.score)}/${a.max_score}` : 'entregada') : 'sin entregar'; }).join(', ') : '<span class="muted">sin tarea publicada</span>'}</td><td class="num">${g.graded ? `<b>${fmtNum(g.pts)}</b>` : '—'} / ${u.weight}</td></tr>`; }).join('');
+    return `<tr><td><span class="code">${esc(u.code)}</span> ${esc(u.title)}</td><td class="num">${aes.length ? aes.map((a) => { const x = sf.get(a.id); return x ? (x.score != null ? `${fmtNum(x.score)}/${topeDe(a)}` : 'entregada') : 'sin entregar'; }).join(', ') : '<span class="muted">sin tarea publicada</span>'}</td><td class="num">${g.graded ? `<b>${fmtNum(g.pts)}</b>` : '—'} / ${u.weight}</td></tr>`; }).join('');
   // tareas
   const taskRows = st.applies.sort((a, b) => (a.due_at || '9').localeCompare(b.due_at || '9')).map((a) => { const x = sf.get(a.id); const late = a.due_at && x && new Date(x.submitted_at) > new Date(a.due_at); const over = a.due_at && !x && new Date(a.due_at) < new Date();
-    const state = x ? (x.score != null ? `<span class="badge ok">Calificada ${fmtNum(x.score)}/${a.max_score}</span>` : '<span class="badge info">Entregada · por calificar</span>') : over ? '<span class="badge bad">Vencida sin entregar</span>' : '<span class="badge warn">Pendiente</span>';
+    const state = x ? (x.score != null ? `<span class="badge ok">Calificada ${fmtNum(x.score)}/${topeDe(a)}</span>` : '<span class="badge info">Entregada · por calificar</span>') : over ? '<span class="badge bad">Vencida sin entregar</span>' : '<span class="badge warn">Pendiente</span>';
     return `<tr><td>${esc(a.title)}${a.is_ae ? ' <span class="badge warn">Evaluación</span>' : ''}<div class="muted small">${uname[a.unit_id] ? 'Propósito ' + uname[a.unit_id] : ''}</div></td><td class="small">${a.due_at ? fmtDateTime(a.due_at) : 'sin fecha'}</td><td>${state}${late ? ' <span class="badge bad">Tarde</span>' : ''}${x?.feedback ? `<div class="muted small">💬 ${esc(x.feedback)}</div>` : ''}</td><td class="small">${x ? fmtDateTime(x.submitted_at) : '—'}</td><td class="right"><a class="btn soft sm" href="#/entregas/${a.id}">${x ? 'Revisar' : 'Abrir'}</a></td></tr>`; }).join('');
   // módulos
   const prog = D.prog.get(id) || []; const pm = Object.fromEntries(prog.map((p) => [p.module, p])); const blocks = [];

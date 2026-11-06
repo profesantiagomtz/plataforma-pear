@@ -1,4 +1,4 @@
-import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, surnameKey, listName, bySurname, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
+import { sb, esc, $, $$, run, toast, modal, confirmBox, copy, downloadCSV, parseCSV, surnameKey, listName, bySurname, fmtDate, fmtDateTime, todayStr, parseDay, toLocalInput, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum, topeDe } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
@@ -326,20 +326,25 @@ async function entregas(el, { param }) {
     const { data: u } = await sb.from('units').select('code').eq('id', a.unit_id).maybeSingle();
     if (u?.code) { const { data: mp } = await sb.from('module_progress').select('student_id,done').eq('module', 'm1-' + u.code.split('.')[1]);
       (mp || []).forEach((r) => { const c = hojaDe(r.done); if (c) hm.set(r.student_id, c); }); }
+    // Si un alumno terminó los 7 pasos pero su hoja no llegó a TAREAS, se registra aquí como entregada.
+    const faltan = list.filter((s) => !sm.has(s.id) && hm.get(s.id) && pasosBien(hm.get(s.id)) === 7);
+    if (faltan.length) {
+      const rows = faltan.map((s) => ({ assignment_id: a.id, student_id: s.id, submitted_at: new Date().toISOString(),
+        body: textoHoja(hm.get(s.id)) + '\n\n(La plataforma la entregó por el alumno: terminó los 7 pasos pero su hoja no había llegado.)' }));
+      const { data: ins, error } = await sb.from('submissions').insert(rows).select('*');
+      if (!error) (ins || []).forEach((x) => sm.set(x.student_id, x));
+    }
   }
   const hojaBadge = (s) => { const c = hm.get(s.id); if (!c) return ''; const n = pasosBien(c); return n === 7 ? ' <span class="badge ok">✏️ Hoja terminada en la plataforma</span>' : ` <span class="badge warn">✏️ Hoja ${n}/7 (sin terminar)</span>`; };
   el.innerHTML = `<div class="head"><h1>Entregas</h1></div>
   <div class="toolbar"><select id="sel">${opt(asg, 'id', (x) => x.title, a.id)}</select></div>
   <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Estado</th><th class="num">Calificación</th><th></th></tr></thead><tbody>${list.map((s) => { const x = sm.get(s.id);
     return `<tr><td>${esc(s.full_name)}</td><td>${x ? `<span class="badge ${x.score == null ? 'info' : 'ok'}">${x.score == null ? 'Entregada' : 'Calificada'}</span> <span class="muted small">${fmtDateTime(x.submitted_at)}</span>` : '<span class="badge">Sin entregar</span>'}${hojaBadge(s)}</td>
-    <td class="num">${x ? gradeBadge(x.score, a.max_score) : '—'}</td><td class="right"><button class="btn soft sm" data-s="${s.id}">${x || hm.get(s.id) ? 'Revisar' : 'Calificar'}</button></td></tr>`; }).join('')}</tbody></table></div>`;
+    <td class="num">${x ? gradeBadge(x.score, a) : '—'}</td><td class="right"><button class="btn soft sm" data-s="${s.id}">${x || hm.get(s.id) ? 'Revisar' : 'Calificar'}</button></td></tr>`; }).join('')}</tbody></table></div>`;
   $('#sel', el).onchange = (e) => { location.hash = '#/entregas/' + e.target.value; };
   el.onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) review(a, list.find((s) => s.id === b.dataset.s), sm.get(b.dataset.s), () => entregas(el, { param: [a.id] }), hm.get(b.dataset.s)); };
 }
 
-// Regla del profe: una actividad de evaluación vale como máximo el 60 % de su puntaje.
-const AE_TOPE = 0.6;
-const topeDe = (a) => (a.is_ae ? Math.round(a.max_score * AE_TOPE * 10) / 10 : a.max_score);
 
 function review(a, s, x, done, hoja) {
   const md = modal(s.full_name, `<p><b>${esc(a.title)}</b></p>
@@ -368,9 +373,9 @@ function autoHoja(a, x, e, c) {
     card.innerHTML = n === 7 ? `<div class="muted small">✏️ Hizo la hoja en la plataforma pero no tocó ENVIAR. Esto es lo que contestó:</div><div class="pre" style="margin-top:6px">${esc(textoHoja(c))}</div>`
       : `<div class="muted small">✏️ Empezó la hoja en la plataforma: lleva <b>${n} de 7</b> pasos bien. Los pasos sin terminar valen 0.</div>`;
     $('.row', e).before(card); }
-  const sug = sugerida(c.first); const score = Math.round(sug / 100 * a.max_score * 10) / 10; const fb = explicacion(c.first, c.tries || []);
+  const sug = sugerida(c.first); const score = Math.round(sug / 60 * topeDe(a) * 10) / 10; const fb = explicacion(c.first, c.tries || []);
   const box = document.createElement('div'); box.className = 'msg info';
-  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${a.max_score}</b> (lo máximo en esta actividad es 60 de 100), según los intentos de cada paso. ${x?.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
+  box.innerHTML = `🤖 <b>Calificación calculada: ${score} de ${topeDe(a)}</b> (${topeDe(a)} es lo máximo en esta actividad), según los intentos de cada paso. ${x?.score == null ? 'Ya la puse abajo con la explicación para el alumno; revisa y toca <b>Guardar</b>.' : 'Esta entrega ya está calificada; no cambié nada.'}`;
   $('.row', e).before(box);
   if (x?.score == null) { $('#sc', e).value = score; if (!$('#fb', e).value.trim()) { $('#fb', e).value = fb; $('#fb', e).rows = 12; } }
 }

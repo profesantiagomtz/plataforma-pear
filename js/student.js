@@ -94,7 +94,7 @@ async function tareas(el, { profile, param }) {
   const draw = () => {
     const list = asg.filter((a) => (tab === 'p') === !sm.has(a.id));
     $('#lst', el).innerHTML = list.length ? list.map((a) => { const s = sm.get(a.id); const late = !s && a.due_at && new Date(a.due_at) < new Date();
-      return `<a class="item" href="#/tareas/${a.id}"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${uc[a.unit_id] ? 'Propósito ' + uc[a.unit_id] + ' · ' : ''}${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div></div>${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}${late ? '<span class="badge bad">Vencida</span>' : ''}${s ? gradeBadge(s.score, a.max_score) : ''}</a>`; }).join('') : empty(tab === 'p' ? 'No tienes tareas pendientes 🎉' : 'Aún no has entregado tareas.');
+      return `<a class="item" href="#/tareas/${a.id}"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${uc[a.unit_id] ? 'Propósito ' + uc[a.unit_id] + ' · ' : ''}${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div></div>${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}${late ? '<span class="badge bad">Vencida</span>' : ''}${s ? gradeBadge(s.score, a) : ''}</a>`; }).join('') : empty(tab === 'p' ? 'No tienes tareas pendientes 🎉' : 'Aún no has entregado tareas.');
     $$('.tabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === tab));
   };
   el.innerHTML = `<div class="head"><h1>Tareas</h1></div><div class="tabs"><button data-t="p">Pendientes</button><button data-t="e">Entregadas</button></div><div class="list" id="lst"></div>`;
@@ -112,7 +112,7 @@ async function tareaDetalle(el, profile, id) {
   el.innerHTML = `<p><a href="#/tareas">← Tareas</a></p>
   <div class="card"><h1>${esc(a.title)}</h1><div>${a.is_ae ? '<span class="badge warn">Actividad de evaluación</span> ' : ''}<span class="badge">${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</span></div>
     <p class="pre">${esc(a.instructions || 'Sin instrucciones adicionales.')}</p></div>
-  ${locked ? `<div class="card"><h2>Calificación</h2><p>${gradeBadge(s.score, a.max_score)}</p>${s.feedback ? `<div class="msg info pre">${esc(s.feedback)}</div>` : ''}</div>` : ''}
+  ${locked ? `<div class="card"><h2>Calificación</h2><p>${gradeBadge(s.score, a)}</p>${s.feedback ? `<div class="msg info pre">${esc(s.feedback)}</div>` : ''}</div>` : ''}
   <div class="card"><h2>${s ? 'Tu entrega' : 'Entregar'}</h2>
     ${s ? `<p class="muted small">Entregado: ${fmtDateTime(s.submitted_at)}${s.file_path ? ' · archivo adjunto' : ''}</p>` : ''}
     <form id="f"><label for="b">Respuesta o comentarios</label><textarea id="b" ${locked ? 'disabled' : ''}>${esc(s?.body)}</textarea>
@@ -146,7 +146,7 @@ async function notas(el, { profile }) {
   <div class="card"><div class="stat" style="border:0;padding:0"><b>${fmtNum(g.total)} <small class="muted" style="font-size:1rem">/ 100</small></b><span>Puntos acumulados (las evaluaciones pendientes cuentan 0 hasta calificarse)</span></div><div class="bar" style="margin-top:10px"><i style="width:${Math.min(100, g.total)}%"></i></div></div>
   ${units.map((u) => { const p = g.perUnit[u.id]; const aes = asg.filter((a) => a.unit_id === u.id && a.is_ae); const others = asg.filter((a) => a.unit_id === u.id && !a.is_ae);
     return `<div class="card"><div class="head" style="margin:0 0 8px"><h3 style="margin:0;flex:1"><span class="code">${esc(u.code)}</span> ${esc(u.title)}</h3><span class="badge brand">${fmtNum(p.pts)} / ${u.weight}</span></div>
-    ${[...aes, ...others].map((a) => { const s = sm.get(a.id); return `<div class="item" style="margin-top:6px"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${a.is_ae ? 'Actividad de evaluación' : 'Práctica (no pondera)'}</div></div>${s ? gradeBadge(s.score, a.max_score) : '<span class="badge">Sin entregar</span>'}</div>`; }).join('') || '<div class="muted small">Sin actividades todavía.</div>'}</div>`; }).join('')}`;
+    ${[...aes, ...others].map((a) => { const s = sm.get(a.id); return `<div class="item" style="margin-top:6px"><div class="grow"><div class="t">${esc(a.title)}</div><div class="muted small">${a.is_ae ? 'Actividad de evaluación' : 'Práctica (no pondera)'}</div></div>${s ? gradeBadge(s.score, a) : '<span class="badge">Sin entregar</span>'}</div>`; }).join('') || '<div class="muted small">Sin actividades todavía.</div>'}</div>`; }).join('')}`;
 }
 
 export const studentRoutes = {
