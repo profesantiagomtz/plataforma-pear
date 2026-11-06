@@ -1,4 +1,4 @@
-import { sb, esc, $, $$, run, toast, fmtDate, parseDay, dayName, todayStr, PASS_HELP, passOk } from './ui.js';
+import { sb, esc, $, $$, run, toast, fmtDate, parseDay, dayName, todayStr, PASS_HELP, passOk, topeDe } from './ui.js';
 
 const KIND = { clase: ['Clase', 'brand'], ae: ['Evaluación', 'warn'], encuadre: ['Encuadre', 'info'], repaso: ['Repaso', 'info'], inhabil: ['Inhábil', 'bad'], ctec: ['Sin clases', 'bad'], corte: ['Corte de calificaciones', 'warn'] };
 
@@ -56,8 +56,9 @@ export async function profileView(el, { profile, reload }) {
   }); };
 }
 
-export const gradeBadge = (s, max) => {
+// Muestra la calificación sobre lo máximo que se puede sacar (en actividades de evaluación: 60).
+export const gradeBadge = (s, a) => {
   if (s == null) return '<span class="badge">Sin calificar</span>';
-  const p = s / max;
+  const max = topeDe(a); const p = s / max;
   return `<span class="badge ${p >= 0.6 ? 'ok' : 'bad'}">${Math.round(s * 10) / 10}/${max}</span>`;
 };

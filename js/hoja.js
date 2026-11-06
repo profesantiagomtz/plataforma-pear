@@ -188,7 +188,7 @@ export function hojaPage(p, ctx, head) {
     mount(root, done, saved) {
       const v = { ...(saved?.c?.v || {}) }; const ok = STEPS.map(() => false);
       const tries = STEPS.map((_, i) => saved?.c?.tries?.[i] || 0); const first = STEPS.map((_, i) => saved?.c?.first?.[i] ?? null);
-      const cards = $$('.hj-step', root);
+      const cards = $$('.hj-step', root); let sent = !!saved?.c?.sent;
       const fields = $$('[data-k]', root);
       fields.forEach((f) => { if (v[f.dataset.k] != null) f.value = v[f.dataset.k]; });
       const read = () => fields.forEach((f) => { v[f.dataset.k] = f.value; });
@@ -199,10 +199,12 @@ export function hojaPage(p, ctx, head) {
         $('.pgl', root).textContent = `${n()} de ${STEPS.length} pasos correctos`;
         $('.hj-send', root).hidden = n() < STEPS.length;
       };
-      const report = (quiet) => done({ n: n(), tot: STEPS.length, c: { v: { ...v }, ok: [...ok], tries: [...tries], first: [...first] }, quiet });
+      const report = (quiet) => done({ n: n(), tot: STEPS.length, c: { v: { ...v }, ok: [...ok], tries: [...tries], first: [...first], sent }, quiet });
       // Al volver a entrar se revisa en silencio lo que ya tenía.
       // Un paso solo cuenta si el alumno tocó COMPROBAR y salió correcto.
       STEPS.forEach((s, i) => { ok[i] = first[i] != null && s.check(v).ok; }); paint();
+      // Si ya tenía los 7 pasos bien pero la hoja no llegó a su profe, se envía sola (sin avisos).
+      if (n() === STEPS.length && !sent && !ctx.preview) enviar(ctx.profile, p.unit, v, intentos(first, tries)).then(() => { sent = true; report(true); $('.hj-sent', root).hidden = false; }).catch(() => {});
       cards.forEach((c, i) => {
         $('[data-hc]', c).addEventListener('click', () => {
           read(); const r = STEPS[i].check(v); ok[i] = r.ok; const f = $('.gf', c);
@@ -214,7 +216,7 @@ export function hojaPage(p, ctx, head) {
           if (r.ok && cards[i + 1] && !ok[i + 1]) cards[i + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
           if (n() === STEPS.length) { $('.hj-send', root).scrollIntoView({ behavior: 'smooth', block: 'center' });
             // Se envía sola al terminar, por si el alumno no toca el botón.
-            if (r.ok && !ctx.preview) enviar(ctx.profile, p.unit, v, intentos(first, tries)).then(() => { $('.hj-sent', root).hidden = false; toast('¡Tu hoja ya le llegó a tu profe! ✔', 'ok'); }).catch((err) => toast(err.message || 'No se pudo enviar. Toca el botón azul.', 'err')); }
+            if (r.ok && !ctx.preview) enviar(ctx.profile, p.unit, v, intentos(first, tries)).then(() => { sent = true; report(true); $('.hj-sent', root).hidden = false; toast('¡Tu hoja ya le llegó a tu profe! ✔', 'ok'); }).catch((err) => toast(err.message || 'No se pudo enviar. Toca el botón azul.', 'err')); }
         });
         $$('[data-k]', c).forEach((f) => f.addEventListener('input', () => { if (ok[i]) { ok[i] = false; $('.gf', c).innerHTML = '✏️ Cambiaste algo: toca <b>COMPROBAR</b> otra vez.'; $('.gf', c).className = 'gf'; paint(); } }));
         $$('[data-k]', c).forEach((f) => f.addEventListener('change', () => { read(); report(true); }));
@@ -224,7 +226,7 @@ export function hojaPage(p, ctx, head) {
         if (STEPS.some((s, i) => !s.check(v).ok || first[i] == null)) { toast('Revisa otra vez los pasos: alguno cambió.', 'err'); return; }
         if (ctx.preview) { toast('Vista de profe: aquí el alumno envía su hoja a TAREAS.', 'ok'); return; }
         b.disabled = true; const old = b.textContent; b.textContent = 'Enviando…';
-        try { await enviar(ctx.profile, p.unit, v, intentos(first, tries)); report(false); $('.hj-sent', root).hidden = false; toast('¡Hoja enviada a tu profe! ✔', 'ok'); }
+        try { await enviar(ctx.profile, p.unit, v, intentos(first, tries)); sent = true; report(false); $('.hj-sent', root).hidden = false; toast('¡Hoja enviada a tu profe! ✔', 'ok'); }
         catch (err) { toast(err.message || 'No se pudo enviar. Inténtalo otra vez.', 'err'); }
         finally { b.disabled = false; b.textContent = old; }
       });
