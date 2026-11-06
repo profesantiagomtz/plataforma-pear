@@ -315,9 +315,10 @@ async function entregas(el, { param }) {
   if (!asg.length) { el.innerHTML = `<div class="head"><h1>Entregas</h1></div>` + empty('Primero crea una tarea.'); return; }
   const id = param[0] || asg[0].id; const a = asg.find((x) => x.id === id) || asg[0];
   const [{ data: studs }, { data: subs }] = await Promise.all([
-    sb.from('profiles').select('id,full_name,email,group_id').eq('role', 'student').eq('active', true).order('full_name'),
+    sb.from('profiles').select('id,full_name,nombres,apellido_p,apellido_m,email,group_id').eq('role', 'student').eq('active', true),
     sb.from('submissions').select('*').eq('assignment_id', a.id),
   ]);
+  studs.sort(bySurname);
   const sm = new Map(subs.map((s) => [s.student_id, s]));
   const list = studs.filter((s) => !a.group_id || s.group_id === a.group_id);
   // Hojas interactivas hechas en la plataforma (aunque el alumno no haya tocado ENVIAR).
@@ -339,7 +340,7 @@ async function entregas(el, { param }) {
   el.innerHTML = `<div class="head"><h1>Entregas</h1></div>
   <div class="toolbar"><select id="sel">${opt(asg, 'id', (x) => x.title, a.id)}</select></div>
   <div class="tablewrap"><table><thead><tr><th>Alumno</th><th>Estado</th><th class="num">Calificación</th><th></th></tr></thead><tbody>${list.map((s) => { const x = sm.get(s.id);
-    return `<tr><td>${esc(s.full_name)}</td><td>${x ? `<span class="badge ${x.score == null ? 'info' : 'ok'}">${x.score == null ? 'Entregada' : 'Calificada'}</span> <span class="muted small">${fmtDateTime(x.submitted_at)}</span>` : '<span class="badge">Sin entregar</span>'}${hojaBadge(s)}</td>
+    return `<tr><td>${esc(listName(s))}</td><td>${x ? `<span class="badge ${x.score == null ? 'info' : 'ok'}">${x.score == null ? 'Entregada' : 'Calificada'}</span> <span class="muted small">${fmtDateTime(x.submitted_at)}</span>` : '<span class="badge">Sin entregar</span>'}${hojaBadge(s)}</td>
     <td class="num">${x ? gradeBadge(x.score, a) : '—'}</td><td class="right"><button class="btn soft sm" data-s="${s.id}">${x || hm.get(s.id) ? 'Revisar' : 'Calificar'}</button></td></tr>`; }).join('')}</tbody></table></div>`;
   $('#sel', el).onchange = (e) => { location.hash = '#/entregas/' + e.target.value; };
   el.onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) review(a, list.find((s) => s.id === b.dataset.s), sm.get(b.dataset.s), () => entregas(el, { param: [a.id] }), hm.get(b.dataset.s)); };
@@ -384,20 +385,21 @@ function autoHoja(a, x, e, c) {
 async function notas(el) {
   const [{ data: units }, { data: asg }, { data: subs }, { data: studs }, { data: groups }] = await Promise.all([
     sb.from('units').select('*').order('ord'), sb.from('assignments').select('*'), sb.from('submissions').select('*'),
-    sb.from('profiles').select('id,full_name,matricula,group_id').eq('role', 'student').eq('active', true).order('full_name'), sb.from('groups').select('*').order('name'),
+    sb.from('profiles').select('id,full_name,nombres,apellido_p,apellido_m,matricula,group_id').eq('role', 'student').eq('active', true), sb.from('groups').select('*').order('name'),
   ]);
+  studs.sort(bySurname);
   let fg = '';
   const rowsFor = () => studs.filter((s) => !fg || s.group_id === fg).map((s) => ({ s, g: computeGrades(units, asg.filter((a) => !a.group_id || a.group_id === s.group_id), subs.filter((x) => x.student_id === s.id)) }));
   const draw = () => {
     const rows = rowsFor();
-    $('#tb', el).innerHTML = rows.map(({ s, g }) => `<tr><td>${esc(s.full_name)}<div class="muted small">${esc(s.matricula || '')}</div></td>${units.map((u) => `<td class="num">${g.perUnit[u.id].graded ? fmtNum(g.perUnit[u.id].pts) : '—'}</td>`).join('')}<td class="num"><b>${fmtNum(g.total)}</b></td></tr>`).join('') || `<tr><td colspan="9">${empty('Sin alumnos')}</td></tr>`;
+    $('#tb', el).innerHTML = rows.map(({ s, g }) => `<tr><td>${esc(listName(s))}<div class="muted small">${esc(s.matricula || '')}</div></td>${units.map((u) => `<td class="num">${g.perUnit[u.id].graded ? fmtNum(g.perUnit[u.id].pts) : '—'}</td>`).join('')}<td class="num"><b>${fmtNum(g.total)}</b></td></tr>`).join('') || `<tr><td colspan="9">${empty('Sin alumnos')}</td></tr>`;
   };
   el.innerHTML = `<div class="head"><h1>Calificaciones</h1></div>
   <div class="toolbar"><select id="g"><option value="">Todos los grupos</option>${opt(groups, 'id', 'name')}</select><button class="btn soft" id="ex">Exportar CSV</button></div>
   <p class="muted small">Puntos por propósito = promedio de sus actividades de evaluación × ponderación del programa (${units.map((u) => `${u.code}: ${u.weight}`).join(' · ')}). Las evaluaciones sin calificar cuentan 0.</p>
   <div class="tablewrap"><table><thead><tr><th>Alumno</th>${units.map((u) => `<th class="num">${u.code}<br>(${u.weight})</th>`).join('')}<th class="num">Total</th></tr></thead><tbody id="tb"></tbody></table></div>`;
   $('#g', el).onchange = (e) => { fg = e.target.value; draw(); };
-  $('#ex', el).onclick = () => downloadCSV('calificaciones-pear.csv', [['Matrícula', 'Alumno', ...units.map((u) => `${u.code} (${u.weight})`), 'Total'], ...rowsFor().map(({ s, g }) => [s.matricula || '', s.full_name, ...units.map((u) => g.perUnit[u.id].graded ? fmtNum(g.perUnit[u.id].pts) : ''), fmtNum(g.total)])]);
+  $('#ex', el).onclick = () => downloadCSV('calificaciones-pear.csv', [['Matrícula', 'Alumno', ...units.map((u) => `${u.code} (${u.weight})`), 'Total'], ...rowsFor().map(({ s, g }) => [s.matricula || '', listName(s), ...units.map((u) => g.perUnit[u.id].graded ? fmtNum(g.perUnit[u.id].pts) : ''), fmtNum(g.total)])]);
   draw();
 }
 
