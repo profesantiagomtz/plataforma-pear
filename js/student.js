@@ -7,6 +7,8 @@ import { datosView } from './datos.js';
 import { logEvent } from './live.js';
 
 const empty = (t) => `<div class="empty">${esc(t)}</div>`;
+// Tareas de propósitos bloqueados (OCULTOS): no se muestran al alumno; sus calificaciones guardadas no cambian.
+const sinOcultas = (asg, units) => { const hid = new Set(units.filter((u) => OCULTOS.includes(u.code)).map((u) => u.id)); return asg.filter((a) => !hid.has(a.unit_id)); };
 
 async function inicio(el, { profile }) {
   const today = todayStr();
@@ -18,7 +20,7 @@ async function inicio(el, { profile }) {
     sb.from('units').select('*').order('ord'),
   ]);
   const done = new Set(subs.map((s) => s.assignment_id));
-  const pending = asg.filter((a) => !done.has(a.id)).slice(0, 5);
+  const pending = sinOcultas(asg, units).filter((a) => !done.has(a.id)).slice(0, 5);
   const g = computeGrades(units, asg, subs);
   const nextDay = sch[0]?.day;
   const nextItems = sch.filter((s) => s.day === nextDay);
@@ -51,7 +53,8 @@ export async function material(el, { preview, profile, showHidden } = {}) {
   const hid = new Set(units.filter((u) => OCULTOS.includes(u.code)).map((u) => u.id));
   const mats0b = preview && showHidden ? mats0 : mats0.filter((m) => !hid.has(m.unit_id)); // propósitos bloqueados para alumnos
   const mats = preview && !showHidden ? mats0b.filter((m) => m.published && !m.teacher_only) : mats0b;
-  const asg = preview && !showHidden ? asg0.filter((a) => a.published) : asg0;
+  const asg1 = preview && showHidden ? asg0 : sinOcultas(asg0, units);
+  const asg = preview && !showHidden ? asg1.filter((a) => a.published) : asg1;
   const pg = Object.fromEntries((prog || []).map((p) => [p.module, p.pct])); const sm = Object.fromEntries((subs || []).map((s) => [s.assignment_id, s]));
   const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id).sort((a, b) => MATRANK(a) - MATRANK(b)), tasks: asg.filter((a) => a.unit_id === u.id) }));
   const loose = mats.filter((m) => !m.unit_id);
@@ -78,7 +81,7 @@ export async function material(el, { preview, profile, showHidden } = {}) {
 
 export async function tareasPreview(el, { showHidden } = {}) {
   const [{ data: asg0 }, { data: units }] = await Promise.all([sb.from('assignments').select('*').order('due_at', { nullsFirst: false }), sb.from('units').select('id,code')]);
-  const asg = showHidden ? asg0 : asg0.filter((a) => a.published);
+  const asg = showHidden ? asg0 : sinOcultas(asg0, units).filter((a) => a.published);
   const uc = Object.fromEntries(units.map((u) => [u.id, u.code]));
   el.innerHTML = asg.length ? `<div class="list">${asg.map((a) => `<div class="card flat" style="margin:0"><div class="t"><b>${esc(a.title)}</b> ${a.published ? '' : '<span class="badge warn">Borrador · no visible</span>'} ${a.is_ae ? '<span class="badge warn">Evaluación</span>' : ''}</div>
     <div class="muted small">${uc[a.unit_id] ? 'Propósito ' + uc[a.unit_id] + ' · ' : ''}${a.due_at ? 'Entrega: ' + fmtDateTime(a.due_at) : 'Sin fecha límite'}</div><p class="pre small">${esc(a.instructions || 'Sin instrucciones adicionales.')}</p>
@@ -87,11 +90,12 @@ export async function tareasPreview(el, { showHidden } = {}) {
 
 async function tareas(el, { profile, param }) {
   if (param[0]) return tareaDetalle(el, profile, param[0]);
-  const [{ data: asg }, { data: subs }, { data: units }] = await Promise.all([
+  let [{ data: asg }, { data: subs }, { data: units }] = await Promise.all([
     sb.from('assignments').select('*').order('due_at', { nullsFirst: false }),
     sb.from('submissions').select('*').eq('student_id', profile.id),
     sb.from('units').select('id,code'),
   ]);
+  asg = sinOcultas(asg, units);
   const sm = new Map(subs.map((s) => [s.assignment_id, s])); const uc = Object.fromEntries(units.map((u) => [u.id, u.code]));
   let tab = 'p';
   const draw = () => {
@@ -110,6 +114,7 @@ async function tareaDetalle(el, profile, id) {
     sb.from('assignments').select('*').eq('id', id).maybeSingle(),
     sb.from('submissions').select('*').eq('assignment_id', id).eq('student_id', profile.id).maybeSingle(),
   ]);
+  if (a?.unit_id) { const { data: u } = await sb.from('units').select('code').eq('id', a.unit_id).maybeSingle(); if (u && OCULTOS.includes(u.code)) { el.innerHTML = empty('🔒 Esta tarea ya no está disponible.') + '<p class="center"><a href="#/tareas">← Volver</a></p>'; return; } }
   if (!a) { el.innerHTML = empty('Tarea no encontrada.') + '<p class="center"><a href="#/tareas">← Volver</a></p>'; return; }
   const locked = s && s.score != null;
   el.innerHTML = `<p><a href="#/tareas">← Tareas</a></p>
