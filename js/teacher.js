@@ -4,6 +4,7 @@ import { material as studentMaterial, tareasPreview } from './student.js';
 import { moduloView } from './modulo.js';
 import { sugerida, explicacion, hojaDe, pasosBien, textoHoja } from './hoja.js';
 import { ediemsView } from './ediems.js';
+import { OCULTOS } from './config.js';
 import { datosView } from './datos.js';
 import { describe, ago, fmtSecs, plain, watchPresence } from './live.js';
 import { seguimiento, loadSeguimiento, statsFor, alertBadges } from './seguimiento.js';
@@ -226,6 +227,7 @@ async function material(el) {
     const days = g.u ? sch.filter((s) => s.unit_code === g.u.code).map((s) => s.day) : []; const n0 = items.filter((m) => !m.teacher_only).length;
     return `<div class="card" id="t-${g.u ? esc(g.u.code) : 'gen'}" style="scroll-margin-top:120px"><div class="head" style="margin-bottom:6px">${g.u ? `<span class="code">${esc(g.u.code)}</span>` : ''}<h2 style="margin:0;flex:1">${esc(g.title)} <span class="badge ${pub === tot ? 'ok' : pub ? 'info' : 'warn'}">${pub}/${tot} visibles</span></h2>
       <button class="btn ghost sm" data-all="show" data-unit="${g.id || ''}">👁️ Mostrar todo</button><button class="btn ghost sm" data-all="hide" data-unit="${g.id || ''}">🙈 Ocultar todo</button></div>
+      ${g.u && OCULTOS.includes(g.u.code) ? '<div class="msg info" style="margin-bottom:8px">🔒 Material BLOQUEADO para los alumnos (no lo ven aunque diga visible). Sus tareas y calificaciones siguen igual.</div>' : ''}
       ${g.u ? `<div class="chips" style="margin-bottom:10px"><span class="chip">⏱️ ${g.u.hours} horas</span><span class="chip">⭐ Vale ${g.u.weight} %</span>${days.length ? `<span class="chip">📅 ${sd(days[0])} → ${sd(days[days.length - 1])}</span>` : ''}</div>` : ''}
       <div class="list">${items.filter((m) => !m.teacher_only).map((m, i) => itemHtml(m, i + 1)).join('')}${tasks.map((a, i) => taskHtml(a, n0 + i + 1)).join('')}${items.filter((m) => m.teacher_only).map((m) => itemHtml(m, '🔒')).join('')}</div></div>`; }).join('');
   const toc = groupsList.filter((g) => g.u).map((g) => `<button class="chip" data-goto="t-${esc(g.u.code)}">${esc(g.u.code)}</button>`).join('');

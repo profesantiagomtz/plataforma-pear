@@ -5,6 +5,7 @@ import * as W from './widgets.js';
 import { steps as exprSteps } from './expr.js';
 import { logEvent, setPresence, plain } from './live.js';
 import { hojaPage } from './hoja.js';
+import { OCULTOS } from './config.js';
 
 const rich = (s) => String(s ?? '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
 const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -196,7 +197,9 @@ const howBox = (p) => { const [ic, tx] = HOW[p.type] || []; return tx ? `<div cl
 export async function moduloView(el, { profile, param }) {
   const id = param[0];
   if (!/^(m1-[1-7]|ed-(10|[1-9]))$/.test(id || '')) { el.innerHTML = '<div class="empty">Módulo no encontrado.</div>'; return; }
-  const preview = profile.role === 'teacher'; const ed = id.startsWith('ed-'); const home = ed ? '#/ediems' : '#/material';
+  const preview = profile.role === 'teacher';
+  if (!preview && /^m1-/.test(id) && OCULTOS.includes(id.slice(1).replace('-', '.'))) { el.innerHTML = '<div class="empty">🔒 Este material ya no está disponible.</div><p style="text-align:center"><a class="btn" href="#/material">Volver a Material</a></p>'; return; }
+  const ed = id.startsWith('ed-'); const home = ed ? '#/ediems' : '#/material';
   let mod;
   try { mod = (await import(`../content/${id}.js`)).default; } catch (e) { console.error(e); el.innerHTML = '<div class="msg err">No se pudo cargar el módulo.</div>'; return; }
   const pages = [{ type: 'intro', t: 'Inicio' }, ...mod.pages];

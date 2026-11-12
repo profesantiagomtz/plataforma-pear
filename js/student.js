@@ -1,6 +1,7 @@
 import { sb, esc, md, modal, $, $$, run, toast, fmtDate, fmtDateTime, todayStr, parseDay, dayName, signedUrl, uploadFile, safeName, isUrl, computeGrades, fmtNum } from './ui.js';
 import { calendarView, profileView, gradeBadge } from './shared.js';
 import { moduloView } from './modulo.js';
+import { OCULTOS } from './config.js';
 import { ediemsView } from './ediems.js';
 import { datosView } from './datos.js';
 import { logEvent } from './live.js';
@@ -47,7 +48,9 @@ export async function material(el, { preview, profile, showHidden } = {}) {
     profile?.id ? sb.from('submissions').select('assignment_id,score').eq('student_id', profile.id) : none,
   ]);
   // El docente ve exactamente lo que ve un alumno (lo oculto y lo «solo docente» no aparece), salvo que lo pida.
-  const mats = preview && !showHidden ? mats0.filter((m) => m.published && !m.teacher_only) : mats0;
+  const hid = new Set(units.filter((u) => OCULTOS.includes(u.code)).map((u) => u.id));
+  const mats0b = preview && showHidden ? mats0 : mats0.filter((m) => !hid.has(m.unit_id)); // propósitos bloqueados para alumnos
+  const mats = preview && !showHidden ? mats0b.filter((m) => m.published && !m.teacher_only) : mats0b;
   const asg = preview && !showHidden ? asg0.filter((a) => a.published) : asg0;
   const pg = Object.fromEntries((prog || []).map((p) => [p.module, p.pct])); const sm = Object.fromEntries((subs || []).map((s) => [s.assignment_id, s]));
   const blocks = units.map((u) => ({ u, items: mats.filter((m) => m.unit_id === u.id).sort((a, b) => MATRANK(a) - MATRANK(b)), tasks: asg.filter((a) => a.unit_id === u.id) }));
