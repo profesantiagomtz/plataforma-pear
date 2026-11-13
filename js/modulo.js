@@ -47,6 +47,7 @@ function block(b, ctx) {
     case 'md': return `<div class="md">${md(b.s)}</div>`;
     case 'img': return `<figure class="fig"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}" loading="lazy"></figure>`;
     case 'ill': return ill(b);
+    case 'anim': return `<figure class="anim">${b.h ? `<div class="vizh">${rich(b.h)}</div>` : ''}<iframe src="${esc(b.src)}" title="${esc(b.h || 'Animación')}" loading="lazy"></iframe></figure>`;
     case 'tiles': return `<div class="tri">${b.items.map(([e, t, d]) => `<div class="tile"><div>${e}</div><b>${rich(t)}</b><span>${rich(d || '')}</span></div>`).join('')}</div>`;
     case 'tbl': return `<div class="tablewrap"><table><thead><tr>${b.head.map((h) => `<th>${rich(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${rich(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     case 'steps': { const id = 'st' + (++UID);
@@ -320,3 +321,6 @@ export async function moduloView(el, { profile, param }) {
   logEvent('module_open', id, null, { title: mod.title });
   draw();
 }
+
+// Las animaciones (iframe) avisan su alto para que el recuadro no tenga barra de desplazamiento.
+window.addEventListener('message', (e) => { if (e.data?.anim !== 'alto') return; document.querySelectorAll('figure.anim iframe').forEach((f) => { if (f.contentWindow === e.source) f.style.height = Math.ceil(e.data.h) + 'px'; }); });

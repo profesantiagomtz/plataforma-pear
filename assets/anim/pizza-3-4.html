@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pizza en fracciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1f3a93;--hl:#ffe45c;--bg:#fbfaf5;--grid:#dfe6f3;--txt:#1d2433;--red:#d64541;--green:#1e8c4e}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Atkinson Hyperlegible',system-ui,sans-serif;color:var(--txt);
+    background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+    min-height:100vh;display:flex;justify-content:center;padding:16px}
+  .wrap{width:100%;max-width:760px;text-align:center}
+  h1{font-family:'Kalam',cursive;color:var(--ink);font-size:clamp(26px,5vw,38px);margin:4px 0 10px}
+  h1 span{background:linear-gradient(transparent 55%,var(--hl) 55%)}
+  .pasos{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .pasos div{padding:6px 10px;border-radius:999px;background:#fff;border:2px solid #c9d2e6;font-size:14px;color:#6b7280;transition:.3s}
+  .pasos div.on{background:var(--hl);border-color:var(--ink);color:var(--ink);font-weight:700}
+  .pasos div.ok{border-color:var(--green);color:var(--green)}
+  .escena{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:12px;box-shadow:4px 4px 0 var(--ink)}
+  svg{width:min(320px,80vw);height:auto;overflow:visible}
+  .rebanada{transition:transform .7s cubic-bezier(.3,1.4,.5,1),opacity .6s}
+  .rebanada.comida{opacity:0;transform:scale(.2)!important}
+  .fantasma{fill:#fde2e1;stroke:#d64541;stroke-width:3;stroke-dasharray:8 7;opacity:0;transition:opacity .5s}
+  .fantasma.on{opacity:1}
+  .comi{font-size:30px;stroke:none}
+  .corte{stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240}
+  .corte.on{animation:cortar .8s forwards}
+  @keyframes cortar{to{stroke-dashoffset:0}}
+  .etq{font:700 22px 'Kalam',cursive;fill:var(--ink);opacity:0;transition:opacity .4s;paint-order:stroke;stroke:#fff;stroke-width:6}
+  .etq.on{opacity:1}
+  .tijeras{font-size:44px;opacity:0;transition:opacity .3s}
+  .lado{min-width:190px;font-size:22px}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;font-family:'Kalam',cursive;color:var(--ink);font-size:72px;line-height:1}
+  .frac .barra{width:80px;height:6px;background:var(--ink);border-radius:3px;margin:4px 0}
+  .frac b{transition:.4s}
+  .cuenta{font-size:40px;letter-spacing:6px;margin:6px 0}
+  .oculto{display:none}
+  .nota{font-size:17px;text-align:left;margin-top:8px}
+  .nota p{margin:6px 0}
+  .arr{color:var(--red);font-weight:700}
+  .texto{min-height:88px;margin:14px 0 8px;font-size:clamp(20px,4vw,26px);font-weight:700;color:var(--txt)}
+  .texto small{display:block;font-weight:400;font-size:.75em;color:#4b5563;margin-top:4px}
+  .controles{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  button{font:700 18px 'Atkinson Hyperlegible',sans-serif;border:none;border-radius:12px;padding:12px 18px;cursor:pointer;background:var(--ink);color:#fff;box-shadow:0 4px 0 #142866}
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 #142866}
+  button.sec{background:#fff;color:var(--ink);border:2px solid var(--ink);box-shadow:0 4px 0 var(--ink)}
+  button:disabled{opacity:.4;cursor:default}
+  .pop{animation:pop .5s}
+  @keyframes pop{50%{transform:scale(1.25)}}
+  .nom{animation:nom .35s 2}
+  @keyframes nom{50%{transform:scale(1.3) rotate(-10deg)}}
+  body.embed{background:transparent;min-height:0;padding:4px 4px 10px}
+  body.embed h1{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍕 <span>¿Cuánta pizza me comí?</span></h1>
+
+  <div class="pasos" id="pasos">
+    <div>1. Pizza entera</div><div>2. La parto</div><div>3. Me como</div><div>4. La fracción</div>
+  </div>
+
+  <div class="escena">
+    <svg viewBox="-20 -20 340 340" id="pizza" aria-label="Pizza">
+      <defs>
+        <radialGradient id="queso" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd84d"/><stop offset="1" stop-color="#f6b93b"/></radialGradient>
+      </defs>
+      <g id="fantasmas"></g>
+      <g id="rebanadas"></g>
+      <g id="cortes">
+        <line class="corte" x1="150" y1="22" x2="150" y2="278"/>
+        <line class="corte" x1="22" y1="150" x2="278" y2="150"/>
+      </g>
+      <g id="etiquetas"></g>
+    </svg>
+    <div class="lado">
+      <div id="emoji" style="font-size:64px">🍕</div>
+      <div id="cuenta" class="cuenta oculto"></div>
+      <div id="fraccion" class="oculto">
+        <div class="frac"><b id="num">3</b><div class="barra"></div><b id="den">4</b></div>
+        <div class="nota">
+          <p><span class="arr">⬆ 3</span> = partes que me comí</p>
+          <p><span class="arr">⬇ 4</span> = partes iguales en que partí la pizza</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="texto" id="texto"></div>
+
+  <div class="controles">
+    <button class="sec" id="atras">◀ Atrás</button>
+    <button id="sig">Siguiente paso ▶</button>
+    <button class="sec" id="auto">▶ Ver todo solo</button>
+    <button class="sec" id="rep">🔁 Repetir</button>
+  </div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg',C=150,R=128;
+const $=id=>document.getElementById(id);
+function pt(a,r){a=(a-90)*Math.PI/180;return[C+r*Math.cos(a),C+r*Math.sin(a)]}
+function sector(a0,a1,r){const[p,q]=[pt(a0,r),pt(a1,r)];return`M${C},${C}L${p[0]},${p[1]}A${r},${r} 0 0 1 ${q[0]},${q[1]}Z`}
+function el(t,attrs,parent){const e=document.createElementNS(NS,t);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
+
+// 4 rebanadas: orden en que se comen: 0,1,2 (queda la 3)
+const reb=[],eti=[];
+for(let i=0;i<4;i++){
+  const a0=i*90,a1=a0+90,mid=a0+45;
+  el('path',{d:sector(a0,a1,R),class:'fantasma',id:'f'+i},$('fantasmas'));
+  const g=el('g',{class:'rebanada'},$('rebanadas'));
+  g.style.transformOrigin=`${pt(mid,R*.5)[0]}px ${pt(mid,R*.5)[1]}px`;
+  el('path',{d:sector(a0,a1,R),fill:'#c97a2b'},g);
+  el('path',{d:sector(a0,a1,R-14),fill:'url(#queso)'},g);
+  [[mid-22,.45],[mid+20,.62],[mid-8,.8],[mid+12,.32]].forEach(([a,f],k)=>{
+    const p=pt(a,(R-14)*f); el('circle',{cx:p[0],cy:p[1],r:k==3?9:12,fill:'#c0392b'},g);
+    el('circle',{cx:p[0]-3,cy:p[1]-3,r:3,fill:'#e2685c'},g)});
+  const hoja=pt(mid+28,(R-14)*.55);el('ellipse',{cx:hoja[0],cy:hoja[1],rx:7,ry:4,fill:'#2e9d55',transform:`rotate(${mid} ${hoja[0]} ${hoja[1]})`},g);
+  reb.push({g,mid});
+  const gp=pt(mid,R*.55);const gt=el('text',{x:gp[0],y:gp[1]+8,'text-anchor':'middle',class:'etq comi',id:'c'+i},$('fantasmas'));gt.textContent='😋';
+  const lp=pt(mid,R*.55);
+  const t=el('text',{x:lp[0],y:lp[1]+8,'text-anchor':'middle',class:'etq'},$('etiquetas'));t.textContent='1/4';eti.push(t);
+}
+function separar(on){reb.forEach(({g,mid},i)=>{const d=on?14:0,a=(mid-90)*Math.PI/180,t=`translate(${d*Math.cos(a)}px,${d*Math.sin(a)}px)`;g.style.transform=t;$('f'+i).style.transform=t})}
+
+const textos=[
+  ['Esta es <u>UNA</u> pizza entera.','Una cosa completa se llama <b>la unidad</b> = 1'],
+  ['La parto en <u>4 partes iguales</u>. ✂️','Cada parte es <b>1/4</b> (un cuarto) de la pizza'],
+  ['Me como <u>3 partes</u>. 😋','Cuenta las rebanadas que me comí'],
+  ['Me comí <span style="color:#1f3a93;font-size:1.2em">3/4</span> de pizza. 🎉','Se lee: <b>“tres cuartos”</b>. Me quedó 1/4.']
+];
+let paso=0,timers=[],autoOn=false;
+function limpiar(){timers.forEach(clearTimeout);timers=[]}
+function later(ms,f){timers.push(setTimeout(f,ms))}
+
+function render(n,animar=true){
+  limpiar();paso=n;
+  [...$('pasos').children].forEach((d,i)=>{d.className=i==n?'on':i<n?'ok':''});
+  $('texto').innerHTML=`${textos[n][0]}<small>${textos[n][1]}</small>`;
+  $('texto').classList.remove('pop');void $('texto').offsetWidth;$('texto').classList.add('pop');
+  $('atras').disabled=n==0;$('sig').disabled=n==3;
+  // estado base
+  const cortado=n>=1;
+  document.querySelectorAll('.corte').forEach(c=>{c.classList.remove('on');c.style.strokeDashoffset=cortado&&!(n==1&&animar)?0:240});
+  separar(cortado&&!(n==1&&animar));
+  eti.forEach(t=>t.classList.toggle('on',n==1&&!animar));
+  reb.forEach((r,i)=>r.g.classList.toggle('comida',n==3&&i<3));
+  for(let i=0;i<4;i++){$('f'+i).classList.toggle('on',n==3&&i<3);$('c'+i).classList.toggle('on',n==3&&i<3)}
+  $('cuenta').classList.toggle('oculto',n!=2&&n!=3?true:false);
+  $('fraccion').classList.toggle('oculto',n!=3);
+  $('emoji').textContent=['🍕','✂️','😋','✅'][n];
+  if(n==3){$('cuenta').classList.add('oculto');$('fraccion').classList.remove('pop');void $('fraccion').offsetWidth;$('fraccion').classList.add('pop')}
+  if(n==1&&animar){
+    document.querySelectorAll('.corte').forEach((c,i)=>later(300+i*900,()=>c.classList.add('on')));
+    later(2100,()=>separar(true));
+    eti.forEach((t,i)=>later(2600+i*350,()=>t.classList.add('on')));
+  }
+  if(n==2){
+    $('cuenta').innerHTML='0 de 4';
+    const comer=i=>{reb[i].g.classList.add('comida');$('f'+i).classList.add('on');$('c'+i).classList.add('on');
+      $('cuenta').innerHTML=`<b style="color:#d64541">${i+1}</b> de 4`;
+      $('emoji').classList.remove('nom');void $('emoji').offsetWidth;$('emoji').classList.add('nom')};
+    if(animar)[0,1,2].forEach(i=>later(700+i*1300,()=>comer(i)));else[0,1,2].forEach(comer);
+  }
+  if(autoOn&&n<3)later(n==0?2500:n==1?5000:5200,()=>render(n+1));
+  if(autoOn&&n==3){autoOn=false;$('auto').disabled=false}
+}
+$('sig').onclick=()=>{autoOn=false;$('auto').disabled=false;paso<3&&render(paso+1)};
+$('atras').onclick=()=>{autoOn=false;$('auto').disabled=false;paso>0&&render(paso-1,false)};
+$('rep').onclick=()=>{autoOn=false;$('auto').disabled=false;render(0)};
+$('auto').onclick=()=>{autoOn=true;$('auto').disabled=true;render(0)};
+render(0);
+// Dentro de la plataforma: sin título y avisa su alto para que el recuadro se ajuste
+if(window.self!==window.top||/embed/.test(location.search)){document.body.classList.add('embed');
+  const avisa=()=>parent.postMessage({anim:'alto',h:document.documentElement.scrollHeight},'*');
+  new ResizeObserver(avisa).observe(document.body);addEventListener('load',avisa)}
+</script>
+</body>
+</html>

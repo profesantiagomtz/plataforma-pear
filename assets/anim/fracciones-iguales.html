@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fracciones iguales</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style></style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍕 <span>¿Comí lo mismo?</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <svg viewBox="0 0 600 250" id="sv"></svg>
+    <div id="igual" class="grande oculto">1/2 = 2/4 = 4/8</div>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const sv=A.$('sv'),X=[100,300,500],N=[2,4,8];
+const P=X.map((x,i)=>A.pizza(sv,x,105,88,N[i]));
+const L=X.map(x=>{const t=A.el('text',{x,y:238,'text-anchor':'middle',class:'etq'},sv);return t});
+const lab=(arr)=>L.forEach((t,i)=>{t.textContent=arr[i]});
+A.iniciar([
+ {n:'3 pizzas',t:'Tengo <u>3 pizzas iguales</u>.',s:'Del mismo tamaño',d:2500},
+ {n:'Las parto',t:'Parto una en <u>2</u>, otra en <u>4</u> y otra en <u>8</u>. ✂️',s:'Todas las partes de cada pizza son iguales',d:3500},
+ {n:'Me como',t:'De cada pizza me como <u>la mitad</u>. 😋',s:'1 de 2 · 2 de 4 · 4 de 8',d:5500},
+ {n:'Comparo',t:'¡Comí <u>lo mismo</u> en las tres! 🎉',s:'Se escriben distinto pero valen igual: son <b>fracciones equivalentes</b>'},
+],(n,animar,later)=>{
+  P.forEach(p=>{p.cortar(n>=1);for(let i=0;i<p.n;i++)p.comer(i,false)});
+  lab(n==0?['1 pizza','1 pizza','1 pizza']:n==1?['2 partes','4 partes','8 partes']:['1/2','2/4','4/8']);
+  A.$('igual').classList.toggle('oculto',n!=3); if(n==3)A.pop(A.$('igual'));
+  if(n>=2){
+    const comer=(k)=>{for(let i=0;i<P[k].n/2;i++)P[k].comer(i)};
+    if(n==2&&animar){lab(['2 partes','4 partes','8 partes']);[0,1,2].forEach(k=>later(600+k*1500,()=>{comer(k);L[k].textContent=['1/2','2/4','4/8'][k];A.pop(L[k])}))}
+    else[0,1,2].forEach(comer);
+  }
+});
+</script>
+</body>
+</html>

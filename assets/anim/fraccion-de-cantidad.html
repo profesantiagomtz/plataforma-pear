@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fracción de una cantidad</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style>.grupo{transition:transform .8s cubic-bezier(.3,1.3,.5,1),opacity .5s}.marco{transition:opacity .5s,fill .5s}
+.cnt{font-size:26px;margin:2px 0;min-height:34px}</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍬 <span>¿Cuánto es 3/4 de 80?</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <svg viewBox="0 0 600 230" id="sv"></svg>
+    <div class="cnt" id="cnt"></div>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const sv=A.$('sv'),S=22,GW=4*S,cols=['#e74c3c','#f39c12','#2ecc71','#9b59b6','#3b82f6'];
+const G=[];for(let k=0;k<4;k++){const g=A.el('g',{class:'grupo'},sv);
+  const m=A.el('rect',{x:-10,y:20,width:GW+20,height:5*S+20,rx:12,fill:'#fff7c2',stroke:'#1f3a93','stroke-width':3,class:'marco',opacity:0},g);
+  for(let i=0;i<20;i++)A.el('circle',{cx:S/2+(i%4)*S,cy:30+S/2+Math.floor(i/4)*S,r:S*.4,fill:cols[(i+k)%5]},g);
+  const t=A.el('text',{x:GW/2,y:180,'text-anchor':'middle',class:'etq'},g);G.push({g,m,t})}
+const pos=(sep)=>{const gap=sep?44:2,w=4*GW+3*gap,x0=(600-w)/2;G.forEach(({g},k)=>{g.style.transform=`translate(${x0+k*(GW+gap)}px,${sep?0:10}px)`})};
+A.iniciar([
+ {n:'80 dulces',t:'Tengo <u>80 dulces</u>. 🍬',s:'Quiero saber cuánto es <b>3/4</b> de ellos',d:2500},
+ {n:'Reparto',t:'Los reparto en <u>4 grupos iguales</u> (el 4 de abajo).',s:'80 ÷ 4 = <b>20</b> dulces en cada grupo',d:3500},
+ {n:'Tomo 3',t:'Tomo <u>3 grupos</u> (el 3 de arriba). 😋',s:'Cuenta de 20 en 20',d:5000},
+ {n:'Resultado',t:'3/4 de 80 = <span style="color:#1f3a93">60</span> 🎉',s:'Atajo: 80 ÷ 4 = 20 y luego 20 × 3 = <b>60</b>'},
+],(n,animar,later)=>{
+  pos(n>=1);G.forEach(({g,m,t})=>{m.setAttribute('opacity',n>=1?1:0);m.setAttribute('fill','#fff');t.textContent=n>=1?'20':'';g.style.opacity=1});
+  const cnt=A.$('cnt');cnt.innerHTML=n==0?'80 dulces':n==1?'20 + 20 + 20 + 20 = 80':'';
+  const toma=(k)=>{G[k].m.setAttribute('fill','#ffe45c');cnt.innerHTML='Llevo: <b style="color:#d64541;font-size:1.3em">'+(20*(k+1))+'</b> dulces';A.pop(cnt)};
+  if(n>=2){if(n==2&&animar)[0,1,2].forEach(k=>later(600+k*1300,()=>toma(k)));else[0,1,2].forEach(toma)}
+  if(n==3){G[3].g.style.opacity=.3;cnt.innerHTML='<b style="font-size:1.3em;color:#1f3a93">60 dulces</b>'}
+});
+</script>
+</body>
+</html>
