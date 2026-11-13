@@ -95,27 +95,33 @@ G.factor = () => { const n = pick([12, 18, 20, 24, 28, 30, 36, 40, 45, 48, 50, 5
   return { q: `Factoriza en números primos: <b>${n}</b> <span class="muted small">(escribe así: 2^2*3*5)</span>`, mode: 'fact', ans: factorize(n), e: `${n} = ${fstr(factorize(n))}.` }; };
 
 // ---------- 1.4 fracciones y porcentajes ----------
-G.simplifica = () => { let p, q; do { q = rnd(2, 12); p = rnd(1, q + 4); } while (gcd(p, q) !== 1 || p === q); const k = rnd(2, 6);
-  return { q: `Simplifica: <b>${fr(k * p, k * q)}</b> <span class="muted small">(escribe a/b)</span>`, mode: 'fs', ans: [p, q], e: `Divide numerador y denominador entre su MCD (${k}): ${p}/${q}.` }; };
-G.sumaFrac = () => { const ds = [2, 3, 4, 5, 6, 8, 10, 12]; let a, b, c, d, n, m; do { b = pick(ds); d = pick(ds); a = rnd(1, b - 1); c = rnd(1, d - 1); n = a * d + c * b; m = b * d; } while (b === d);
-  const [rn, rd] = red(n, m); const sub = Math.random() < .35;
-  if (sub) { let [x, y, z, w] = [a, b, c, d]; if (x / y < z / w) [x, y, z, w] = [z, w, x, y]; const nn = x * w - z * y, mm = y * w; const [sn, sd] = red(nn, mm); if (nn === 0) return G.sumaFrac();
-    return { q: `Resta: <b>${fr(x, y)} − ${fr(z, w)}</b> <span class="muted small">(resultado simplificado, a/b)</span>`, mode: 'fs', ans: [sn, sd], e: `Denominador común ${lcm(y, w)}: ${x * (lcm(y, w) / y)}/${lcm(y, w)} − ${z * (lcm(y, w) / w)}/${lcm(y, w)} = ${frs(sn, sd)}.` }; }
-  return { q: `Suma: <b>${fr(a, b)} + ${fr(c, d)}</b> <span class="muted small">(resultado simplificado, a/b)</span>`, mode: 'fs', ans: [rn, rd], e: `Denominador común ${lcm(b, d)}: ${a * (lcm(b, d) / b)}/${lcm(b, d)} + ${c * (lcm(b, d) / d)}/${lcm(b, d)} = ${frs(rn, rd)}.` }; };
-G.mulFrac = () => { const a = rnd(1, 5), b = rnd(2, 7), c = rnd(1, 5), d = rnd(2, 7); const mul = Math.random() < .6;
-  const [n, m] = mul ? red(a * c, b * d) : red(a * d, b * c);
-  return { q: `${mul ? 'Multiplica' : 'Divide'}: <b>${fr(a, b)} ${mul ? '×' : '÷'} ${fr(c, d)}</b> <span class="muted small">(simplificado, a/b)</span>`, mode: 'fs', ans: [n, m], e: mul ? `Numerador × numerador y denominador × denominador, y simplifica: ${frs(n, m)}.` : `Dividir es multiplicar por el inverso: ${a}/${b} × ${d}/${c} = ${frs(n, m)}.` }; };
-G.fraccionDe = () => { const d = pick([2, 3, 4, 5, 6, 8, 10]); const n = rnd(1, d - 1); const N = d * rnd(2, 12);
-  return { q: `¿Cuánto es <b>${fr(n, d)}</b> de <b>${N}</b>?`, mode: 'n', ans: N / d * n, e: `(${N} ÷ ${d}) × ${n} = ${N / d * n}.` }; };
-G.porcentaje = () => { const P = pick([5, 10, 15, 20, 25, 30, 40, 50, 60, 75]); const N = pick([40, 60, 80, 120, 160, 200, 240, 300, 400, 500]);
-  return { q: `¿Cuánto es el <b>${P} %</b> de <b>${N}</b>?`, mode: 'n', ans: N * P / 100, e: `${N} × ${P} ÷ 100 = ${N * P / 100}.` }; };
-G.descuento = () => { const P = pick([10, 15, 20, 25, 30, 40, 50]); const N = pick([200, 400, 500, 800, 1000, 1200, 2000, 4800]); const up = Math.random() < .3;
-  const r = N * (100 + (up ? P : -P)) / 100;
-  return { q: up ? `Un producto de <b>$${N}</b> sube <b>${P} %</b>. ¿Cuál es su precio nuevo?` : `Un producto cuesta <b>$${N}</b> y tiene <b>${P} %</b> de descuento. ¿Cuánto se paga?`, mode: 'n', ans: r, e: `${N} × ${100 + (up ? P : -P)} ÷ 100 = $${r}.` }; };
-G.quePorcentaje = () => { const B = pick([20, 40, 50, 80, 200, 250, 400]); const P = pick([5, 10, 20, 25, 30, 40, 50, 75]); const A = B * P / 100;
-  return { q: `¿Qué porcentaje es <b>${A}</b> de <b>${B}</b>?`, mode: 'n', ans: P, e: `${A} ÷ ${B} × 100 = ${P} %.` }; };
-G.reglaTres = () => { const u = rnd(8, 45); const a = rnd(2, 6), b = a + rnd(2, 6);
-  return { q: `<b>${a}</b> cuadernos cuestan <b>$${a * u}</b>. ¿Cuánto cuestan <b>${b}</b> cuadernos?`, mode: 'n', ans: b * u, e: `Cada uno cuesta ${a * u} ÷ ${a} = $${u}; ${b} × ${u} = $${b * u}.` }; };
+G.simplifica = () => { let p, q; do { q = pick([2, 3, 4, 5]); p = rnd(1, q - 1); } while (gcd(p, q) !== 1); const k = pick([2, 3, 5]);
+  return { q: `Hazla más corta (simplifica): <b>${fr(k * p, k * q)}</b> <span class="muted small">(prueba dividir arriba y abajo entre 2, 3 o 5)</span>`, mode: 'fs', ans: [p, q], e: `Divide los dos entre ${k}: arriba ${k * p} ÷ ${k} = ${p} y abajo ${k * q} ÷ ${k} = ${q}. Queda ${p}/${q}.` }; };
+G.sumaFrac = () => { const sub = Math.random() < .35;
+  // 60 %: el mismo número abajo. 40 %: uno es el doble del otro (2 y 4, 3 y 6, 4 y 8, 5 y 10).
+  let a, b, c, d; if (Math.random() < .6) { b = d = pick([3, 4, 5, 6, 7, 8, 10]); a = rnd(1, b - 2); c = rnd(1, b - 1 - a); } else { b = pick([2, 3, 4, 5]); d = 2 * b; a = rnd(1, b - 1); c = rnd(1, d - 1); if (Math.random() < .5) [a, b, c, d] = [c, d, a, b]; }
+  if (sub && a / b < c / d) [a, b, c, d] = [c, d, a, b];
+  const m = Math.max(b, d), x = a * (m / b), y = c * (m / d), n = sub ? x - y : x + y; if (n <= 0) return G.sumaFrac();
+  const [rn, rd] = red(n, m), op = sub ? '−' : '+';
+  const paso = b === d ? 'Abajo ya tienen el mismo número.' : `Cambia para que abajo diga ${m}: ${b === m ? `${c}/${d} = ${y}/${m}` : `${a}/${b} = ${x}/${m}`} (× 2 arriba y abajo).`;
+  return { q: `${sub ? 'Resta' : 'Suma'}: <b>${fr(a, b)} ${op} ${fr(c, d)}</b> <span class="muted small">(escribe con rayita; hazla más corta si se puede)</span>`, mode: 'fs', ans: [rn, rd],
+    e: `${paso} Luego ${sub ? 'resta' : 'suma'} solo los de arriba: ${x} ${op} ${y} = ${n}. Queda ${n}/${m}${rn !== n ? `, y más corta: ${rn}/${rd}` : ''}.` }; };
+G.mulFrac = () => { const a = rnd(1, 4), b = rnd(2, 5), c = rnd(1, 4), d = rnd(2, 5); const mul = Math.random() < .65;
+  const [N, M] = mul ? [a * c, b * d] : [a * d, b * c]; const [n, m] = red(N, M); const corta = n !== N ? `, y más corta: ${n}/${m}` : '';
+  return { q: `${mul ? 'Multiplica' : 'Divide'}: <b>${fr(a, b)} ${mul ? '×' : '÷'} ${fr(c, d)}</b> <span class="muted small">(escribe con rayita; hazla más corta si se puede)</span>`, mode: 'fs', ans: [n, m],
+    e: mul ? `Arriba con arriba: ${a} × ${c} = ${N}. Abajo con abajo: ${b} × ${d} = ${M}. Queda ${N}/${M}${corta}.` : `Voltea la segunda: ${c}/${d} se vuelve ${d}/${c}. Multiplica: arriba ${a} × ${d} = ${N}, abajo ${b} × ${c} = ${M}. Queda ${N}/${M}${corta}.` }; };
+G.fraccionDe = () => { const d = pick([2, 3, 4, 5, 10]); const n = rnd(1, d - 1); const N = d * rnd(2, 10);
+  return { q: `¿Cuánto es <b>${fr(n, d)}</b> de <b>${N}</b>?`, mode: 'n', ans: N / d * n, e: `Reparte ${N} entre ${d} (el de abajo): ${N} ÷ ${d} = ${N / d}. Toma ${n} ${n === 1 ? "parte" : "partes"} (el de arriba): ${N / d} × ${n} = ${N / d * n}.` }; };
+G.porcentaje = () => { const P = pick([10, 20, 25, 50, 75]); const N = pick([40, 80, 100, 200, 400, 600]);
+  return { q: `¿Cuánto es el <b>${P} %</b> de <b>${N}</b>?`, mode: 'n', ans: N * P / 100, e: `Multiplica: ${N} × ${P} = ${N * P}. Divide entre 100: ${N * P} ÷ 100 = ${N * P / 100}.` }; };
+G.descuento = () => { const P = pick([10, 20, 25, 50]); const N = pick([200, 400, 500, 800, 1000]); const up = Math.random() < .3;
+  const x = N * P / 100, r = up ? N + x : N - x;
+  return { q: up ? `Un producto de <b>$${N}</b> sube <b>${P} %</b>. ¿Cuánto cuesta ahora?` : `Un producto cuesta <b>$${N}</b> y tiene <b>${P} %</b> de descuento. ¿Cuánto pagas?`, mode: 'n', ans: r,
+    e: `${up ? 'Aumento' : 'Descuento'}: ${N} × ${P} ÷ 100 = $${x}. ${up ? `Lo sumas: ${N} + ${x}` : `Lo restas: ${N} − ${x}`} = $${r}.` }; };
+G.quePorcentaje = () => { const B = pick([20, 50, 100, 200]); const P = pick([10, 20, 25, 50]); const A = B * P / 100;
+  return { q: `¿Qué porcentaje es <b>${A}</b> de <b>${B}</b>?`, mode: 'n', ans: P, e: `Divide: ${A} ÷ ${B} = ${fmtN(A / B)}. Multiplica por 100: ${P} %.` }; };
+G.reglaTres = () => { const u = rnd(5, 20); const a = rnd(2, 5), b = a + rnd(1, 5);
+  return { q: `<b>${a}</b> cuadernos cuestan <b>$${a * u}</b>. ¿Cuánto cuestan <b>${b}</b> cuadernos?`, mode: 'n', ans: b * u, e: `Primero 1 cuaderno: ${a * u} ÷ ${a} = $${u}. Luego ${b} cuadernos: ${b} × ${u} = $${b * u}.` }; };
 
 // ---------- 1.5 potencias y raíces ----------
 G.potencia = () => { const neg = Math.random() < .3; const b = neg ? -rnd(2, 5) : rnd(2, 9); const e = neg ? rnd(2, 4) : rnd(2, b > 5 ? 3 : 5); const val = b ** e;
@@ -217,10 +223,10 @@ export function check(p, raw) {
   if (p.mode === 'n') { const v = parseValue(raw); if (isNaN(v)) return { ok: false, msg: 'Escribe solo un número (puede ser decimal o a/b).' };
     const tol = p.tol ?? Math.max(1e-6, Math.abs(p.ans) * 1e-6); return { ok: Math.abs(v - p.ans) <= tol }; }
   if (p.mode === 'fs') { const s = clearNum(raw); const [an, ad] = p.ans;
-    const m = s.match(/^(-?\d+)(?:\/(\d+))?$/); if (!m) return { ok: false, msg: 'Escribe la fracción como a/b (por ejemplo 3/4).' };
+    const m = s.match(/^(-?\d+)(?:\/(\d+))?$/); if (!m) return { ok: false, msg: 'Escribe la fracción con una rayita: el de arriba, / y el de abajo (por ejemplo 3/4).' };
     const n = +m[1], d = m[2] ? +m[2] : 1; if (!d) return { ok: false, msg: 'El denominador no puede ser 0.' };
     if (n * ad !== an * d) return { ok: false }; const [rn, rd] = red(n, d);
-    if (rn !== n || rd !== d) return { ok: false, msg: 'Es correcta pero se puede simplificar más.' }; return { ok: true }; }
+    if (rn !== n || rd !== d) return { ok: false, msg: '¡Casi! Está bien, pero hazla más corta: divide arriba y abajo entre el mismo número.' }; return { ok: true }; }
   if (p.mode === 'list') { const got = String(raw).replace(/−/g, '-').split(/[,;\s]+/).filter(Boolean).map(Number); if (got.some(isNaN)) return { ok: false, msg: 'Escribe solo números separados por comas (ejemplo: 1, 2, 3).' };
     const A = [...new Set(p.ans)].sort((a, b) => a - b), B = [...new Set(got)].sort((a, b) => a - b); return { ok: A.length === B.length && A.every((x, i) => x === B[i]), msg: B.length < A.length ? 'Te faltan números.' : B.length > A.length ? 'Te sobran números.' : undefined }; }
   if (p.mode === 't') return { ok: raw.toUpperCase().replace(/[^A-Z0-9]/g, '') === String(p.ans).toUpperCase() };
