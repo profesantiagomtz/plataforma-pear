@@ -15,7 +15,7 @@ export default {
       anim('assets/anim/pizza-3-4.html', '🍕 De la pizza a la fracción: aprieta el botón azul **Siguiente paso**'),
       def('Fracción', 'En **3/4**: el **4 (abajo)** dice en cuántas partes iguales partiste la pizza. El **3 (arriba)** dice cuántas partes tomaste.'),
       viz('frac', '🎛️ Juega con la barra: aprieta los botones azules **−** y **+**'),
-      tbl(['Nombre', 'Cómo la reconoces', 'Ejemplo'], [['Propia', 'el de arriba es **más chico** que el de abajo. Es menos de una pizza', '3/4'], ['Impropia', 'el de arriba es **más grande** (o igual). Es una pizza o más', '11/4'], ['Mixta', 'un número entero y junto una fracción', '2 ¾']]),
+      tbl(['Nombre', 'Cómo la reconoces', 'Ejemplo'], [['Propia', 'el de arriba es **más chico** que el de abajo. Es menos de una pizza', '3/4'], ['Impropia', 'el de arriba es **más grande** (o igual). Es una pizza o más', '11/4'], ['Mixta', 'un número entero y junto una fracción', '2 ¾']], '📋 Tipos de fracciones'),
       anim('assets/anim/mixta-impropia.html', '🍕 Número mixto: aprieta el botón azul **Siguiente paso**'),
       p('También al revés: 11 ÷ 4 = 2 y sobran 3. Entonces 11/4 = **2 ¾** (2 pizzas enteras y 3 rebanadas).'),
     ], 'El de abajo dice en cuántas partes se partió; el de arriba, cuántas tomaste.', 'La fracción'),
