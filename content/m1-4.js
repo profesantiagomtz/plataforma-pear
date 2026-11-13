@@ -13,7 +13,7 @@ export default {
       words([['Unidad', 'el entero: una pizza completa, una barra, un grupo'], ['Fracción', 'una o varias partes iguales de la unidad, como ¾'], ['Numerador', 'el número de **arriba**: cuántas partes tomas'], ['Denominador', 'el número de **abajo**: en cuántas partes se partió']]),
       anim('assets/anim/pizza-3-4.html', '🍕 De la pizza a la fracción: aprieta el botón azul **Siguiente paso**'),
       def('Fracción', 'En **a/b**, el **denominador (b)** dice en cuántas partes iguales se partió el entero y el **numerador (a)** dice cuántas partes tomaste.'),
-      viz('frac', '🎛️ Mueve los controles y mira cómo cambia la barra'),
+      viz('frac', '🎛️ Juega con la barra: aprieta los botones azules **−** y **+**'),
       tbl(['Tipo', 'Cómo se ve', 'Ejemplo'], [['Propia', 'arriba < abajo (vale menos que 1)', '3/4'], ['Impropia', 'arriba ≥ abajo (vale 1 o más)', '11/4'], ['Mixta', 'un entero + una fracción', '2 ¾']]),
       anim('assets/anim/mixta-impropia.html', '🍕 Número mixto: aprieta el botón azul **Siguiente paso**'),
       p('Al revés también se puede: 11 ÷ 4 = 2 y sobran 3 → **2 ¾**. Y un entero también es fracción: 5 = 5/1 = 10/2.'),

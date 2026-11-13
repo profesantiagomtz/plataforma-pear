@@ -34,3 +34,4 @@ button:disabled{opacity:.4;cursor:default}
 .etq{font:700 28px 'Kalam',cursive;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:6;transition:opacity .4s}
 .entera{transition:opacity .4s;pointer-events:none}
 .fantasma.vacia{fill:none;stroke:#b8b8b8}
+@media (prefers-color-scheme:dark){body.embed .texto{background:#fff;border:3px solid #1f3a93;border-radius:14px;padding:10px 12px}}
