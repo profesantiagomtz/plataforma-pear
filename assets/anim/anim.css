@@ -33,3 +33,4 @@ button:disabled{opacity:.4;cursor:default}
 .carita{opacity:0;transition:opacity .4s}.carita.on{opacity:1}
 .etq{font:700 28px 'Kalam',cursive;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:6;transition:opacity .4s}
 .entera{transition:opacity .4s;pointer-events:none}
+.fantasma.vacia{fill:none;stroke:#b8b8b8}

@@ -15,7 +15,8 @@ export default {
       def('Fracción', 'En **a/b**, el **denominador (b)** dice en cuántas partes iguales se partió el entero y el **numerador (a)** dice cuántas partes tomaste.'),
       viz('frac', '🎛️ Mueve los controles y mira cómo cambia la barra'),
       tbl(['Tipo', 'Cómo se ve', 'Ejemplo'], [['Propia', 'arriba < abajo (vale menos que 1)', '3/4'], ['Impropia', 'arriba ≥ abajo (vale 1 o más)', '11/4'], ['Mixta', 'un entero + una fracción', '2 ¾']]),
-      ex('**Mixta a impropia:** 2 ¾ = (2 × 4 + 3)/4 = **11/4**.<br>**Impropia a mixta:** 11 ÷ 4 = 2 y sobran 3 → **2 ¾**.<br>Un entero también es fracción: 5 = 5/1 = 10/2.'),
+      anim('assets/anim/mixta-impropia.html', '🍕 Número mixto: aprieta el botón azul **Siguiente paso**'),
+      p('Al revés también se puede: 11 ÷ 4 = 2 y sobran 3 → **2 ¾**. Y un entero también es fracción: 5 = 5/1 = 10/2.'),
     ], 'El de abajo dice en cuántas partes se partió; el de arriba, cuántas tomaste.', 'La fracción'),
 
     guia('Practica con ayuda', 'Leer fracciones', [
@@ -83,8 +84,8 @@ export default {
 
     lesson('Proporciones y regla de tres', 'Cuando una cosa sube, la otra también (o baja)', [
       words([['Razón', 'comparar dos cantidades: 3 de cada 5'], ['Proporción', 'dos razones que valen lo mismo'], ['Directa', 'si una sube, la otra **también**'], ['Inversa', 'si una sube, la otra **baja**']]),
-      it('Directa', '**3 kg** de tomate cuestan **$54**. ¿Cuánto cuestan **5 kg**? Cada kilo cuesta 54 ÷ 3 = $18 → 5 × 18 = **$90**.'),
-      it('Inversa', '**4 obreros** terminan en **12 días**. ¿Y con **6 obreros**? Más obreros → menos días: 4 × 12 ÷ 6 = **8 días**.'),
+      anim('assets/anim/regla-directa.html', '🍅 **Directa**: aprieta el botón azul **Siguiente paso**'),
+      anim('assets/anim/regla-inversa.html', '👷 **Inversa**: aprieta el botón azul **Siguiente paso**'),
       ex('Receta para **4** personas: **3/4 de taza** de harina. Para **6** personas: 3/4 × 6/4 = 9/8 = **1 ⅛ tazas**.', '🍰 En la cocina'),
       alt('Pregúntate: «si pido el **doble**, ¿pago el doble?» (directa). «Si pongo el **doble de gente**, ¿tardo la **mitad**?» (inversa).', '🤔 ¿Directa o inversa?'),
     ], 'Directa: sube con sube. Inversa: sube con baja.', 'Proporciones'),
@@ -101,7 +102,7 @@ export default {
       def('Porcentaje', '**P %** quiere decir **P/100**. Ejemplo: 50 % = 50/100 = ½ y 25 % = 25/100 = ¼.'),
       tiles([['½', '50 %', 'la mitad'], ['¼', '25 %', 'un cuarto'], ['¾', '75 %', 'tres cuartos'], ['1', '100 %', 'todo']]),
       tbl(['Quiero…', 'Cómo lo hago', 'Ejemplo'], [['El P % de una cantidad', 'cantidad × P ÷ 100', '25 % de 240 = 240 × 25 ÷ 100 = 60'], ['¿Qué % es A de N?', 'A ÷ N × 100', '45 de 180 = 45 ÷ 180 × 100 = 25 %'], ['Aplicar descuento', 'precio × (100 − P) ÷ 100', '$850 con 20 % = 850 × 0.80 = $680'], ['Aplicar aumento', 'precio × (100 + P) ÷ 100', '$400 con 15 % = 400 × 1.15 = $460']]),
-      steps('Un celular de $4 800 con 15 % de descuento', ['El descuento es el 15 % de 4 800: 4 800 × 15 ÷ 100 = **$720**.', 'Precio final: 4 800 − 720 = **$4 080**.', 'Atajo: si descuentan 15 %, **pagas el 85 %**: 4 800 × 0.85 = **$4 080**.']),
+      anim('assets/anim/porcentaje-descuento.html', '📱 Un descuento: aprieta el botón azul **Siguiente paso**'),
     ], 'Si descuentan P %, pagas (100 − P) %.', 'Porcentaje'),
 
     guia('Practica con ayuda', 'Descuento paso a paso', [

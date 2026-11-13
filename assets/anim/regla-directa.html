@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regla de tres directa</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style>.cajas{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:150px}
+.caja{width:96px;border:3px solid #1f3a93;border-radius:14px;padding:6px;background:#fff;transition:transform .5s,opacity .5s}
+.caja .e{font-size:40px}.caja .kg{font-weight:700}.caja .pr{font:700 26px Kalam,cursive;color:#1e8c4e;min-height:34px}
+.caja.nueva{background:#fff7c2}.caja.fuera{display:none}
+.tot{font-size:24px;min-height:40px}</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍅 <span>Si 3 kg cuestan $54…</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <div class="cajas" id="cajas"></div>
+    <div class="tot" id="tot"></div>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const C=A.$('cajas');const cajas=[];
+for(let i=0;i<5;i++){const d=document.createElement('div');d.className='caja'+(i>=3?' nueva':'');d.innerHTML='<div class="e">🍅</div><div class="kg">1 kg</div><div class="pr"></div>';C.appendChild(d);cajas.push(d)}
+const pr=(i,t)=>{cajas[i].querySelector('.pr').textContent=t};
+A.iniciar([
+ {n:'3 kg',t:'<u>3 kg</u> de tomate cuestan <u>$54</u>. 🍅',s:'¿Cuánto cuestan 5 kg?',d:3000},
+ {n:'1 kg',t:'Primero, ¿cuánto cuesta <u>1 kg</u>?',s:'Reparto: 54 ÷ 3 = <b>18</b>. Cada kilo cuesta $18',d:4000},
+ {n:'5 kg',t:'Ahora pongo <u>5 kg</u>, a $18 cada uno.',s:'Cuenta de 18 en 18',d:5500},
+ {n:'Resultado',t:'5 kg cuestan <span style="color:#1f3a93">$90</span> 🎉',s:'5 × 18 = 90. Es <b>directa</b>: más kilos, más dinero'},
+],(n,animar,later)=>{
+  cajas.forEach((c,i)=>{c.classList.toggle('fuera',i>=3&&n<2);if(i>=3&&n==2&&animar)A.pop(c);pr(i,n>=1&&(i<3||n>=3)?'$18':'')});
+  const T=A.$('tot');
+  T.innerHTML=n==0?'3 kg = <b>$54</b>':n==1?'$54 ÷ 3 = <b style="color:#1e8c4e">$18</b> cada kilo':n==3?'5 kg = <b style="font-size:1.4em;color:#1f3a93">$90</b>':'';
+  if(n==2){const sum=k=>{for(let i=0;i<=k;i++)pr(i,'$18');T.innerHTML='Llevo: <b style="color:#d64541;font-size:1.3em">$'+18*(k+1)+'</b>';A.pop(T)};
+    cajas.forEach((c,i)=>pr(i,''));
+    if(animar)[0,1,2,3,4].forEach(k=>later(500+k*900,()=>sum(k)));else sum(4)}
+});
+</script>
+</body>
+</html>

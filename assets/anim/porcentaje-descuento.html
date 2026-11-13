@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descuento</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style>.rejilla{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;width:min(300px,78vw)}
+.cu{aspect-ratio:1;border-radius:3px;background:#3b82f6;transition:background .3s,transform .3s}
+.cu.desc{background:#d64541;transform:scale(.8)}.cu.paga{background:#1e8c4e}
+.fila2{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap}
+.info{font-size:22px;min-width:200px;text-align:left}.info p{margin:6px 0}</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📱 <span>Celular con 15 % de descuento</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <div class="fila2"><div class="rejilla" id="rej"></div><div class="info" id="info"></div></div>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const G=A.$('rej'),Q=[];for(let i=0;i<100;i++){const d=document.createElement('div');d.className='cu';G.appendChild(d);Q.push(d)}
+const I=A.$('info');
+A.iniciar([
+ {n:'El precio',t:'El celular cuesta <u>$4 800</u>. 📱',s:'Lo parto en <b>100 cuadritos</b>: eso es el 100 %',d:3000},
+ {n:'1 cuadrito',t:'Cada cuadrito vale <u>$48</u>.',s:'4 800 ÷ 100 = 48. Cada cuadrito es el 1 %',d:3500},
+ {n:'Descuento',t:'Descuento de <u>15 %</u>: me quitan <u>15 cuadritos</u>.',s:'15 × 48 = <b>$720</b> de descuento',d:4500},
+ {n:'Pago',t:'Pago <span style="color:#1e8c4e">85 cuadritos</span> = <span style="color:#1f3a93">$4 080</span> 🎉',s:'4 800 − 720 = 4 080. Atajo: si descuentan 15 %, <b>pagas el 85 %</b>'},
+],(n,animar,later)=>{
+  Q.forEach((q,i)=>{q.className='cu'+(n>=2&&i>=85&&!(n==2&&animar)?' desc':'')+(n==3&&i<85?' paga':'')});
+  I.innerHTML=n==0?'<p>100 cuadritos</p><p><b>= $4 800</b></p>':n==1?'<p>1 cuadrito</p><p><b>= $48</b></p>':n==2?'<p><span style="color:#d64541">■</span> descuento: <b id="k">15</b> cuadritos</p><p><b>= $720</b></p>':'<p><span style="color:#d64541">■</span> 15 % = $720</p><p><span style="color:#1e8c4e">■</span> <b>85 % = $4 080</b></p>';
+  Q[0].style.transform='';
+  if(n==1){Q[0].style.transform='scale(1.6)';later(1200,()=>Q[0].style.transform='')}
+  if(n==2&&animar){A.$('k').textContent='0';for(let j=0;j<15;j++)later(400+j*200,()=>{Q[99-j].classList.add('desc');A.$('k').textContent=j+1})}
+});
+</script>
+</body>
+</html>

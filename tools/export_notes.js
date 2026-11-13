@@ -8,6 +8,7 @@ const line = (h, p) => `> **${clean(h)}** ${clean(p)}`;
 function blockMd(b) {
   switch (b.k) {
     case 'words': return `**📖 Palabras nuevas**\n\n${b.items.map(([t, d]) => `- **${clean(t)}**: ${clean(d)}`).join('\n')}`;
+    case 'anim': return `> 🎬 **Animación:** ${clean(b.h).replace(/:.*$/, '')}. Mírala en el **módulo interactivo**.`;
     case 'def': return line(`${b.h}:`, b.p);
     case 'ex': return line(`${b.h || 'Ejemplo'}:`, b.p);
     case 'ana': return line(`${b.h || 'Piénsalo así'}:`, b.p);

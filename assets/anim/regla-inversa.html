@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regla de tres inversa</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style>.campo{position:relative;width:100%;max-width:560px;height:260px}
+.lad{position:absolute;width:5.4%;height:24px;border-radius:4px;transition:left .9s,top .9s,background .9s}
+.ob{position:absolute;left:0;font-size:24px;transition:opacity .5s,top .9s}
+.dias{position:absolute;right:0;font:700 24px Kalam,cursive;color:#1f3a93;transition:top .9s,opacity .5s}
+.tot{font-size:24px;min-height:36px}</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>👷 <span>Más obreros, menos días</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <div class="campo" id="campo"></div>
+    <div class="tot" id="tot"></div>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const F=A.$('campo'),cols=['#e74c3c','#f39c12','#2ecc71','#3b82f6','#9b59b6','#ec4899'],R=34;
+const L=[];for(let i=0;i<48;i++){const d=document.createElement('div');d.className='lad';F.appendChild(d);L.push(d)}
+const O=[];for(let k=0;k<6;k++){const d=document.createElement('div');d.className='ob';d.textContent='👷';F.appendChild(d);O.push(d)}
+const D=document.createElement('div');D.className='dias';F.appendChild(D);
+const acomoda=(filas)=>{const por=48/filas;L.forEach((d,i)=>{const f=Math.floor(i/por),c=i%por;d.style.left=(9+c*6)+'%';d.style.top=(8+f*R)+'px';d.style.background=cols[f]});
+  O.forEach((o,k)=>{o.style.top=(4+k*R)+'px';o.style.opacity=k<filas?1:0});D.style.top=(8+(filas/2-.5)*R)+'px';D.textContent=por+' días';F.style.height=(filas*R+16)+'px'};
+A.iniciar([
+ {n:'4 obreros',t:'<u>4 obreros</u> hacen una barda en <u>12 días</u>. 👷',s:'Cada cuadrito es lo que hace un obrero en un día',d:3500},
+ {n:'Todo el trabajo',t:'Todo el trabajo: 4 × 12 = <u>48 cuadritos</u>.',s:'Ese trabajo no cambia, sea quien sea',d:3500},
+ {n:'6 obreros',t:'Ahora son <u>6 obreros</u>. Se reparten los 48.',s:'Mira cómo se acomodan',d:4000},
+ {n:'Resultado',t:'Con 6 obreros tardan <span style="color:#1f3a93">8 días</span> 🎉',s:'48 ÷ 6 = 8. Es <b>inversa</b>: más obreros, menos días'},
+],(n,animar,later)=>{
+  const T=A.$('tot');
+  if(n<2){acomoda(4);T.innerHTML=n==0?'4 obreros → <b>12 días</b>':'<b>48</b> cuadritos de trabajo'}
+  else if(n==2&&animar){acomoda(4);T.innerHTML='6 obreros → ¿cuántos días?';later(500,()=>acomoda(6))}
+  else{acomoda(6);T.innerHTML=n==3?'<b style="font-size:1.3em;color:#1f3a93">6 obreros → 8 días</b>':'6 obreros → ¿cuántos días?'}
+});
+</script>
+</body>
+</html>

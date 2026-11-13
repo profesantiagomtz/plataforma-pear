@@ -38,6 +38,8 @@
     pep.forEach(([a, f]) => { const p = A.pt(cx, cy, r * .89 * f, a); A.el('circle', { cx: p[0], cy: p[1], r: r * .1, fill: '#c0392b' }, ent); });
     return {
       cortar(on) { ent.style.opacity = on ? 0 : 1; s.forEach(({ g, ghost, face, mid, borde }) => { const d = on && n > 1 ? r * .07 : 0, a = (mid - 90) * Math.PI / 180, t = `translate(${d * Math.cos(a)}px,${d * Math.sin(a)}px)`; g.style.transform = t; ghost.style.transform = t; face.style.transform = t; borde.setAttribute('stroke', on ? '#fff' : '#c97a2b'); }); },
+      quitar(i, on = true) { const x = s[i]; x.g.classList.toggle('comida', on); x.ghost.classList.toggle('on', on); x.ghost.classList.toggle('vacia', on); },
+      centro(i, f = .55) { return A.pt(cx, cy, r * f, s[i].mid); },
       comer(i, on = true) { const x = s[i]; x.g.classList.toggle('comida', on); x.ghost.classList.toggle('on', on); x.face.classList.toggle('on', on); },
       n,
     };
