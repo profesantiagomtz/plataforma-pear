@@ -49,7 +49,7 @@ function block(b, ctx) {
     case 'ill': return ill(b);
     case 'anim': return `<figure class="anim">${b.h ? `<div class="vizh">${rich(b.h)}</div>` : ''}<iframe src="${esc(b.src)}" title="${esc(b.h || 'Animación')}" loading="lazy"></iframe></figure>`;
     case 'tiles': return `<div class="tri">${b.items.map(([e, t, d]) => `<div class="tile"><div>${e}</div><b>${rich(t)}</b><span>${rich(d || '')}</span></div>`).join('')}</div>`;
-    case 'tbl': return `<div class="tablewrap"><table><thead><tr>${b.head.map((h) => `<th>${rich(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${rich(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    case 'tbl': return `${b.t ? `<h3 class="tblt">${rich(b.t)}</h3>` : ''}<div class="tablewrap"><table><thead><tr>${b.head.map((h) => `<th>${rich(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${rich(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     case 'steps': { const id = 'st' + (++UID);
       ctx.mounts.push((root) => { const box = $('#' + id, root); const items = $$('.px', box); let k = 0; const upd = () => { items.forEach((it, i) => it.hidden = i > k); $('[data-px]', box).hidden = k >= items.length - 1; $('[data-pxall]', box).hidden = k >= items.length - 1; };
         $('[data-px]', box).onclick = () => { k++; upd(); }; $('[data-pxall]', box).onclick = () => { k = items.length - 1; upd(); }; upd(); });

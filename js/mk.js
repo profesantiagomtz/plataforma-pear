@@ -11,7 +11,7 @@ export const img = (src, alt) => ({ k: 'img', src, alt });
 export const anim = (src, h) => ({ k: 'anim', src, h });
 export const flow = (items, label) => ({ k: 'ill', kind: 'flow', items, label });
 export const tiles = (items) => ({ k: 'tiles', items });
-export const tbl = (head, rows) => ({ k: 'tbl', head, rows });
+export const tbl = (head, rows, t) => ({ k: 'tbl', head, rows, t });
 export const steps = (t, list) => ({ k: 'steps', t, steps: list });
 export const words = (items) => ({ k: 'words', items });
 export const vis = (rows, cap) => ({ k: 'vis', rows, cap });

@@ -17,7 +17,7 @@ function blockMd(b) {
     case 'it': return `- **${clean(b.h)}:** ${clean(b.p)}`;
     case 'p': return clean(b.s);
     case 'md': return b.s;
-    case 'tbl': return `| ${b.head.map(clean).join(' | ')} |\n|${b.head.map(() => '---').join('|')}|\n${b.rows.map((r) => `| ${r.map(clean).join(' | ')} |`).join('\n')}`;
+    case 'tbl': return `${b.t ? `**${clean(b.t)}**\n\n` : ''}| ${b.head.map(clean).join(' | ')} |\n|${b.head.map(() => '---').join('|')}|\n${b.rows.map((r) => `| ${r.map(clean).join(' | ')} |`).join('\n')}`;
     case 'tiles': return b.items.map(([e, t, d]) => `- ${e} **${clean(t)}**${d ? ' — ' + clean(d) : ''}`).join('\n');
     case 'vis': return b.rows.map((r) => `**${r.map(clean).join('  ')}**`).join('  \n') + (b.cap ? `\n\n${clean(b.cap)}` : '');
     case 'steps': return `**${clean(b.t)}**\n\n${b.steps.map((s, i) => `${i + 1}. ${clean(s)}`).join('\n')}`;
