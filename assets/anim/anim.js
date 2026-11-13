@@ -68,7 +68,7 @@
     ir(0);
     if (window.self !== window.top || /embed/.test(location.search)) {
       document.body.classList.add('embed');
-      const avisa = () => parent.postMessage({ anim: 'alto', h: document.documentElement.scrollHeight }, '*');
+      const avisa = () => parent.postMessage({ anim: 'alto', h: Math.ceil(document.body.getBoundingClientRect().height) }, '*');
       new ResizeObserver(avisa).observe(document.body); addEventListener('load', avisa);
     }
   };

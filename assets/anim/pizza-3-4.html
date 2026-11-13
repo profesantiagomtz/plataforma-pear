@@ -53,6 +53,7 @@
   @keyframes nom{50%{transform:scale(1.3) rotate(-10deg)}}
   body.embed{background:transparent;min-height:0;padding:4px 4px 10px}
   body.embed h1{display:none}
+  @media (prefers-color-scheme:dark){body.embed .texto{background:#fff;border:3px solid #1f3a93;border-radius:14px;padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -175,7 +176,7 @@ $('auto').onclick=()=>{autoOn=true;$('auto').disabled=true;render(0)};
 render(0);
 // Dentro de la plataforma: sin título y avisa su alto para que el recuadro se ajuste
 if(window.self!==window.top||/embed/.test(location.search)){document.body.classList.add('embed');
-  const avisa=()=>parent.postMessage({anim:'alto',h:document.documentElement.scrollHeight},'*');
+  const avisa=()=>parent.postMessage({anim:'alto',h:Math.ceil(document.body.getBoundingClientRect().height)},'*');
   new ResizeObserver(avisa).observe(document.body);addEventListener('load',avisa)}
 </script>
 </body>

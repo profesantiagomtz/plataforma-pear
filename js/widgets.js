@@ -35,20 +35,43 @@ export function mountAbaco(el, { rods = 4, onChange } = {}) {
 
 // ============ FRACCIONES ============
 export function mountFrac(el) {
-  el.innerHTML = `<div class="vz"><div class="vzrow"><label>Numerador <b data-vn>3</b><input type="range" min="0" max="12" value="3" data-n></label>
-    <label>Denominador <b data-vd>4</b><input type="range" min="1" max="12" value="4" data-d></label>
-    <label>Amplificar × <b data-vk>1</b><input type="range" min="1" max="6" value="1" data-k></label></div>
-    <div class="fbars" data-bars></div><div class="vzout" data-out></div></div>`;
+  // Versión guiada: botones grandes − / +, cada barra explicada y retos que se palomean solos.
+  const st = { n: 3, d: 4, k: 1 }, hechos = new Set();
+  const RETOS = [
+    { t: 'Haz <b>3/4</b>: abajo pon <b>4</b> y arriba <b>3</b>.', ok: () => st.n === 3 && st.d === 4 && st.k === 1, bien: '¡Bien! La barra tiene 4 partes y 3 están pintadas.' },
+    { t: 'Haz <b>1/2</b> (la mitad): abajo <b>2</b>, arriba <b>1</b>.', ok: () => st.n === 1 && st.d === 2 && st.k === 1, bien: '¡Eso! Media barra pintada.' },
+    { t: 'Con 1/2 en pantalla, aprieta <b>+</b> en «Partir cada parte en» hasta que diga <b>2</b>.', ok: () => st.n === 1 && st.d === 2 && st.k === 2, bien: 'Salió <b>2/4</b> y pinta <b>lo mismo</b> que 1/2. Eso es <b>amplificar</b>.' },
+    { t: 'Haz <b>6/8</b> (regresa «Partir» a 1) y mira la barra verde de abajo.', ok: () => st.n === 6 && st.d === 8 && st.k === 1, bien: '6/8 se puede escribir más corto: <b>3/4</b>. Eso es <b>simplificar</b>.' },
+  ];
+  const ctl = (key, label, ayuda, min, max) => `<div class="fx-ctl"><div class="fx-lab">${label}<small>${ayuda}</small></div>
+    <div class="fx-btns"><button type="button" class="fx-b" data-m="${key}" aria-label="menos">−</button><b class="fx-v" data-v="${key}"></b><button type="button" class="fx-b" data-p="${key}" aria-label="más">+</button></div></div>`;
+  el.innerHTML = `<div class="vz frx">
+    <ol class="fx-retos" data-retos></ol>
+    <div class="fx-row">${ctl('d', '⬇ Abajo: partes en total', 'en cuántas partes iguales parto la barra', 1, 12)}${ctl('n', '⬆ Arriba: partes pintadas', 'cuántas partes tomo', 0, 12)}</div>
+    <div class="fx-big"><span class="fx-frac"><b data-fn></b><i></i><b data-fd></b></span><span data-dice></span></div>
+    <div data-bars></div>
+    <div class="fx-row">${ctl('k', '✂️ Partir cada parte en', 'amplificar: más partes, misma cantidad', 1, 6)}</div>
+    <div class="vzout" data-out></div></div>`;
+  const LIM = { n: [0, 12], d: [1, 12], k: [1, 6] };
+  const bar = (nn, dd, cls) => `<div class="fbar ${cls || ''}">${Array.from({ length: dd }, (_, i) => `<i class="${i < nn ? 'on' : ''}"></i>`).join('')}</div>`;
   const upd = () => {
-    const n = +$('[data-n]', el).value, d = +$('[data-d]', el).value, k = +$('[data-k]', el).value;
-    $('[data-vn]', el).textContent = n; $('[data-vd]', el).textContent = d; $('[data-vk]', el).textContent = k;
-    const bar = (nn, dd) => `<div class="fbar">${Array.from({ length: dd }, (_, i) => `<i class="${i < nn ? 'on' : ''}"></i>`).join('')}</div>`;
-    const g = gcd(n, d) || 1;
-    $('[data-bars]', el).innerHTML = `<div class="fl">${n}/${d}</div>${bar(Math.min(n, d), d)}` + (k > 1 ? `<div class="fl">${n * k}/${d * k}</div>${bar(Math.min(n * k, d * k), d * k)}` : '') + (g > 1 && n ? `<div class="fl">${n / g}/${d / g} (simplificada)</div>${bar(Math.min(n / g, d / g), d / g)}` : '');
+    const { n, d, k } = st, g = gcd(n, d) || 1;
+    ['n', 'd', 'k'].forEach((x) => { $(`[data-v="${x}"]`, el).textContent = st[x]; });
+    $('[data-fn]', el).textContent = n; $('[data-fd]', el).textContent = d;
+    $('[data-dice]', el).innerHTML = `Parto la barra en <b>${d}</b> partes iguales y pinto <b>${n}</b>.`;
+    let h = `<div class="fl">Tu fracción: <b>${n}/${d}</b></div>${bar(Math.min(n, d), d)}`;
+    if (n > d) h += `<p class="fx-nota">Ojo: quieres pintar ${n} pero la barra solo tiene ${d} partes. Eso es <b>más de un entero</b> (fracción impropia).</p>`;
+    if (k > 1) h += `<div class="fl">✂️ Partí cada parte en ${k}: ahora son <b>${d * k}</b> partes y <b>${n * k}</b> pintadas → <b>${n * k}/${d * k}</b></div>${bar(Math.min(n * k, d * k), d * k, 'amp')}<p class="fx-nota">Mira: lo pintado mide <b>igual</b> que arriba. ${n}/${d} = ${n * k}/${d * k}</p>`;
+    if (g > 1 && n) h += `<div class="fl">🟩 Más corta (simplificada): <b>${n / g}/${d / g}</b></div>${bar(Math.min(n / g, d / g), d / g, 'simp')}<p class="fx-nota">Dividí arriba y abajo entre ${g}. Pinta lo mismo con menos partes.</p>`;
+    $('[data-bars]', el).innerHTML = h;
     const val = n / d;
-    $('[data-out]', el).innerHTML = `<span class="chip">Decimal: <b>${fmtN(val)}</b></span><span class="chip">Porcentaje: <b>${fmtN(val * 100)} %</b></span><span class="chip">${n >= d ? 'Fracción impropia' : 'Fracción propia'}</span>${n >= d && d ? `<span class="chip">Mixta: <b>${Math.floor(n / d)} ${n % d ? `${n % d}/${d}` : ''}</b></span>` : ''}`;
+    $('[data-out]', el).innerHTML = `<span class="chip">En decimal: <b>${fmtN(val)}</b></span><span class="chip">En porcentaje: <b>${fmtN(val * 100)} %</b></span><span class="chip">${n >= d ? 'Vale 1 o más (impropia)' : 'Vale menos de 1 (propia)'}</span>`;
+    RETOS.forEach((r, i) => { if (!hechos.has(i) && r.ok() && [...Array(i).keys()].every((j) => hechos.has(j))) hechos.add(i); });
+    const act = RETOS.findIndex((_, i) => !hechos.has(i));
+    $('[data-retos]', el).innerHTML = `<li class="fx-tit">🎯 Haz estos retos en orden (se palomean solos)</li>` + RETOS.map((r, i) => `<li class="${hechos.has(i) ? 'ok' : i === act ? 'act' : ''}">${hechos.has(i) ? '✅' : i === act ? '👉' : '⬜'} ${r.t}${hechos.has(i) ? `<small>${r.bien}</small>` : ''}</li>`).join('') + (act < 0 ? '<li class="ok">🎉 ¡Terminaste los retos! Ahora prueba con otros números.</li>' : '');
   };
-  $$('input', el).forEach((i) => i.addEventListener('input', upd)); upd();
+  el.addEventListener('click', (e) => { const b = e.target.closest('[data-m],[data-p]'); if (!b) return; const x = b.dataset.m || b.dataset.p; st[x] = Math.max(LIM[x][0], Math.min(LIM[x][1], st[x] + (b.dataset.m ? -1 : 1))); upd(); });
+  upd();
 }
 
 // ============ POTENCIAS ============
