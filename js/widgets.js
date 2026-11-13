@@ -40,17 +40,16 @@ export function mountFrac(el) {
   const RETOS = [
     { t: 'Haz <b>3/4</b>: abajo pon <b>4</b> y arriba <b>3</b>.', ok: () => st.n === 3 && st.d === 4 && st.k === 1, bien: '¡Bien! La barra tiene 4 partes y 3 están pintadas.' },
     { t: 'Haz <b>1/2</b> (la mitad): abajo <b>2</b>, arriba <b>1</b>.', ok: () => st.n === 1 && st.d === 2 && st.k === 1, bien: '¡Eso! Media barra pintada.' },
-    { t: 'Con 1/2 en pantalla, aprieta <b>+</b> en «Partir cada parte en» hasta que diga <b>2</b>.', ok: () => st.n === 1 && st.d === 2 && st.k === 2, bien: 'Salió <b>2/4</b> y pinta <b>lo mismo</b> que 1/2. Eso es <b>amplificar</b>.' },
+    { t: 'Con 1/2 en pantalla, aprieta <b>+</b> en «✂️ Partir cada parte en» hasta que diga <b>2</b>.', ok: () => st.n === 1 && st.d === 2 && st.k === 2, bien: 'Salió <b>2/4</b> y pinta <b>lo mismo</b> que 1/2. Eso es <b>amplificar</b>.' },
     { t: 'Haz <b>6/8</b> (regresa «Partir» a 1) y mira la barra verde de abajo.', ok: () => st.n === 6 && st.d === 8 && st.k === 1, bien: '6/8 se puede escribir más corto: <b>3/4</b>. Eso es <b>simplificar</b>.' },
   ];
   const ctl = (key, label, ayuda, min, max) => `<div class="fx-ctl"><div class="fx-lab">${label}<small>${ayuda}</small></div>
     <div class="fx-btns"><button type="button" class="fx-b" data-m="${key}" aria-label="menos">−</button><b class="fx-v" data-v="${key}"></b><button type="button" class="fx-b" data-p="${key}" aria-label="más">+</button></div></div>`;
   el.innerHTML = `<div class="vz frx">
     <ol class="fx-retos" data-retos></ol>
-    <div class="fx-row">${ctl('d', '⬇ Abajo: partes en total', 'en cuántas partes iguales parto la barra', 1, 12)}${ctl('n', '⬆ Arriba: partes pintadas', 'cuántas partes tomo', 0, 12)}</div>
+    <div class="fx-row">${ctl('d', '⬇ Abajo: partes en total', 'en cuántas partes parto', 1, 12)}${ctl('n', '⬆ Arriba: partes pintadas', 'cuántas partes tomo', 0, 12)}${ctl('k', '✂️ Partir cada parte en', 'amplificar', 1, 6)}</div>
     <div class="fx-big"><span class="fx-frac"><b data-fn></b><i></i><b data-fd></b></span><span data-dice></span></div>
     <div data-bars></div>
-    <div class="fx-row">${ctl('k', '✂️ Partir cada parte en', 'amplificar: más partes, misma cantidad', 1, 6)}</div>
     <div class="vzout" data-out></div></div>`;
   const LIM = { n: [0, 12], d: [1, 12], k: [1, 6] };
   const bar = (nn, dd, cls) => `<div class="fbar ${cls || ''}">${Array.from({ length: dd }, (_, i) => `<i class="${i < nn ? 'on' : ''}"></i>`).join('')}</div>`;
