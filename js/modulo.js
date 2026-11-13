@@ -294,7 +294,7 @@ export async function moduloView(el, { profile, param }) {
     let k = 0; secs[0].classList.add('on');
     const bar = document.createElement('div'); bar.className = 'more'; bar.innerHTML = `<button class="btn big" id="more">Entendido 👍</button><div class="muted small" id="mc">Parte 1 de ${secs.length}</div>`;
     stage.append(bar);
-    $('#more', stage).onclick = () => { k++; secs[k].classList.add('on'); secs[k].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('#mc', stage).textContent = `Parte ${k + 1} de ${secs.length}`; if (k >= secs.length - 1) { bar.remove(); lessonRead(); } };
+    $('#more', stage).onclick = () => { k++; secs[k].classList.add('on'); { const r = secs[k].getBoundingClientRect(), libre = innerHeight - 200; secs[k].scrollIntoView({ behavior: 'smooth', block: r.height > libre ? 'start' : 'nearest' }); } $('#mc', stage).textContent = `Parte ${k + 1} de ${secs.length}`; if (k >= secs.length - 1) { bar.remove(); lessonRead(); } };
   }
   function lessonRead() { const old = st.done[i] || {}; mark(i, 1, { r: 1 }); if (!old.r) log('lesson_read', { secs: old.t || 0 }); $('.nexthint', el) && ($('.nexthint', el).hidden = false); }
   function maybeDone() { if (pct() >= 100 && !doneLogged) { doneLogged = true; log('module_done', {}); toast('🏆 ¡Completaste el módulo!', 'ok'); } }
