@@ -8,6 +8,7 @@ export const it = (h, p) => ({ k: 'it', h, p });
 export const p = (s) => ({ k: 'p', s });
 export const md = (s) => ({ k: 'md', s });
 export const img = (src, alt) => ({ k: 'img', src, alt });
+export const anim = (src, h) => ({ k: 'anim', src, h });
 export const flow = (items, label) => ({ k: 'ill', kind: 'flow', items, label });
 export const tiles = (items) => ({ k: 'tiles', items });
 export const tbl = (head, rows) => ({ k: 'tbl', head, rows });

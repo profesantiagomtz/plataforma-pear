@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sumar fracciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="anim.css">
+<style>.c{transition:fill .5s}.sexto{stroke:#6b7280;stroke-width:2;stroke-dasharray:6 5;opacity:0;transition:opacity .6s}.sexto.on{opacity:1}
+#barC{transition:opacity .5s}</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍫 <span>Sumar 1/2 + 1/3</span></h1>
+  <div class="pasos" id="pasos"></div>
+  <div class="escena">
+    <svg viewBox="0 0 620 330" id="sv"></svg>
+  </div>
+  <div class="texto" id="texto"></div>
+  <div class="controles" id="controles"></div>
+</div>
+<script src="anim.js"></script>
+<script>
+
+const sv=A.$('sv'),X0=120,W=80,H=62,Y=[20,115,240],OR='#f39c12',BL='#3b82f6';
+const bar=(y,cortes)=>{const g=A.el('g',{},sv),c=[];
+  for(let i=0;i<6;i++)c.push(A.el('rect',{x:X0+i*W,y,width:W+.8,height:H,fill:'#fff',class:'c'},g));
+  for(let i=1;i<6;i++){const x=X0+i*W;cortes.includes(i)?A.el('line',{x1:x,y1:y,x2:x,y2:y+H,stroke:'#1f3a93','stroke-width':4},g):A.el('line',{x1:x,y1:y+4,x2:x,y2:y+H-4,class:'sexto'},g)}
+  A.el('rect',{x:X0,y,width:6*W,height:H,fill:'none',stroke:'#1f3a93','stroke-width':4,rx:6},g);
+  const t=A.el('text',{x:X0-14,y:y+H/2+11,'text-anchor':'end',class:'etq'},g);return{g,c,t}};
+const a=bar(Y[0],[3]),b=bar(Y[1],[2,4]),c=bar(Y[2],[]);c.g.id='barC';
+const mas=A.el('text',{x:X0+3*W,y:Y[1]+H+48,'text-anchor':'middle',class:'etq','font-size':40},sv);mas.textContent='⬇';
+A.iniciar([
+ {n:'Dos pedazos',t:'Tengo <u>1/2</u> chocolate y <u>1/3</u> de otro. 🍫',s:'Los pedazos son de <b>distinto tamaño</b>: así no se pueden sumar',d:3500},
+ {n:'Partes iguales',t:'Parto los dos en <u>6 partes iguales</u> (sextos). ✂️',s:'1/2 se vuelve <b>3/6</b> y 1/3 se vuelve <b>2/6</b>',d:4000},
+ {n:'Los junto',t:'Ahora sí los junto: <u>3 sextos + 2 sextos</u>.',s:'Ya son partes del mismo tamaño',d:5000},
+ {n:'Resultado',t:'1/2 + 1/3 = 3/6 + 2/6 = <span style="color:#1f3a93">5/6</span> 🎉',s:'Se suman los de arriba; el de abajo (6) se queda igual'},
+],(n,animar,later)=>{
+  a.c.forEach((r,i)=>r.setAttribute('fill',i<3?OR:'#fff'));b.c.forEach((r,i)=>r.setAttribute('fill',i<2?BL:'#fff'));
+  document.querySelectorAll('.sexto').forEach(l=>l.classList.toggle('on',n>=1));
+  a.t.textContent=n>=1?'3/6':'1/2';b.t.textContent=n>=1?'2/6':'1/3';
+  if(n==1&&animar){A.pop(A.$('texto'))}
+  c.g.style.opacity=n>=2?1:0;mas.style.opacity=n>=2?1:0;c.t.textContent=n==3?'5/6':'';
+  const cols=[OR,OR,OR,BL,BL];c.c.forEach(r=>r.setAttribute('fill','#fff'));
+  if(n>=2){if(n==2&&animar)cols.forEach((f,i)=>later(500+i*600,()=>c.c[i].setAttribute('fill',f)));else cols.forEach((f,i)=>c.c[i].setAttribute('fill',f))}
+});
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { lesson, def, ex, ana, warn, it, p, md, img, flow, tiles, tbl, steps, words, vis, alt, viz, match, mc, order, cloze, gen, guia, write, practica } from '../js/mk.js';
+import { anim, lesson, def, ex, ana, warn, it, p, md, img, flow, tiles, tbl, steps, words, vis, alt, viz, match, mc, order, cloze, gen, guia, write, practica } from '../js/mk.js';
 
 export default {
   id: 'm1-4', unit: '1.4', title: 'Fracciones y porcentajes', sub: 'Pizzas, descuentos y proporciones: matemáticas que usas todos los días', minutes: 130, weight: 10,
@@ -11,7 +11,7 @@ export default {
   pages: [
     lesson('¿Qué es una fracción?', 'Partes de algo entero, como una pizza 🍕', [
       words([['Unidad', 'el entero: una pizza completa, una barra, un grupo'], ['Fracción', 'una o varias partes iguales de la unidad, como ¾'], ['Numerador', 'el número de **arriba**: cuántas partes tomas'], ['Denominador', 'el número de **abajo**: en cuántas partes se partió']]),
-      flow([['🍕', 'Pizza entera|(la unidad)'], ['✂️', 'La parto en 4|partes iguales'], ['😋', 'Me como 3|partes'], ['➗', 'Como ¾|de pizza']], 'De la pizza a la fracción'),
+      anim('assets/anim/pizza-3-4.html', '🍕 De la pizza a la fracción: aprieta el botón azul **Siguiente paso**'),
       def('Fracción', 'En **a/b**, el **denominador (b)** dice en cuántas partes iguales se partió el entero y el **numerador (a)** dice cuántas partes tomaste.'),
       viz('frac', '🎛️ Mueve los controles y mira cómo cambia la barra'),
       tbl(['Tipo', 'Cómo se ve', 'Ejemplo'], [['Propia', 'arriba < abajo (vale menos que 1)', '3/4'], ['Impropia', 'arriba ≥ abajo (vale 1 o más)', '11/4'], ['Mixta', 'un entero + una fracción', '2 ¾']]),
@@ -28,7 +28,7 @@ export default {
     lesson('Fracciones que valen lo mismo', 'Equivalentes: se ven distintas pero son iguales', [
       words([['Equivalentes', 'fracciones que valen **lo mismo** aunque se escriban distinto'], ['Amplificar', 'multiplicar arriba y abajo por el mismo número'], ['Simplificar', 'dividir arriba y abajo entre el mismo número para que quede más chica'], ['Irreducible', 'una fracción que ya no se puede simplificar más']]),
       img('assets/lessons/1-4-fracciones.svg', 'Barras que muestran fracciones equivalentes'),
-      ana('**La mitad de una pizza es lo mismo** si la partes en 2 y te comes 1 (1/2), o la partes en 4 y te comes 2 (2/4), o en 8 y te comes 4 (4/8). Se ve distinto, pero **comes lo mismo** 🍕.', '🍕 Con pizza'),
+      anim('assets/anim/fracciones-iguales.html', '🍕 Con pizza: aprieta el botón azul **Siguiente paso**'),
       it('Amplificar', 'Multiplica arriba y abajo por el **mismo** número: 2/3 = 4/6 = 6/9.'),
       it('Simplificar', 'Divide arriba y abajo entre un número que quepa en los dos. Lo mejor es el **MCD**. 18/24 ÷ 6 = **3/4**.'),
       steps('Simplificar 12/18', ['Busca un número que quepa exacto en 12 y en 18. El más grande es el **MCD = 6**.', '12 ÷ 6 = **2**.', '18 ÷ 6 = **3**.', 'Queda **2/3**. Ya no se puede simplificar (el 2 y el 3 no tienen divisores en común).']),
@@ -47,7 +47,7 @@ export default {
     lesson('¿Cuál fracción es más grande?', 'Compara con la «multiplicación en cruz»', [
       def('Multiplicación en cruz', 'Para comparar **a/b** con **c/d**: multiplica **a × d** y **b × c**. **El lado con el resultado más grande es la fracción más grande.**'),
       ex('Comparar **3/5** con **4/7**: 3 × 7 = **21** y 4 × 5 = **20**. Como 21 es mayor que 20, **3/5 > 4/7**.'),
-      ana('Si partes 2 pizzas iguales, una en 5 y otra en 7 rebanadas, **las rebanadas de 5 son más grandes**. Tomar 3 de 5 es más que tomar 4 de 7.', '🍕 Para imaginarlo'),
+      anim('assets/anim/cual-es-mas.html', '🍕 Para imaginarlo: aprieta el botón azul **Siguiente paso**'),
     ], 'Multiplica en cruz y compara los resultados.', 'Comparar'),
 
     match('Tú solo: compara fracciones', 'Elige el signo correcto (> mayor · < menor · = igual)', [
@@ -58,7 +58,7 @@ export default {
       words([['Denominador común', 'que las dos fracciones estén partidas en el **mismo** número de partes']]),
       it('Mismo denominador', 'Ya están partidas igual: solo **sumas o restas los de arriba**. 3/8 + 2/8 = **5/8**.'),
       it('Distinto denominador', 'Primero las **partes iguales**: busca el **MCM** de los denominadores y convierte. 1/2 + 1/3 = 3/6 + 2/6 = **5/6**.'),
-      ana('No puedes sumar «medios» con «tercios» como si fueran lo mismo, igual que no puedes sumar 2 manzanas + 3 peras y decir «5 manzanas». Hay que convertirlos a **sextos** (partes del mismo tamaño).', '🍎🍐 Peras y manzanas'),
+      anim('assets/anim/sumar-fracciones.html', '🍫 Mira cómo se suman: aprieta el botón azul **Siguiente paso**'),
       steps('Ejemplo: 3/4 − 1/6', ['Denominadores 4 y 6 → el **MCM** es **12**.', '3/4 = **9/12** (multiplicaste arriba y abajo por 3).', '1/6 = **2/12** (multiplicaste por 2).', '9/12 − 2/12 = **7/12**.', '7 y 12 no tienen divisores en común: ya quedó simplificada.']),
       warn('**Nunca** sumes los de abajo: 1/2 + 1/3 **no** es 2/5.'),
     ], 'Primero partes iguales (MCM), luego sumas los de arriba.', 'Sumar y restar'),
@@ -74,7 +74,7 @@ export default {
     lesson('Multiplicar y dividir fracciones', 'Más fácil que sumar', [
       def('Multiplicar', '**Arriba × arriba** y **abajo × abajo**: 2/3 × 3/5 = 6/15 = **2/5**.'),
       def('Dividir', 'Se **voltea** la segunda fracción y se **multiplica**: 3/4 ÷ 2/5 = 3/4 × 5/2 = **15/8**.'),
-      ex('**Fracción de una cantidad:** ¿cuánto es **3/4 de 80**? Divide entre 4 → 20 y multiplica por 3 → **60**.'),
+      anim('assets/anim/fraccion-de-cantidad.html', '🍬 Fracción de una cantidad: aprieta el botón azul **Siguiente paso**'),
       alt('«De» en matemáticas es **por**: «¾ de 80» es lo mismo que ¾ × 80.', '🤔 ¿Qué significa «de»?'),
     ], 'Multiplicar: directo. Dividir: voltea la segunda y multiplica.', 'Multiplicar y dividir'),
 
